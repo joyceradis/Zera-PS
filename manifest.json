@@ -1,0 +1,19 @@
+{
+  "name": "Zera PS",
+  "short_name": "Zera PS",
+  "description": "Acelerador de documentação clínica para pronto-socorro.",
+  "start_url": "./app.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f7fa",
+  "theme_color": "#0b1f33",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "assets/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
