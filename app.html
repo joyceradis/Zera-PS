@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b1f33">
+  <meta name="description" content="Zera PS — acelerador de documentação clínica.">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/styles.css">
+  <title>Zera PS — Aplicativo</title>
+</head>
+<body class="app-body">
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand brand-inverse" href="index.html">
+        <img src="assets/logo.svg" alt="" width="36" height="36">
+        <span>Zera PS</span>
+      </a>
+
+      <nav class="app-nav" aria-label="Navegação principal">
+        <button class="nav-button active" data-view="evolucao">Evolução</button>
+        <button class="nav-button" data-view="reavaliacao">Reavaliação</button>
+        <button class="nav-button" data-view="internacao">Internação</button>
+        <button class="nav-button" data-view="alta">Alta</button>
+        <button class="nav-button" data-view="scores">Scores</button>
+        <button class="nav-button" data-view="rascunhos">Rascunhos</button>
+      </nav>
+
+      <div class="sidebar-note">
+        <strong>Uso responsável</strong>
+        <span>Revise e valide clinicamente todo texto antes de registrar no prontuário.</span>
+      </div>
+    </aside>
+
+    <main class="workspace">
+      <header class="app-header">
+        <button class="icon-button menu-button" id="menu-button" aria-label="Abrir menu">Menu</button>
+        <div>
+          <p class="eyebrow">PLANTÃO ATIVO</p>
+          <h1 id="view-title">Evolução</h1>
+        </div>
+        <div class="header-actions">
+          <span class="offline-badge" id="connection-status">ONLINE</span>
+          <button class="button button-ghost button-small" id="install-button" hidden>Instalar</button>
+        </div>
+      </header>
+
+      <section class="view active" id="view-evolucao" data-title="Evolução">
+        <div class="notice-bar">O Zera PS organiza a documentação; não substitui julgamento clínico, protocolos institucionais ou revisão médica.</div>
+
+        <div class="content-grid">
+          <section class="form-panel">
+            <div class="section-heading">
+              <div>
+                <p class="section-kicker">ATALHOS CLÍNICOS</p>
+                <h2>Comece por um cenário</h2>
+              </div>
+              <button class="text-button" id="clear-template">Remover modelo</button>
+            </div>
+            <div class="template-grid" id="template-grid"></div>
+
+            <form id="evolution-form" autocomplete="off">
+              <div class="form-section">
+                <div class="section-heading compact">
+                  <div>
+                    <p class="section-kicker">HISTÓRIA</p>
+                    <h2>Queixa e contexto clínico</h2>
+                  </div>
+                </div>
+
+                <label class="field">
+                  <span>QP</span>
+                  <input id="qp" name="qp" placeholder="QUEIXA PRINCIPAL DO PACIENTE">
+                  <small>Registre literalmente a queixa principal, de forma curta.</small>
+                </label>
+
+                <label class="field">
+                  <span>HDA</span>
+                  <textarea id="hda" name="hda" rows="6" placeholder="HISTÓRIA CRONOLÓGICA DO QUADRO, SINTOMAS ASSOCIADOS E NEGATIVAS RELEVANTES"></textarea>
+                </label>
+              </div>
+
+              <div class="form-section">
+                <div class="section-heading compact">
+                  <div>
+                    <p class="section-kicker">HPP</p>
+                    <h2>Antecedentes</h2>
+                  </div>
+                  <button type="button" class="text-button" id="fill-negatives">Preencher NEGA</button>
+                </div>
+
+                <div class="field-grid two-columns">
+                  <label class="field"><span>Comorbidades</span><input id="comorbidades" placeholder="NEGA / LISTAR"></label>
+                  <label class="field"><span>MUC</span><input id="muc" placeholder="NEGA / LISTAR"></label>
+                  <label class="field"><span>Alergias</span><input id="alergias" placeholder="NEGA / LISTAR"></label>
+                  <label class="field"><span>Hábitos</span><input id="habitos" placeholder="NEGA / LISTAR"></label>
+                  <label class="field full-width"><span>Cirurgias prévias</span><input id="cirurgias" placeholder="NEGA / LISTAR"></label>
+                </div>
+              </div>
+
+              <div class="form-section">
+                <div class="section-heading compact">
+                  <div>
+                    <p class="section-kicker">EXAME FÍSICO</p>
+                    <h2>Achados objetivos</h2>
+                  </div>
+                  <button type="button" class="text-button" id="fill-normal-exam">Preencher normal</button>
+                </div>
+
+                <label class="field">
+                  <span>Estado geral</span>
+                  <input id="estado-geral" placeholder="BEG, LOTE, CORADO, HIDRATADO, ANICTÉRICO, ACIANÓTICO, AFEBRIL">
+                </label>
+                <div class="field-grid two-columns">
+                  <label class="field"><span>ACV</span><input id="acv" placeholder="RCR, 2T, BNF, SEM SOPROS"></label>
+                  <label class="field"><span>AR</span><input id="ar" placeholder="MV PRESENTE BILATERALMENTE, SEM RA"></label>
+                  <label class="field"><span>ABD</span><input id="abd" placeholder="PLANO, FLÁCIDO, INDOLOR..."></label>
+                  <label class="field"><span>EXT</span><input id="ext" placeholder="SEM EDEMAS, PULSOS PALPÁVEIS..."></label>
+                  <label class="field full-width"><span>Neurológico</span><input id="neuro" placeholder="LOTE, GLASGOW 15, SEM DÉFICITS FOCAIS"></label>
+                </div>
+              </div>
+
+              <div class="form-section">
+                <div class="section-heading compact">
+                  <div>
+                    <p class="section-kicker">INVESTIGAÇÃO E PLANO</p>
+                    <h2>Exames, hipóteses e conduta</h2>
+                  </div>
+                </div>
+
+                <div class="field-grid two-columns">
+                  <label class="field"><span>Laboratoriais</span><textarea id="laboratoriais" rows="4" placeholder="NA / RESULTADOS RELEVANTES"></textarea></label>
+                  <label class="field"><span>Imagem</span><textarea id="imagem" rows="4" placeholder="NA / RESULTADOS RELEVANTES"></textarea></label>
+                </div>
+                <label class="field"><span>Hipóteses diagnósticas</span><textarea id="hipoteses" rows="4" placeholder="UMA HIPÓTESE POR LINHA"></textarea></label>
+                <label class="field"><span>Conduta</span><textarea id="conduta" rows="6" placeholder="UMA CONDUTA POR LINHA"></textarea></label>
+
+                <label class="toggle-row">
+                  <input type="checkbox" id="include-em-tempo">
+                  <span>Incluir # EM TEMPO:</span>
+                </label>
+                <label class="field" id="em-tempo-field" hidden><span>Em tempo</span><textarea id="em-tempo" rows="4" placeholder="ATUALIZAÇÃO CLÍNICA OU RESULTADO POSTERIOR"></textarea></label>
+              </div>
+            </form>
+          </section>
+
+          <aside class="preview-panel">
+            <div class="preview-sticky">
+              <div class="section-heading compact">
+                <div>
+                  <p class="section-kicker">SAÍDA FINAL</p>
+                  <h2>Pronto para revisar e copiar</h2>
+                </div>
+                <span class="save-status" id="save-status">NÃO SALVO</span>
+              </div>
+              <textarea id="evolution-output" class="output-area" spellcheck="false" aria-label="Texto final da evolução"></textarea>
+              <div class="action-row">
+                <button class="button button-primary" id="generate-evolution" type="button">Gerar evolução</button>
+                <button class="button button-dark" id="copy-evolution" type="button">Copiar</button>
+                <button class="button button-secondary" id="save-draft" type="button">Salvar rascunho</button>
+                <button class="button button-danger" id="clear-form" type="button">Limpar</button>
+              </div>
+              <p class="microcopy" id="action-feedback" aria-live="polite"></p>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="view" id="view-reavaliacao" data-title="Reavaliação">
+        <div class="simple-layout">
+          <section class="form-panel">
+            <div class="section-heading"><div><p class="section-kicker">REAVALIAÇÃO</p><h2>Atualização clínica objetiva</h2></div></div>
+            <label class="field"><span>Evolução após medidas iniciais</span><textarea id="reav-evolucao" rows="5" placeholder="PACIENTE REAVALIADO APÓS MEDICAÇÃO..."></textarea></label>
+            <label class="field"><span>Exames disponibilizados</span><textarea id="reav-exames" rows="4" placeholder="RESULTADOS E INTERPRETAÇÃO CLÍNICA"></textarea></label>
+            <label class="field"><span>Conduta após reavaliação</span><textarea id="reav-conduta" rows="5" placeholder="UMA CONDUTA POR LINHA"></textarea></label>
+            <div class="action-row"><button class="button button-primary" id="generate-reassessment">Gerar reavaliação</button><button class="button button-dark" data-copy-target="reassessment-output">Copiar</button></div>
+          </section>
+          <section class="preview-panel"><textarea id="reassessment-output" class="output-area tall" spellcheck="false"></textarea></section>
+        </div>
+      </section>
+
+      <section class="view" id="view-internacao" data-title="Internação">
+        <div class="simple-layout">
+          <section class="form-panel">
+            <div class="section-heading"><div><p class="section-kicker">INTERNAÇÃO</p><h2>Justificativa e plano inicial</h2></div></div>
+            <label class="field"><span>Diagnóstico / hipótese principal</span><input id="int-diagnostico" placeholder="DIAGNÓSTICO PRINCIPAL"></label>
+            <label class="field"><span>Justificativa clínica</span><textarea id="int-justificativa" rows="6" placeholder="GRAVIDADE, FALHA TERAPÊUTICA, RISCO DO MANEJO AMBULATORIAL..."></textarea></label>
+            <label class="field"><span>Destino</span><select id="int-destino"><option>ENFERMARIA</option><option>SEMI-INTENSIVA</option><option>UTI</option></select></label>
+            <label class="field"><span>Prescrição / cuidados iniciais</span><textarea id="int-prescricao" rows="6" placeholder="UMA MEDIDA POR LINHA"></textarea></label>
+            <div class="action-row"><button class="button button-primary" id="generate-admission">Gerar solicitação</button><button class="button button-dark" data-copy-target="admission-output">Copiar</button></div>
+          </section>
+          <section class="preview-panel"><textarea id="admission-output" class="output-area tall" spellcheck="false"></textarea></section>
+        </div>
+      </section>
+
+      <section class="view" id="view-alta" data-title="Alta">
+        <div class="simple-layout">
+          <section class="form-panel">
+            <div class="section-heading"><div><p class="section-kicker">ALTA</p><h2>Desfecho e orientações</h2></div></div>
+            <label class="field"><span>Diagnóstico final</span><input id="alta-diagnostico" placeholder="DIAGNÓSTICO FINAL"></label>
+            <label class="field"><span>Resumo do atendimento</span><textarea id="alta-resumo" rows="5" placeholder="EVOLUÇÃO, EXAMES E RESPOSTA TERAPÊUTICA"></textarea></label>
+            <label class="field"><span>Medicações domiciliares</span><textarea id="alta-medicacoes" rows="5" placeholder="UMA MEDICAÇÃO POR LINHA"></textarea></label>
+            <label class="field"><span>Orientações e sinais de alarme</span><textarea id="alta-orientacoes" rows="6" placeholder="UMA ORIENTAÇÃO POR LINHA"></textarea></label>
+            <div class="action-row"><button class="button button-primary" id="generate-discharge">Gerar alta</button><button class="button button-dark" data-copy-target="discharge-output">Copiar</button></div>
+          </section>
+          <section class="preview-panel"><textarea id="discharge-output" class="output-area tall" spellcheck="false"></textarea></section>
+        </div>
+      </section>
+
+      <section class="view" id="view-scores" data-title="Scores">
+        <div class="scores-layout" id="scores-container"></div>
+      </section>
+
+      <section class="view" id="view-rascunhos" data-title="Rascunhos">
+        <section class="form-panel drafts-panel">
+          <div class="section-heading"><div><p class="section-kicker">SALVOS NESTE DISPOSITIVO</p><h2>Rascunhos locais</h2></div><button class="button button-danger button-small" id="clear-all-drafts">Apagar todos</button></div>
+          <div id="draft-list" class="draft-list"></div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+  <script src="assets/data.js"></script>
+  <script src="assets/templates.js"></script>
+  <script src="assets/scores.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>
