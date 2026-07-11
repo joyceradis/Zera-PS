@@ -1,6 +1,6 @@
 # Zera-PS
 
-zera-ps/
+    zera-ps/
     ├── index.html              (Apresentação + Login futuro)
     ├── app.html               (Aplicação offline real)
     ├── manifest.json          (PWA - pode instalar como app)
