@@ -1,4 +1,4 @@
-const CACHE_NAME = 'zera-ps-v2';
+const CACHE_NAME = 'zera-ps-v3';
 
 const APP_SHELL = [
   './',
@@ -9,6 +9,7 @@ const APP_SHELL = [
   './assets/data.js',
   './assets/templates.js',
   './assets/scores.js',
+  './assets/attendance.js',
   './assets/app.js',
   './assets/logo.svg'
 ];
