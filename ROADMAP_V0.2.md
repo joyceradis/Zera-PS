@@ -2,29 +2,39 @@
 
 ## Objetivo
 
-Transformar o MVP atual, baseado em formulários e rascunhos isolados, em uma aplicação centrada em atendimentos identificáveis.
+Transformar o MVP atual, baseado em um formulário único e rascunhos isolados, em uma aplicação centrada em atendimentos identificáveis.
 
-A v0.2 deve permitir criar, salvar, reabrir, reavaliar e finalizar vários atendimentos, preservando o gerador de evolução que já funciona.
+A v0.2 deverá permitir criar, salvar, reabrir, reavaliar e finalizar vários atendimentos, preservando o gerador de evolução, o autosave e o funcionamento offline-first.
+
+## Fonte de verdade da interface
+
+A especificação detalhada da tela de Novo Atendimento está em:
+
+`SPEC_NOVO_ATENDIMENTO_V0.2.md`
+
+Quando houver diferença entre este roadmap e a especificação, a SPEC representa a decisão mais recente sobre a tela e o fluxo clínico.
 
 ## O que será preservado
 
 - identidade visual atual;
 - bloco de evolução em destaque;
-- padrão de texto em caixa alta;
-- geração e cópia da evolução;
+- padrão institucional em caixa alta;
+- estrutura fixa da evolução;
+- geração, edição e cópia do texto final;
 - autosave;
 - funcionamento offline-first;
-- reavaliação, internação, alta e scores existentes.
+- reavaliação, internação, alta e scores existentes;
+- revisão médica obrigatória antes do registro no prontuário.
 
-## Estrutura central
+## Estrutura central do Atendimento
 
 Cada atendimento deverá conter:
 
 - ID;
 - número do atendimento;
 - data e hora de início;
-- convênio;
-- QP;
+- QP principal;
+- sintomas associados;
 - HDA;
 - HPP;
 - exame físico;
@@ -34,17 +44,19 @@ Cada atendimento deverá conter:
 - conduta;
 - reavaliações;
 - laudos gerados;
-- desfecho;
+- destino / desfecho;
 - data e hora de finalização;
 - último salvamento.
+
+O convênio não fará parte do cabeçalho e não deverá interferir na geração dos laudos.
 
 ## Fluxo principal
 
 NOVO ATENDIMENTO  
 → atendimento criado  
-→ preenchimento dos sete cards  
-→ geração da evolução  
-→ reavaliação ou definição de desfecho  
+→ preenchimento progressivo dos cards  
+→ evolução construída e revisada  
+→ definição de destino / desfecho  
 → salvamento no histórico  
 → atualização das métricas
 
@@ -52,15 +64,24 @@ NOVO ATENDIMENTO
 
 ### Cabeçalho
 
-ATENDIMENTO 024 — SALVO AGORA
+ATENDIMENTO 05 — AUTOSSALVO
 
-UNIMED · ALERGIAS: NEGA · CID A09
+ALERGIAS: NEGA · CID: NÃO DEFINIDO
 
-### Evolução
+O cabeçalho deverá mostrar apenas:
 
-O bloco de evolução continuará visível, imponente, editável e pronto para copiar.
+- número do atendimento;
+- status do salvamento;
+- alergias;
+- CID confirmado, quando houver.
 
-### Sete cards
+### Bloco da evolução
+
+O bloco de evolução continuará visualmente imponente, editável e pronto para copiar.
+
+A estrutura final do texto permanecerá fixa e não mudará conforme a QP.
+
+### Cards progressivos
 
 1. QP
 2. HDA
@@ -70,16 +91,145 @@ O bloco de evolução continuará visível, imponente, editável e pronto para c
 6. HIPÓTESES + CID
 7. CONDUTA
 
+Abaixo dos cards haverá:
+
+DESTINO / DESFECHO
+
 ### Comportamento dos cards
 
 - o card de QP começa aberto;
-- o próximo card pode abrir automaticamente;
+- os demais começam fechados;
+- o próximo pode abrir automaticamente após o preenchimento mínimo;
 - o médico pode abrir qualquer card diretamente;
-- cards fechados exibem um resumo;
-- nenhum dado é perdido ao trocar de card;
+- cards fechados exibem um resumo curto;
+- nenhuma informação é perdida ao trocar de card;
 - toda a linha do card é clicável;
 - evitar botões pequenos e excesso de campos visíveis;
-- campos dependentes aparecem somente quando necessários.
+- campos dependentes aparecem somente quando necessários;
+- o fluxo não será rigidamente sequencial.
+
+## QP e sintomas associados
+
+A QP principal será de seleção única.
+
+Ela determinará:
+
+- o roteiro principal da HDA;
+- os sinais de alarme;
+- os dados prioritários do HPP;
+- exames direcionados;
+- scores aplicáveis;
+- hipóteses possíveis;
+- sugestões de CID;
+- ferramentas contextuais.
+
+Os sintomas associados serão de seleção múltipla e entrarão na HDA.
+
+Uma segunda queixa independente poderá ser adicionada por uma opção recolhida, sem abrir dois roteiros completos simultaneamente.
+
+## HDA
+
+A HDA deverá ser construída com o menor número possível de cliques.
+
+Cada QP deverá apresentar:
+
+- cerca de quatro a seis dados essenciais;
+- sinais de alarme relevantes;
+- detalhes menos frequentes dentro de `MAIS DETALHES`;
+- texto clínico em construção, sempre editável.
+
+A plataforma não deverá transformar o atendimento em um questionário extenso.
+
+## Exame físico
+
+O exame físico padrão permanecerá completo e previamente preenchido.
+
+A QP poderá acrescentar exames direcionados, mas nunca remover partes do exame padrão.
+
+Ordem fixa e imutável:
+
+1. estado geral;
+2. neurológico;
+3. ACV;
+4. AR;
+5. ABD;
+6. EXT;
+7. ORO, quando aplicável;
+8. OTO, quando aplicável.
+
+ORO e OTO sempre serão acrescentados no final.
+
+O médico deverá poder confirmar o exame padrão ou alterar somente os achados diferentes.
+
+## Hipóteses e CID
+
+A hipótese principal sempre será confirmada pelo médico.
+
+A plataforma poderá sugerir diferenciais e pontos relevantes a revisar, sem inserir diagnósticos automaticamente.
+
+Cada CID sugerido deverá mostrar:
+
+- código;
+- descrição completa;
+- opção de selecionar;
+- opção de copiar.
+
+Nenhum CID será inserido sem confirmação médica.
+
+## Conduta e ferramentas contextuais
+
+A interface deverá oferecer ações rápidas:
+
+- MEDICAR;
+- SOLICITAR EXAMES;
+- SOLICITAR PARECER;
+- ORIENTAR;
+- REAVALIAR;
+- INTERNAR;
+- TRANSFERIR;
+- ALTA.
+
+As ferramentas continuarão disponíveis no menu, mas também deverão surgir automaticamente quando forem necessárias.
+
+Exemplos:
+
+- suspeita de pneumonia → oferecer CURB-65;
+- hipótese de abdome agudo → oferecer score aplicável;
+- laboratório colado → oferecer organizador;
+- hipótese registrada → sugerir CID;
+- tomografia ou ressonância solicitada → oferecer laudo;
+- internação selecionada → gerar justificativa;
+- reavaliação selecionada → incluir o caso nas pendências.
+
+Os laudos não terão logomarca de operadora, não dependerão do convênio e serão imprimíveis em folha limpa.
+
+## Destino / desfecho
+
+Opções:
+
+- ALTA;
+- REAVALIAÇÃO;
+- INTERNAÇÃO;
+- PARECER;
+- TRANSFERÊNCIA.
+
+O bloco deverá permanecer simples.
+
+A plataforma não deverá obrigar o médico a separar a pendência em várias categorias.
+
+Para o plantonista, importam diretamente:
+
+- total de atendimentos;
+- total de altas;
+- total de reavaliações pendentes.
+
+Reavaliações pendentes incluem pacientes aguardando exames, resposta à medicação, parecer ou nova avaliação clínica.
+
+ALTA encerra o atendimento e soma nas altas.
+
+INTERNAÇÃO e TRANSFERÊNCIA encerram o atendimento, mas não somam como alta.
+
+PARECER e REAVALIAÇÃO mantêm o caso pendente.
 
 ## Menu da v0.2
 
@@ -96,19 +246,6 @@ HISTÓRICO
 DRA. JOYCE RADIS  
 CRM-ES 21188
 
-## Ferramentas contextuais
-
-As ferramentas continuarão disponíveis no menu, mas também deverão surgir automaticamente dentro do atendimento quando forem necessárias.
-
-Exemplos:
-
-- suspeita de pneumonia → oferecer CURB-65;
-- laboratório colado → oferecer organizador de exames;
-- hipótese registrada → sugerir CID para confirmação;
-- tomografia ou ressonância solicitada → oferecer laudo para impressão;
-- internação selecionada → gerar justificativa editável;
-- reavaliação selecionada → incluir o caso nas pendências.
-
 ## Histórico
 
 Cada atendimento deverá aparecer em um card contendo:
@@ -117,7 +254,7 @@ Cada atendimento deverá aparecer em um card contendo:
 - horário;
 - QP;
 - CID confirmado;
-- desfecho ou situação atual.
+- destino / desfecho ou pendência atual.
 
 Ao abrir o card, o médico poderá acessar:
 
@@ -126,33 +263,26 @@ Ao abrir o card, o médico poderá acessar:
 - laudos;
 - exames;
 - conduta;
-- desfecho;
-- horários do atendimento.
-
-## Reavaliações
-
-Quando a conduta for marcada como reavaliação:
-
-- o atendimento entra na lista de pendências;
-- os dados anteriores permanecem vinculados;
-- cada reavaliação registra data e hora;
-- o caso pode depois ser finalizado como alta, internação ou transferência.
+- destino / desfecho;
+- horários.
 
 ## Métricas
 
-A estrutura da v0.2 deverá registrar dados suficientes para calcular:
+Na visão rápida do menu deverão aparecer:
 
 - total de atendimentos;
-- altas;
-- internações;
-- transferências;
-- reavaliações pendentes;
+- total de altas;
+- total de reavaliações pendentes;
+- média de atendimentos por hora.
+
+A tela detalhada poderá mostrar:
+
 - atendimentos por hora;
 - distribuição por QP;
 - distribuição por CID;
-- distribuição por desfecho.
-
-A tela completa de gráficos poderá ser desenvolvida progressivamente, mas os dados devem nascer estruturados.
+- distribuição por desfecho;
+- horários de maior movimento;
+- comparação com a meta configurada.
 
 ## Fora do escopo da v0.2
 
@@ -160,6 +290,7 @@ Não serão prioridade nesta versão:
 
 - login com Google;
 - sincronização em nuvem;
+- pagamento e assinaturas;
 - inteligência artificial clínica avançada;
 - OCR de exames;
 - integração com prontuários;
@@ -174,24 +305,40 @@ A v0.2 será considerada pronta quando for possível:
 - criar mais de um atendimento;
 - identificar cada atendimento por número;
 - preencher e salvar os dados;
-- gerar e copiar a evolução;
+- gerar, editar e copiar a evolução;
 - fechar e reabrir o atendimento;
 - adicionar reavaliações;
-- definir um desfecho;
+- definir destino / desfecho;
 - consultar o histórico;
 - manter os dados após recarregar a página;
 - preservar o funcionamento offline;
-- não perder os recursos do MVP atual.
+- não perder os recursos do MVP atual;
+- usar o Novo Atendimento com clareza no celular.
 
 ## Ordem de implementação
 
-1. Criar o modelo de dados de Atendimento.
-2. Adaptar o autosave.
-3. Criar a ação Novo Atendimento.
-4. Criar a lista de atendimentos.
-5. Vincular reavaliações ao atendimento.
-6. Criar os desfechos.
-7. Criar o histórico em cards.
-8. Reorganizar o formulário nos sete cards.
-9. Adaptar o menu.
-10. Testar o fluxo completo.
+1. Manter a SPEC e o roadmap alinhados.
+2. Criar uma tela estática separada do Novo Atendimento.
+3. Abrir o protótipo no celular e avaliar o design.
+4. Revisar a medicina da QP piloto: síndrome diarreica.
+5. Implementar funcionalmente apenas a QP piloto.
+6. Ligar a nova tela ao modelo de Atendimento, mantendo inicialmente o autosave antigo em paralelo.
+7. Testar dois atendimentos fictícios: um com alta e outro com reavaliação.
+8. Criar histórico e reavaliações vinculadas.
+9. Criar métricas iniciais.
+10. Expandir progressivamente para novas QPs.
+
+## Estado atual
+
+Concluído:
+
+- MVP v0.1.0 preservado;
+- branch `develop` criada;
+- modelo de dados de Atendimento criado;
+- `attendance.js` carregado pela aplicação;
+- funcionamento offline atualizado;
+- especificação detalhada do Novo Atendimento criada.
+
+Próximo marco:
+
+**Criar a primeira tela estática e responsiva do Novo Atendimento, sem substituir ainda o `app.html` atual.**
