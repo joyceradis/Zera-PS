@@ -47,6 +47,7 @@ const FORM_IDS = {
   estadoGeral: 'estado-geral', acv: 'acv', ar: 'ar', abd: 'abd', ext: 'ext', neuro: 'neuro',
   laboratoriais: 'laboratoriais', imagem: 'imagem', hipoteses: 'hipoteses', conduta: 'conduta', emTempo: 'em-tempo'
 };
+const DEFAULT_HDA_PLACEHOLDER = 'HISTÓRIA CRONOLÓGICA DO QUADRO E DADOS EFETIVAMENTE INVESTIGADOS';
 
 let clinicalState = emptyClinicalState();
 let scoreStates = Object.fromEntries(SCORE_LIST.map((definition) => [definition.id, createScoreState(definition)]));
@@ -118,7 +119,17 @@ function syncExamState(key, rawValue) {
   const value = normalize(rawValue);
   const current = clinicalState.physicalExam.fields[key] || createClinicalField();
   clinicalState.physicalExam.fields[key] = value ? confirmObserved(current, value) : createClinicalField();
-  if (!value) clinicalState.physicalExam.template = null;
+
+  if (clinicalState.physicalExam.template) {
+    const original = normalize(clinicalState.physicalExam.template.values?.[key]);
+    const wasModified = Boolean(clinicalState.physicalExam.template.modified);
+    const nowModified = value !== original;
+    clinicalState.physicalExam.template = {
+      ...clinicalState.physicalExam.template,
+      modified: wasModified || nowModified,
+      modifiedAt: (wasModified || nowModified) ? new Date().toISOString() : null
+    };
+  }
   autosave();
 }
 
@@ -139,10 +150,11 @@ function confirmAllHppNegatives() {
 }
 
 function useNormalExamTemplate() {
-  clinicalState.physicalExam.template = confirmTemplate(
-    NORMAL_EXAM_TEMPLATE.id,
-    NORMAL_EXAM_TEMPLATE.values
-  );
+  clinicalState.physicalExam.template = {
+    ...confirmTemplate(NORMAL_EXAM_TEMPLATE.id, NORMAL_EXAM_TEMPLATE.values),
+    modified: false,
+    modifiedAt: null
+  };
   Object.entries(NORMAL_EXAM_TEMPLATE.values).forEach(([key, value]) => {
     const node = $(FORM_IDS[key]);
     if (node) node.value = value;
@@ -159,18 +171,17 @@ function useNormalExamTemplate() {
 function applyTemplate(id) {
   const template = TEMPLATES.find((item) => item.id === id);
   if (!template) return;
-  if ($('qp')) $('qp').value = template.qp || '';
-  if ($('hda')) $('hda').value = template.hda || '';
-  if ($('hipoteses')) $('hipoteses').value = template.hipoteses || '';
-  if ($('conduta')) $('conduta').value = template.conduta || '';
+  if ($('qp') && !normalize($('qp').value)) $('qp').value = template.qp || '';
+  if ($('hda')) $('hda').placeholder = template.hdaPrompt || DEFAULT_HDA_PLACEHOLDER;
   setActiveTemplate(id);
   autosave();
   const toolNote = template.clinicalTools?.length ? ` Ferramenta clínica vinculada: ${template.clinicalTools.join(', ').toUpperCase()}.` : '';
-  showFeedback(`Roteiro ${template.label} aplicado sem pré-confirmar fatos clínicos.${toolNote}`);
+  showFeedback(`Roteiro ${template.label} aplicado sem sobrescrever HDA, hipóteses ou conduta.${toolNote}`);
 }
 
 function clearTemplate() {
   setActiveTemplate(null);
+  if ($('hda')) $('hda').placeholder = DEFAULT_HDA_PLACEHOLDER;
   showFeedback('Roteiro removido. Os dados já digitados foram preservados.');
 }
 
@@ -274,6 +285,7 @@ function clearForm() {
   clinicalState = emptyClinicalState();
   storage.clearAutosave();
   setActiveTemplate(null);
+  if ($('hda')) $('hda').placeholder = DEFAULT_HDA_PLACEHOLDER;
   toggleEmTempo();
   syncAllQuickChoices(QUICK_CHOICES, FIELD_MAP);
   $('save-status').textContent = 'NÃO SALVO';
@@ -364,21 +376,8 @@ function bindEvents() {
   window.addEventListener('offline', updateConnection);
 }
 
-function initializeCopyAndSafetyLabels() {
-  $('fill-negatives').textContent = 'Confirmar NEGA em HPP';
-  $('fill-normal-exam').textContent = 'Usar modelo de exame normal';
-  const hppHeading = $('fill-negatives').closest('.section-heading');
-  if (hppHeading && !hppHeading.parentElement.querySelector('.safety-hint')) {
-    const note = document.createElement('p');
-    note.className = 'safety-hint';
-    note.textContent = 'Campos sem confirmação não serão transformados automaticamente em negativas.';
-    hppHeading.after(note);
-  }
-}
-
 function init() {
   injectUiStyles();
-  initializeCopyAndSafetyLabels();
   renderTemplates(TEMPLATES, applyTemplate);
   renderScores(SCORE_LIST, handleScoreAnswer, handleGlasgowChange);
   buildQuickChoices(QUICK_CHOICES, FIELD_MAP, onQuickInput);
