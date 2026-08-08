@@ -2,6 +2,8 @@ import {
   WORKFLOW_STAGES,
   createEncounter,
   transitionEncounter,
+  updateEncounterContext,
+  updateAdmissionSnapshot,
   addPendingItem,
   resolvePendingItem,
   startReassessment
@@ -33,20 +35,60 @@ function nullableNumber(id) {
   return value === '' || value === undefined ? null : Number(value);
 }
 
-function currentScenarioContext() {
-  const troponinAvailable = $('sca-troponin-status')?.value === 'available';
+function readTemporalContext() {
   return {
     suspectedAcs: Boolean($('sca-suspected')?.checked),
+    ecgStatus: $('sca-ecg-status')?.value || 'not_informed',
+    ecgResult: $('sca-ecg-result')?.value || '',
+    troponinStatus: $('sca-troponin-status')?.value || 'not_informed',
+    troponinValue: $('sca-troponin-value')?.value || '',
+    troponinRatio: nullableNumber('sca-troponin-ratio'),
     heartHistory: nullableNumber('heart-history'),
     heartEcg: nullableNumber('heart-ecg'),
-    age: nullableNumber('heart-age'),
-    heartRiskFactors: nullableNumber('heart-risk'),
-    troponinRatio: troponinAvailable ? nullableNumber('sca-troponin-ratio') : null
+    heartAge: nullableNumber('heart-age'),
+    heartRisk: nullableNumber('heart-risk')
   };
+}
+
+function currentScenarioContext() {
+  const context = readTemporalContext();
+  return {
+    suspectedAcs: context.suspectedAcs,
+    heartHistory: context.heartHistory,
+    heartEcg: context.heartEcg,
+    age: context.heartAge,
+    heartRiskFactors: context.heartRisk,
+    troponinRatio: context.troponinStatus === 'available' ? context.troponinRatio : null
+  };
+}
+
+function restoreInput(id, value) {
+  const node = $(id);
+  if (!node || value === null || value === undefined) return;
+  node.value = String(value);
+}
+
+function restoreTemporalContext(context = {}) {
+  if ($('sca-suspected')) $('sca-suspected').checked = Boolean(context.suspectedAcs);
+  restoreInput('sca-ecg-status', context.ecgStatus || 'not_informed');
+  restoreInput('sca-ecg-result', context.ecgResult || '');
+  restoreInput('sca-troponin-status', context.troponinStatus || 'not_informed');
+  restoreInput('sca-troponin-value', context.troponinValue || '');
+  restoreInput('sca-troponin-ratio', context.troponinRatio);
+  restoreInput('heart-history', context.heartHistory);
+  restoreInput('heart-ecg', context.heartEcg);
+  restoreInput('heart-age', context.heartAge);
+  restoreInput('heart-risk', context.heartRisk);
 }
 
 function persistEncounter() {
   if (encounter) encounterStorage.saveActiveEncounter(encounter);
+}
+
+function persistTemporalContext() {
+  if (!encounter) return;
+  encounter = updateEncounterContext(encounter, readTemporalContext());
+  persistEncounter();
 }
 
 function renderStage() {
@@ -76,30 +118,22 @@ function markAvailable(id, result) {
   if (!(encounter.pendingItems || []).some((item) => item.id === id)) {
     ensurePendingItem(id, result.kind || 'result', result.label || id);
   }
-  const item = encounter.pendingItems.find((entry) => entry.id === id);
-  if (item?.status !== 'available') encounter = resolvePendingItem(encounter, id, result);
+  encounter = resolvePendingItem(encounter, id, result);
 }
 
 function syncTemporalResults() {
   if (!encounter || $('workflow-scenario')?.value !== 'sca') return;
-  const ecgStatus = $('sca-ecg-status')?.value;
-  const troponinStatus = $('sca-troponin-status')?.value;
+  const context = readTemporalContext();
 
-  if (ecgStatus === 'pending') ensurePendingItem('ecg_initial', 'ecg', 'ECG');
-  if (ecgStatus === 'available') markAvailable('ecg_initial', {
-    kind: 'ecg',
-    label: 'ECG',
-    value: $('sca-ecg-result')?.value || '',
-    availableAt: new Date().toISOString()
+  if (context.ecgStatus === 'pending') ensurePendingItem('ecg_initial', 'ecg', 'ECG');
+  if (context.ecgStatus === 'available') markAvailable('ecg_initial', {
+    kind: 'ecg', label: 'ECG', value: context.ecgResult, availableAt: new Date().toISOString()
   });
 
-  if (troponinStatus === 'pending') ensurePendingItem('troponin_1', 'lab', 'Troponina');
-  if (troponinStatus === 'available') markAvailable('troponin_1', {
-    kind: 'lab',
-    label: 'Troponina',
-    value: $('sca-troponin-value')?.value || '',
-    ratio: nullableNumber('sca-troponin-ratio'),
-    availableAt: new Date().toISOString()
+  if (context.troponinStatus === 'pending') ensurePendingItem('troponin_1', 'lab', 'Troponina');
+  if (context.troponinStatus === 'available') markAvailable('troponin_1', {
+    kind: 'lab', label: 'Troponina', value: context.troponinValue,
+    ratio: context.troponinRatio, availableAt: new Date().toISOString()
   });
 
   const hasPending = (encounter.pendingItems || []).some((item) => item.status === 'pending');
@@ -151,17 +185,11 @@ function updateHeart() {
 
 function captureAdmissionSnapshot() {
   if (!encounter) return;
-  const existing = encounter.admissionSnapshot || {};
-  if (existing.capturedAt) return;
-  encounter = {
-    ...encounter,
-    admissionSnapshot: {
-      qp: $('qp')?.value || '',
-      hda: $('hda')?.value || '',
-      evolutionText: $('evolution-output')?.value || '',
-      capturedAt: new Date().toISOString()
-    }
-  };
+  encounter = updateAdmissionSnapshot(encounter, {
+    qp: $('qp')?.value || '',
+    hda: $('hda')?.value || '',
+    evolutionText: $('evolution-output')?.value || ''
+  });
   persistEncounter();
 }
 
@@ -178,9 +206,9 @@ function handleScenarioChange() {
   }
 
   if (!encounter || encounter.workflowId !== scenario) {
-    encounter = createEncounter({ workflowId: scenario, admissionSnapshot: {} });
-    persistEncounter();
+    encounter = createEncounter({ workflowId: scenario, admissionSnapshot: {}, context: {} });
   }
+  persistTemporalContext();
   renderScenarioVisibility();
   renderStage();
   renderPending();
@@ -188,6 +216,7 @@ function handleScenarioChange() {
 }
 
 function handleContextChange() {
+  persistTemporalContext();
   renderScenarioVisibility();
   syncTemporalResults();
   updateHeart();
@@ -203,6 +232,7 @@ function handleEvolutionGenerated() {
 
 function handleStartReassessment() {
   if (!encounter) return;
+  persistTemporalContext();
   captureAdmissionSnapshot();
   encounter = startReassessment(encounter);
   persistEncounter();
@@ -216,6 +246,8 @@ function splitLines(value) {
 
 function handleReassessmentGenerated() {
   if (!encounter) return;
+  persistTemporalContext();
+  updateHeart();
   const admission = encounter.admissionSnapshot || {};
   const narrativeParts = [$('reav-evolucao')?.value || '', $('reav-exames')?.value || '']
     .map((item) => item.trim()).filter(Boolean);
@@ -248,9 +280,11 @@ function handleReassessmentGenerated() {
 function restoreTemporalUi() {
   if (!encounter) return;
   if ($('workflow-scenario')) $('workflow-scenario').value = encounter.workflowId || '';
+  restoreTemporalContext(encounter.context || {});
   renderScenarioVisibility();
   renderStage();
   renderPending();
+  updateHeart();
 }
 
 function injectTemporalStyles() {
