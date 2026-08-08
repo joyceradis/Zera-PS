@@ -1,4 +1,11 @@
-import { FIELD_TYPES, FIELD_WIDTHS, SECTION_LAYOUTS } from './protocol-schema.js';
+import {
+  FIELD_TYPES,
+  FIELD_WIDTHS,
+  SECTION_LAYOUTS,
+  fieldDomId,
+  toolApplyDomId,
+  toolStatusDomId
+} from './protocol-schema.js';
 import {
   buildRenderPlan,
   defaultContext,
@@ -6,10 +13,6 @@ import {
   getRenderableFields,
   isNumericField
 } from './protocol-engine.js';
-
-const fieldDomId = (protocol, field) => field.domId || `${protocol.id}-${field.id}`;
-const toolStatusDomId = (protocol, toolId) => `${protocol.id}-tool-status-${toolId}`;
-const toolApplyDomId = (protocol, toolId) => `${protocol.id}-tool-apply-${toolId}`;
 
 function createNode(doc, tag, className) {
   const node = doc.createElement(tag);
@@ -181,7 +184,12 @@ function createProtocolRenderer({
       }
       const value = control.value;
       if (isNumericField(field)) {
-        context[id] = value === '' || value === undefined || value === null ? null : Number(value);
+        if (value === '' || value === undefined || value === null) {
+          context[id] = null;
+          continue;
+        }
+        const numeric = Number(value);
+        context[id] = Number.isFinite(numeric) ? numeric : null;
         continue;
       }
       context[id] = value ?? '';
@@ -217,4 +225,4 @@ function createProtocolRenderer({
   };
 }
 
-export { createProtocolRenderer, fieldDomId, toolStatusDomId, toolApplyDomId };
+export { createProtocolRenderer };

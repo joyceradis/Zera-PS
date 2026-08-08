@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createDocument, fireInput, fireClick } from './helpers/fake-dom.mjs';
-import { createProtocolRenderer, fieldDomId, toolStatusDomId, toolApplyDomId } from '../src/protocol-renderer.js';
+import { createProtocolRenderer } from '../src/protocol-renderer.js';
+import { fieldDomId, toolStatusDomId, toolApplyDomId } from '../src/protocol-schema.js';
 import { SCA_PROTOCOL } from '../protocols/sca.js';
 
 function mountReference() {
@@ -94,6 +95,18 @@ test('renderer reads context with the value semantics declared by each field', (
   assert.equal(context.heartHistory, 1);
   assert.equal(context.heartAge, 52);
   assert.equal(context.troponinValue, '12 ng/L');
+});
+
+test('non numeric content in a numeric control is read as missing, never as a number', () => {
+  const { renderer } = mountReference();
+  renderer.getFieldNode('heartAge').control.value = 'cinquenta';
+  renderer.getFieldNode('troponinRatio').control.value = '--';
+  renderer.getFieldNode('heartHistory').control.value = 'alto';
+
+  const context = renderer.readContext();
+  assert.equal(context.heartAge, null);
+  assert.equal(context.troponinRatio, null);
+  assert.equal(context.heartHistory, null);
 });
 
 test('renderer restores persisted context and falls back to declared defaults', () => {

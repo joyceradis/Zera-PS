@@ -29,7 +29,11 @@ const PROTOCOL_ERRORS = Object.freeze({
   INVALID_FIELD: 'INVALID_FIELD',
   INVALID_FIELD_TYPE: 'INVALID_FIELD_TYPE',
   INVALID_OPTIONS: 'INVALID_OPTIONS',
+  INVALID_COERCION: 'INVALID_COERCION',
+  INVALID_DEFAULT: 'INVALID_DEFAULT',
+  DUPLICATE_DOM_ID: 'DUPLICATE_DOM_ID',
   INVALID_SECTION: 'INVALID_SECTION',
+  AMBIGUOUS_SECTION_STAGES: 'AMBIGUOUS_SECTION_STAGES',
   SECTION_UNKNOWN_STAGE: 'SECTION_UNKNOWN_STAGE',
   UNKNOWN_FIELD_REFERENCE: 'UNKNOWN_FIELD_REFERENCE',
   DUPLICATE_FIELD_PLACEMENT: 'DUPLICATE_FIELD_PLACEMENT',
@@ -60,6 +64,10 @@ const VERSION_PATTERN = /^\d+\.\d+\.\d+$/;
 
 const isFilledString = (value) => typeof value === 'string' && value.trim().length > 0;
 const fieldSource = (field) => field?.source || FIELD_SOURCES.PROTOCOL;
+
+const fieldDomId = (protocol, field) => field.domId || `${protocol?.id}-${field.id}`;
+const toolStatusDomId = (protocol, toolId) => `${protocol?.id}-tool-status-${toolId}`;
+const toolApplyDomId = (protocol, toolId) => `${protocol?.id}-tool-apply-${toolId}`;
 
 class ProtocolValidationError extends Error {
   constructor(protocolId, errors = []) {
@@ -95,6 +103,7 @@ function validateProtocol(protocol) {
   validateTools(protocol, fieldIndex, add);
   validateTemporalResults(protocol, fieldIndex, add);
   validatePlacement(protocol, fieldIndex, sectionIds, add);
+  validateDomIdentity(protocol, fieldIndex, add);
 
   return { valid: errors.length === 0, errors };
 }
@@ -155,9 +164,11 @@ function validateFields(fields, add) {
       add(PROTOCOL_ERRORS.INVALID_FIELD, `${path}.width`, `Largura não suportada: ${String(field.width)}.`);
     }
     if (field.coerce !== undefined && !KNOWN_COERCIONS.has(field.coerce)) {
-      add(PROTOCOL_ERRORS.INVALID_FIELD, `${path}.coerce`, `Coerção não suportada: ${String(field.coerce)}.`);
+      add(PROTOCOL_ERRORS.INVALID_COERCION, `${path}.coerce`, `Coerção não suportada: ${String(field.coerce)}.`);
     }
     if (field.type === FIELD_TYPES.SELECT) validateOptions(field, path, add);
+    validateCoercion(field, path, add);
+    validateDefault(field, path, add);
   });
 
   fields.forEach((field, position) => {
@@ -184,6 +195,66 @@ function validateOptions(field, path, add) {
     if (!isFilledString(option.label)) add(PROTOCOL_ERRORS.INVALID_OPTIONS, `${optionPath}.label`, 'Opção exige label apresentável.');
     if (seen.has(option.value)) add(PROTOCOL_ERRORS.DUPLICATE_ID, `${optionPath}.value`, `Opção duplicada: ${String(option.value)}.`);
     seen.add(option.value);
+  });
+}
+
+function validateCoercion(field, path, add) {
+  if (field.coerce !== VALUE_COERCIONS.NUMBER) return;
+  if (field.type !== FIELD_TYPES.SELECT) {
+    add(PROTOCOL_ERRORS.INVALID_COERCION, `${path}.coerce`, `Coerção numérica só se aplica a select; tipo declarado: ${String(field.type)}.`);
+    return;
+  }
+  (Array.isArray(field.options) ? field.options : []).forEach((option, index) => {
+    if (!option || typeof option.value !== 'string' || option.value === '') return;
+    if (!Number.isFinite(Number(option.value))) {
+      add(PROTOCOL_ERRORS.INVALID_COERCION, `${path}.options[${index}].value`, `Opção não numérica em campo com coerção numérica: ${option.value}.`);
+    }
+  });
+}
+
+function validateDefault(field, path, add) {
+  if (field.default === undefined) return;
+  const value = field.default;
+  const invalid = (message) => add(PROTOCOL_ERRORS.INVALID_DEFAULT, `${path}.default`, message);
+
+  if (field.type === FIELD_TYPES.BOOLEAN) {
+    if (typeof value !== 'boolean') invalid(`Valor inicial de campo booleano deve ser true ou false: ${JSON.stringify(value)}.`);
+    return;
+  }
+  if (field.type === FIELD_TYPES.SELECT) {
+    const options = Array.isArray(field.options) ? field.options : [];
+    if (!options.some((option) => option?.value === value)) {
+      invalid(`Valor inicial fora das opções declaradas: ${JSON.stringify(value)}.`);
+    }
+    return;
+  }
+  if (field.type === FIELD_TYPES.NUMBER) {
+    if (value !== null && !Number.isFinite(value)) invalid(`Valor inicial numérico inválido: ${JSON.stringify(value)}.`);
+    return;
+  }
+  if (typeof value !== 'string') invalid(`Valor inicial textual inválido: ${JSON.stringify(value)}.`);
+}
+
+function validateDomIdentity(protocol, fieldIndex, add) {
+  const owners = new Map();
+  const claim = (domId, path, owner) => {
+    if (!isFilledString(domId)) return;
+    if (owners.has(domId)) {
+      add(PROTOCOL_ERRORS.DUPLICATE_DOM_ID, path, `Identificador de DOM duplicado: ${domId} já pertence a ${owners.get(domId)}.`);
+      return;
+    }
+    owners.set(domId, owner);
+  };
+
+  (protocol.fields || []).forEach((field, position) => {
+    if (!field?.id || fieldIndex.get(field.id) !== field) return;
+    claim(fieldDomId(protocol, field), `fields[${position}].domId`, `campo ${field.id}`);
+  });
+
+  (Array.isArray(protocol.tools) ? protocol.tools : []).forEach((tool, position) => {
+    if (!tool?.id) return;
+    claim(toolStatusDomId(protocol, tool.id), `tools[${position}].id`, `estado da ferramenta ${tool.id}`);
+    claim(toolApplyDomId(protocol, tool.id), `tools[${position}].id`, `aplicação da ferramenta ${tool.id}`);
   });
 }
 
@@ -235,7 +306,10 @@ function validateSections(protocol, fieldIndex, declaredStages, add) {
     }
     sectionIds.add(section.id);
 
-    const stages = section.stage ? [section.stage] : section.stages;
+    if (section.stage !== undefined && section.stages !== undefined) {
+      add(PROTOCOL_ERRORS.AMBIGUOUS_SECTION_STAGES, `${path}.stage`, 'Seção deve declarar stage ou stages, nunca ambos.');
+    }
+    const stages = section.stage !== undefined ? [section.stage] : section.stages;
     if (stages !== undefined) {
       if (!Array.isArray(stages) && typeof stages !== 'string') {
         add(PROTOCOL_ERRORS.INVALID_SECTION, `${path}.stages`, 'Etapas da seção devem ser declaradas em lista.');
@@ -449,6 +523,9 @@ export {
   VALUE_COERCIONS,
   PROTOCOL_ERRORS,
   ProtocolValidationError,
+  fieldDomId,
+  toolStatusDomId,
+  toolApplyDomId,
   validateProtocol,
   assertValidProtocol
 };

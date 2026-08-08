@@ -228,6 +228,118 @@ test('temporal results must reference declared protocol fields and rules', () =>
   assert.ok(codesOf(missingRule).includes(PROTOCOL_ERRORS.INVALID_TEMPORAL_RESULT));
 });
 
+test('colliding DOM ids are rejected before reaching the interface', () => {
+  const explicitCollision = fixture({
+    fields: [
+      { id: 'flag', type: 'boolean', label: 'Marcador', domId: 'shared-node' },
+      { id: 'note', type: 'textarea', label: 'Nota', domId: 'shared-node' }
+    ]
+  });
+  assert.ok(codesOf(explicitCollision).includes(PROTOCOL_ERRORS.DUPLICATE_DOM_ID));
+
+  const derivedCollision = fixture({
+    fields: [
+      { id: 'flag', type: 'boolean', label: 'Marcador', domId: 'fixture-note' },
+      { id: 'note', type: 'textarea', label: 'Nota' }
+    ]
+  });
+  assert.ok(codesOf(derivedCollision).includes(PROTOCOL_ERRORS.DUPLICATE_DOM_ID));
+
+  const toolCollision = toolFixture({
+    fields: [
+      { id: 'flag', type: 'boolean', label: 'Marcador', domId: 'fixture-tool-status-demo' },
+      { id: 'points', type: 'number', label: 'Pontos' }
+    ]
+  });
+  assert.ok(codesOf(toolCollision).includes(PROTOCOL_ERRORS.DUPLICATE_DOM_ID));
+
+  assert.equal(validateProtocol(fixture()).valid, true);
+});
+
+test('numeric coercion is rejected when it cannot produce a number', () => {
+  const nonNumericOption = fixture({
+    fields: [
+      { id: 'flag', type: 'boolean', label: 'Marcador' },
+      {
+        id: 'note',
+        type: 'select',
+        coerce: 'number',
+        label: 'Pontos',
+        options: [{ value: '', label: 'NÃO INFORMADO' }, { value: 'alto', label: 'ALTO' }]
+      }
+    ]
+  });
+  assert.ok(codesOf(nonNumericOption).includes(PROTOCOL_ERRORS.INVALID_COERCION));
+
+  const wrongType = fixture({
+    fields: [
+      { id: 'flag', type: 'boolean', label: 'Marcador' },
+      { id: 'note', type: 'text', coerce: 'number', label: 'Pontos' }
+    ]
+  });
+  assert.ok(codesOf(wrongType).includes(PROTOCOL_ERRORS.INVALID_COERCION));
+
+  const numericOptions = fixture({
+    fields: [
+      { id: 'flag', type: 'boolean', label: 'Marcador' },
+      {
+        id: 'note',
+        type: 'select',
+        coerce: 'number',
+        label: 'Pontos',
+        options: [{ value: '', label: 'NÃO INFORMADO' }, { value: '2', label: '2' }]
+      }
+    ]
+  });
+  assert.equal(validateProtocol(numericOptions).valid, true);
+});
+
+test('declared defaults must respect the field type and its options', () => {
+  const booleanDefault = fixture({
+    fields: [
+      { id: 'flag', type: 'boolean', label: 'Marcador', default: 'sim' },
+      { id: 'note', type: 'textarea', label: 'Nota' }
+    ]
+  });
+  assert.ok(codesOf(booleanDefault).includes(PROTOCOL_ERRORS.INVALID_DEFAULT));
+
+  const selectDefault = fixture({
+    fields: [
+      { id: 'flag', type: 'boolean', label: 'Marcador' },
+      { id: 'note', type: 'select', label: 'Estado', default: 'inexistente', options: [{ value: 'a', label: 'A' }] }
+    ]
+  });
+  assert.ok(codesOf(selectDefault).includes(PROTOCOL_ERRORS.INVALID_DEFAULT));
+
+  const numberDefault = fixture({
+    fields: [
+      { id: 'flag', type: 'boolean', label: 'Marcador' },
+      { id: 'note', type: 'number', label: 'Idade', default: 'setenta' }
+    ]
+  });
+  assert.ok(codesOf(numberDefault).includes(PROTOCOL_ERRORS.INVALID_DEFAULT));
+
+  const textDefault = fixture({
+    fields: [
+      { id: 'flag', type: 'boolean', label: 'Marcador' },
+      { id: 'note', type: 'textarea', label: 'Nota', default: 42 }
+    ]
+  });
+  assert.ok(codesOf(textDefault).includes(PROTOCOL_ERRORS.INVALID_DEFAULT));
+});
+
+test('section must declare stage or stages, never both', () => {
+  const ambiguous = fixture({
+    sections: [{ id: 'main', stage: 'initial_assessment', stages: ['reassessment'], fields: ['flag', 'note'] }]
+  });
+  assert.ok(codesOf(ambiguous).includes(PROTOCOL_ERRORS.AMBIGUOUS_SECTION_STAGES));
+
+  const singleStage = fixture({
+    sections: [{ id: 'main', stage: 'initial_assessment', fields: ['flag', 'note'] }]
+  });
+  assert.equal(validateProtocol(singleStage).valid, true);
+});
+
 test('configuration errors fail loudly instead of producing partial interfaces', () => {
   assert.throws(
     () => assertValidProtocol(fixture({ sections: [{ id: 'main', stages: ['initial_assessment'], fields: ['ghost'] }] })),

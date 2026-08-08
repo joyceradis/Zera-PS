@@ -31,6 +31,36 @@ test('applicable HEART remains not calculable while troponin is missing', () => 
   assert.equal(state.message, 'HEART Score não calculado: troponina ainda não informada.');
 });
 
+test('non finite variable never becomes a calculable score', () => {
+  const state = evaluateToolState(HEART_TOOL, createToolState(HEART_TOOL), {
+    suspectedAcs: true,
+    heartHistory: 1,
+    heartEcg: 1,
+    age: Number.NaN,
+    heartRiskFactors: 1,
+    troponinRatio: 0
+  });
+  assert.equal(state.applicability, 'applicable');
+  assert.equal(state.calculability, 'not_calculable');
+  assert.equal(state.score, null);
+  assert.deepEqual(state.missingVariables, ['age']);
+});
+
+test('tool whose calculation cannot produce a finite score stays not calculable', () => {
+  const brokenTool = { ...HEART_TOOL, calculate: () => Number.NaN };
+  const state = evaluateToolState(brokenTool, createToolState(brokenTool), {
+    suspectedAcs: true,
+    heartHistory: 1,
+    heartEcg: 1,
+    age: 52,
+    heartRiskFactors: 1,
+    troponinRatio: 0
+  });
+  assert.equal(state.calculability, 'not_calculable');
+  assert.equal(state.score, null);
+  assert.equal(state.interpretation, null);
+});
+
 test('HEART only calculates after all required variables are informed', () => {
   const state = evaluateToolState(HEART_TOOL, createToolState(HEART_TOOL), {
     suspectedAcs: true,

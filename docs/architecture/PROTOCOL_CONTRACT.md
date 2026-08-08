@@ -35,10 +35,10 @@ Um protocolo **não** executa diagnóstico, conduta, DOM ou decisão clínica. C
 | `type` | sim | `text`, `textarea`, `number`, `select`, `boolean` |
 | `label` | sim | rótulo acessível |
 | `source` | não | `protocol` (padrão) ou `evolution_form` |
-| `domId` | externo | id do elemento; obrigatório para `evolution_form` |
+| `domId` | externo | id do elemento; obrigatório para `evolution_form`; padrão `<protocolo>-<campo>`; único no protocolo |
 | `options` | select | lista `{ value, label }` |
-| `default` | não | valor inicial; ausência não vira valor |
-| `coerce` | não | `number` para selects numéricos |
+| `default` | não | valor inicial compatível com o tipo e, em select, presente nas opções; ausência não vira valor |
+| `coerce` | não | `number`, apenas em select cujas opções sejam numéricas ou vazias |
 | `width` | não | `half` (padrão) ou `full` |
 | `rows`, `placeholder`, `help`, `min`, `max`, `step` | não | apresentação |
 | `visibleWhen` | não | regra `{ field, equals }` |
@@ -51,7 +51,7 @@ Campos `evolution_form` são **referências** a campos já pertencentes ao formu
 | --- | --- | --- |
 | `id` | sim | único no protocolo |
 | `fields` | sim | lista de ids de campos (pode ser vazia) |
-| `stage` / `stages` | não | etapas em que a seção é pertinente; ausência = todas |
+| `stage` / `stages` | não | etapas em que a seção é pertinente; declare uma das duas chaves, nunca ambas; ausência = todas |
 | `visibleWhen` | não | regra `{ field, equals }` sobre o contexto |
 | `layout` | não | `stack` (padrão) ou `two-columns` |
 | `kicker`, `title` | não | cabeçalho da subseção |
@@ -97,7 +97,9 @@ O motor converte a declaração em `pendingItems[]` e `results[]` do Atendimento
 
 `validateProtocol(protocol)` retorna `{ valid, errors[] }` com `{ code, path, message }`. `assertValidProtocol` lança `ProtocolValidationError`. O registry valida no registro, então erro de configuração quebra o carregamento em desenvolvimento e testes.
 
-Detecções atuais: id/versão/label inválidos, ids duplicados, etapa inexistente ou não declarada, seção referenciando etapa inválida, campo referenciado inexistente, campo órfão ou declarado em duas seções, `visibleWhen`/`applicableWhen`/`availableWhen` apontando para campo inexistente ou externo, variável obrigatória sem origem declarada, variável apontando para campo inexistente, ferramenta inexistente ou sem seção, resultado temporal sem regra ou com payload quebrado, e estrutura incompatível com o contrato.
+Detecções atuais: id/versão/label inválidos, ids duplicados, identificadores de DOM colidentes (inclusive entre campo e ferramenta), etapa inexistente ou não declarada, `stage` e `stages` declarados ao mesmo tempo, seção referenciando etapa inválida, campo referenciado inexistente, campo órfão ou declarado em duas seções, valor inicial incompatível com tipo ou opções, coerção numérica sobre opções não numéricas, `visibleWhen`/`applicableWhen`/`availableWhen` apontando para campo inexistente ou externo, variável obrigatória sem origem declarada, variável apontando para campo inexistente, ferramenta inexistente ou sem seção, resultado temporal sem regra ou com payload quebrado, e estrutura incompatível com o contrato.
+
+Em tempo de execução a proteção é complementar: um controle numérico com conteúdo não numérico é lido como **ausente**, e uma ferramenta cujo cálculo não produza número finito permanece **não calculável**. Valor inválido nunca vira score.
 
 ## Como adicionar um novo cenário
 
