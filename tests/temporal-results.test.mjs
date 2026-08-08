@@ -36,6 +36,14 @@ test('resolving a pending result records a temporal result without overwriting t
   assert.equal(resolved.results[0].sourcePendingItemId, 'troponin_1');
 });
 
+test('re-resolving the same pending item updates its linked result instead of duplicating chronology', () => {
+  const pending = addPendingItem(createEncounter({ workflowId: 'sca' }), { id: 'troponin_1', kind: 'troponin', label: 'Troponina' });
+  const first = resolvePendingItem(pending, 'troponin_1', { value: 12, availableAt: '2026-08-08T10:40:00.000Z' });
+  const second = resolvePendingItem(first, 'troponin_1', { value: 13, availableAt: '2026-08-08T10:41:00.000Z' });
+  assert.equal(second.results.length, 1);
+  assert.equal(second.results[0].value, 13);
+});
+
 test('calculable tool is not automatically applied to documentation', () => {
   const context = { suspectedAcs: true, heartHistory: 1, heartEcg: 0, age: 50, heartRiskFactors: 1, troponinRatio: 0.8 };
   const calculated = evaluateToolState(HEART_TOOL, createToolState(HEART_TOOL), context);
