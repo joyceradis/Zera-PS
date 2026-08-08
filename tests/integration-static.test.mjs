@@ -7,7 +7,7 @@ const legacyApp = await readFile('assets/app.js', 'utf8');
 const temporalUi = await readFile('src/temporal-ui.js', 'utf8');
 const rootApp = await readFile('app.js', 'utf8');
 const serviceWorker = await readFile('service-worker.js', 'utf8');
-const DYNAMIC_IDS = new Set(['zera-temporal-styles', 'heart-apply-tool']);
+const DYNAMIC_IDS = new Set(['zera-temporal-styles']);
 
 test('application loads the root coordinator as an ES module', () => {
   assert.match(appHtml, /<script\s+type="module"\s+src="app\.js"><\/script>/);

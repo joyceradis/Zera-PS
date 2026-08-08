@@ -8,7 +8,7 @@ Roadmap orientado por **risco + gate verificável**. Quantidade de telas não de
 | --- | --- | --- |
 | 0. Fundação de segurança | Concluída | Sem fabricação clínica |
 | 1. Workflow temporal | v1.1 implementada | Reavaliação preserva admissão e resultados seriados |
-| 2. Progressive disclosure | Referência SCA implementada | Motor continua genérico |
+| 2. Progressive disclosure | Infraestrutura declarativa concluída | Motor continua genérico |
 | 3. Ferramentas clínicas | v1.1 implementada | `available ≠ applicable ≠ calculable ≠ applied` |
 | 4. Documento temporal | v1.1 implementada | Estado operacional não vaza para o prontuário |
 | 5. Persistência/histórico | Parcial | Sem perda ou reinterpretação de estado |
@@ -44,7 +44,9 @@ Próximos itens: UI explícita para múltiplas coletas/resultados seriados, múl
 
 Concluído como referência: `protocols/sca.js`, regras por cenário + etapa + contexto, ECG/troponina condicionais e estados visuais.
 
-Próximos itens: renderer declarativo, schema/validador de protocolos e garantia de referências válidas antes de adicionar novos cenários.
+Concluído nesta fase: contrato formal de protocolo, validador determinístico com falha explícita, registry único, renderer declarativo e migração do SCA como prova da arquitetura. A interface deixou de conter blocos específicos do cenário e nenhuma camada genérica importa ferramenta clínica concreta.
+
+Próximos itens: ampliar tipos de campo e operadores de regra apenas quando um cenário real exigir, e versionar migração de protocolo quando um `version` mudar de forma incompatível.
 
 ## 3 — Ferramentas clínicas estruturadas
 
@@ -98,7 +100,7 @@ Painel de atendimentos ativos, reavaliações pendentes, tempos, destino/desfech
 
 Somente após regressão cognitiva do cenário SCA. Candidatos: cefaleia, pneumonia, dispneia, sepse/infecção, trauma e dor abdominal.
 
-Cada cenário deve declarar campos, etapas, regras e ferramentas. Arquivo de cenário não executa diagnóstico ou conduta automaticamente.
+Cada cenário deve declarar campos, etapas, regras e ferramentas conforme [`docs/architecture/PROTOCOL_CONTRACT.md`](docs/architecture/PROTOCOL_CONTRACT.md). Arquivo de cenário não executa diagnóstico ou conduta automaticamente. A infraestrutura já aceita configuração; o gate remanescente é clínico, não técnico.
 
 ## 8 — Módulos documentais adicionais
 

@@ -32,7 +32,7 @@ Principais capacidades atuais:
 - reavaliação vinculada ao mesmo Atendimento;
 - HPP com negativas apenas por ação explícita;
 - modelo de exame físico normal confirmado pela médica;
-- campos condicionais por cenário + etapa + contexto;
+- campos condicionais por cenário + etapa + contexto, renderizados a partir da configuração do protocolo;
 - pendências e resultados de ECG/troponina no workflow de referência;
 - HEART com `disponível ≠ aplicável ≠ calculável`;
 - CRB-65, CURB-65, qSOFA e Glasgow sem falso resultado inicial;
@@ -60,7 +60,7 @@ Zera-PS/
 ├── index.html
 ├── app.html
 ├── app.js
-├── src/                 # workflow temporal e coordenação atual
+├── src/                 # workflow temporal, contrato de protocolos e coordenação atual
 ├── protocols/           # configurações clínicas declarativas
 ├── assets/              # fundação documental estabilizada
 ├── tests/               # regressão automatizada
@@ -102,6 +102,7 @@ O comando executa verificação de sintaxe e toda a suíte automatizada. Testes 
 | Escopo do produto | [`docs/product/PRODUCT_SCOPE.md`](docs/product/PRODUCT_SCOPE.md) |
 | Workflows | [`docs/product/WORKFLOWS.md`](docs/product/WORKFLOWS.md) |
 | Arquitetura | [`docs/architecture/ARCHITECTURE.md`](docs/architecture/ARCHITECTURE.md) |
+| Contrato de protocolos | [`docs/architecture/PROTOCOL_CONTRACT.md`](docs/architecture/PROTOCOL_CONTRACT.md) |
 | Workflow temporal | [`docs/architecture/TEMPORAL_WORKFLOW.md`](docs/architecture/TEMPORAL_WORKFLOW.md) |
 | Segurança clínica | [`docs/safety/CLINICAL_SAFETY.md`](docs/safety/CLINICAL_SAFETY.md) |
 | Invariantes | [`docs/safety/INVARIANTS.md`](docs/safety/INVARIANTS.md) |

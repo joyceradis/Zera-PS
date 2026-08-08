@@ -12,6 +12,7 @@ Esta pasta concentra a documentação de produto, arquitetura, segurança, teste
 ### Arquitetura
 
 - [`architecture/ARCHITECTURE.md`](architecture/ARCHITECTURE.md) — visão técnica consolidada e responsabilidades dos módulos.
+- [`architecture/PROTOCOL_CONTRACT.md`](architecture/PROTOCOL_CONTRACT.md) — contrato declarativo de protocolos clínicos e como adicionar um novo cenário.
 - [`architecture/TEMPORAL_WORKFLOW.md`](architecture/TEMPORAL_WORKFLOW.md) — contrato do workflow temporal e estados do Atendimento.
 
 ### Segurança clínica

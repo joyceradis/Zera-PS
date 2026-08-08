@@ -31,6 +31,18 @@ documento clínico
 protocols/
 → configuração clínica declarativa
 
+src/protocol-schema.js
+→ contrato de protocolo e validador determinístico
+
+src/protocol-registry.js
+→ ponto único de registro e resolução de cenários
+
+src/protocol-engine.js
+→ derivações puras: plano de renderização, variáveis de ferramenta e pendências
+
+src/protocol-renderer.js
+→ renderização declarativa do contexto clínico no DOM
+
 src/workflow-engine.js
 → etapas, transições, pendências, resultados temporais e progressive disclosure
 
@@ -56,6 +68,14 @@ assets/
 ## Regra de isolamento
 
 O motor de workflow não deve conhecer SCA. O arquivo `protocols/sca.js` não manipula DOM. O document engine não decide conduta clínica. A UI não deve fabricar regra clínica.
+
+A interface temporal resolve o cenário pelo registry e renderiza a partir da declaração. Não existem ramos `if (scenario === '...')` na aplicação, e nenhuma camada genérica importa uma ferramenta clínica concreta. O contrato completo está em [Contrato de protocolos](PROTOCOL_CONTRACT.md).
+
+```text
+protocolo declara   → campos, seções, regras, ferramentas e resultados temporais
+motor interpreta    → etapa, visibilidade, variáveis, pendências e estados
+médica decide       → aplicação documental e revisão final
+```
 
 ## Estado clínico
 
@@ -94,12 +114,15 @@ schema v3
 
 Essa separação é intencional para evitar reinterpretação silenciosa de dados existentes.
 
+O `context` do Atendimento v3 continua indexado pelos ids dos campos do protocolo, sem migração. A aplicação de ferramentas passou a ser persistida em `context.appliedTools[<ferramenta>] = { applied, appliedAt }`. Contextos anteriores que gravaram `heartApplied` continuam sendo lidos como intenção legada, e essa intenção só é restaurada quando a ferramenta é aplicável e calculável no reload — migração técnica não fabrica confirmação clínica.
+
 ## Migração incremental
 
 A pasta `assets/` permanece enquanto a camada temporal em `src/` amadurece. O objetivo é evitar uma reconstrução ampla que elimine microfunções já estabilizadas.
 
 ## Referências internas
 
+- [Contrato de protocolos](PROTOCOL_CONTRACT.md)
 - [Workflow temporal](TEMPORAL_WORKFLOW.md)
 - [Segurança clínica](../safety/CLINICAL_SAFETY.md)
 - [Invariantes](../safety/INVARIANTS.md)

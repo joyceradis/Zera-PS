@@ -11,7 +11,22 @@ import {
   updateEncounterContext,
   updateAdmissionSnapshot
 } from '../src/workflow-engine.js';
-import { SCA_PROTOCOL } from '../protocols/sca.js';
+const DISCLOSURE_FIXTURE = Object.freeze({
+  id: 'fixture',
+  version: '1.0.0',
+  label: 'FIXTURE',
+  stages: ['initial_assessment', 'pending_results', 'reassessment'],
+  fields: [
+    { id: 'flag', type: 'boolean', label: 'Marcador' },
+    { id: 'note', type: 'textarea', label: 'Nota' },
+    { id: 'result', type: 'text', label: 'Resultado' }
+  ],
+  sections: [
+    { id: 'presentation', stage: 'initial_assessment', fields: ['note'] },
+    { id: 'conditional', stages: ['initial_assessment', 'reassessment'], visibleWhen: { field: 'flag', equals: true }, fields: ['flag'] },
+    { id: 'awaited', stages: ['pending_results'], visibleWhen: { field: 'flag', equals: true }, fields: ['result'] }
+  ]
+});
 
 test('new encounter starts at initial assessment without inventing pending items', () => {
   const encounter = createEncounter({ workflowId: 'sca', now: '2026-08-08T10:00:00.000Z' });
@@ -58,15 +73,18 @@ test('reassessing creates a temporal child event without overwriting admission s
   assert.equal(reassessed.reassessments[0].startedAt, '2026-08-08T11:30:00.000Z');
 });
 
-test('progressive disclosure uses both stage and clinical context', () => {
-  const withoutSuspicion = getVisibleSections(SCA_PROTOCOL, WORKFLOW_STAGES.INITIAL_ASSESSMENT, { suspectedAcs: false });
-  assert.deepEqual(withoutSuspicion.map((section) => section.id), ['presentation', 'acs_context']);
+test('progressive disclosure uses both stage and declarative context, without clinical knowledge in the engine', () => {
+  const withoutContext = getVisibleSections(DISCLOSURE_FIXTURE, WORKFLOW_STAGES.INITIAL_ASSESSMENT, { flag: false });
+  assert.deepEqual(withoutContext.map((section) => section.id), ['presentation']);
 
-  const withSuspicion = getVisibleSections(SCA_PROTOCOL, WORKFLOW_STAGES.INITIAL_ASSESSMENT, { suspectedAcs: true });
-  assert.deepEqual(withSuspicion.map((section) => section.id), ['presentation', 'acs_context', 'ecg', 'troponin', 'cardiovascular_risk']);
+  const withContext = getVisibleSections(DISCLOSURE_FIXTURE, WORKFLOW_STAGES.INITIAL_ASSESSMENT, { flag: true });
+  assert.deepEqual(withContext.map((section) => section.id), ['presentation', 'conditional']);
 
-  const pendingStage = getVisibleSections(SCA_PROTOCOL, WORKFLOW_STAGES.PENDING_RESULTS, { suspectedAcs: true });
-  assert.deepEqual(pendingStage.map((section) => section.id), ['troponin']);
+  const pendingStage = getVisibleSections(DISCLOSURE_FIXTURE, WORKFLOW_STAGES.PENDING_RESULTS, { flag: true });
+  assert.deepEqual(pendingStage.map((section) => section.id), ['awaited']);
+
+  const reassessment = getVisibleSections(DISCLOSURE_FIXTURE, WORKFLOW_STAGES.REASSESSMENT, { flag: true });
+  assert.deepEqual(reassessment.map((section) => section.id), ['conditional']);
 });
 
 test('workflow context is persisted as explicit state without mutating the previous encounter', () => {
