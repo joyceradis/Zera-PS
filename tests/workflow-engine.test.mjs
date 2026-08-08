@@ -6,8 +6,10 @@ import {
   transitionEncounter,
   addPendingItem,
   resolvePendingItem,
-  startReassessment
+  startReassessment,
+  getVisibleSections
 } from '../src/workflow-engine.js';
+import { SCA_PROTOCOL } from '../protocols/sca.js';
 
 test('new encounter starts at initial assessment without inventing pending items', () => {
   const encounter = createEncounter({ workflowId: 'sca', now: '2026-08-08T10:00:00.000Z' });
@@ -51,4 +53,15 @@ test('reassessing creates a temporal child event without overwriting admission s
   assert.equal(reassessed.admissionSnapshot.hda, 'DOR HÁ 2 HORAS');
   assert.equal(reassessed.reassessments.length, 1);
   assert.equal(reassessed.reassessments[0].startedAt, '2026-08-08T11:30:00.000Z');
+});
+
+test('progressive disclosure uses both stage and clinical context', () => {
+  const withoutSuspicion = getVisibleSections(SCA_PROTOCOL, WORKFLOW_STAGES.INITIAL_ASSESSMENT, { suspectedAcs: false });
+  assert.deepEqual(withoutSuspicion.map((section) => section.id), ['presentation', 'acs_context']);
+
+  const withSuspicion = getVisibleSections(SCA_PROTOCOL, WORKFLOW_STAGES.INITIAL_ASSESSMENT, { suspectedAcs: true });
+  assert.deepEqual(withSuspicion.map((section) => section.id), ['presentation', 'acs_context', 'ecg', 'troponin', 'cardiovascular_risk']);
+
+  const pendingStage = getVisibleSections(SCA_PROTOCOL, WORKFLOW_STAGES.PENDING_RESULTS, { suspectedAcs: true });
+  assert.deepEqual(pendingStage.map((section) => section.id), ['troponin']);
 });
