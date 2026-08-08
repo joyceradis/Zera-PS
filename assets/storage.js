@@ -50,6 +50,15 @@ function migrateLegacyAutosave(legacy = {}) {
   };
 }
 
+function migrateLegacyDrafts(legacyDrafts = []) {
+  return legacyDrafts.map((draft) => ({
+    id: draft.id,
+    title: draft.title || 'RASCUNHO MIGRADO',
+    createdAt: draft.createdAt || new Date(0).toISOString(),
+    snapshot: migrateLegacyAutosave(draft.state || {})
+  }));
+}
+
 function safeParse(raw, fallback) {
   if (!raw) return fallback;
   try { return JSON.parse(raw); } catch { return fallback; }
@@ -73,7 +82,13 @@ function createStorage(adapter = globalThis.localStorage) {
       adapter?.removeItem(STORAGE_KEYS.autosave);
     },
     loadDrafts() {
-      return safeParse(adapter?.getItem(STORAGE_KEYS.drafts), []);
+      const current = safeParse(adapter?.getItem(STORAGE_KEYS.drafts), null);
+      if (current) return current;
+      const legacy = safeParse(adapter?.getItem(STORAGE_KEYS.legacyDrafts), null);
+      if (!legacy) return [];
+      const migrated = migrateLegacyDrafts(legacy);
+      api.saveDrafts(migrated);
+      return migrated;
     },
     saveDrafts(drafts) {
       adapter?.setItem(STORAGE_KEYS.drafts, JSON.stringify(drafts));
@@ -82,4 +97,4 @@ function createStorage(adapter = globalThis.localStorage) {
   return api;
 }
 
-export { STORAGE_KEYS, emptyClinicalState, migrateLegacyAutosave, createStorage };
+export { STORAGE_KEYS, emptyClinicalState, migrateLegacyAutosave, migrateLegacyDrafts, createStorage };
