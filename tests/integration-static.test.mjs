@@ -11,7 +11,7 @@ test('application loads the coordinator as an ES module', () => {
 });
 
 test('every direct DOM id referenced by app.js exists in app.html', () => {
-  const ids = [...appJs.matchAll(/\$\('([^']+)'\)/g)].map((match) => match[1]);
+  const ids = [...appJs.matchAll(/(?<!\$)\$\('([^']+)'\)/g)].map((match) => match[1]);
   const uniqueIds = [...new Set(ids)];
   const missing = uniqueIds.filter((id) => !appHtml.includes(`id="${id}"`));
   assert.deepEqual(missing, []);
