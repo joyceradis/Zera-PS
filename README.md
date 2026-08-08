@@ -1,125 +1,60 @@
 # Zera PS
 
-**Documentação clínica no ritmo do plantão.**
+**Documentação clínica no ritmo do pronto-socorro, com confirmação explícita e saída revisável.**
 
-O Zera PS é um MVP offline-first de uma estação clínica para pronto-socorro. A proposta é reduzir a fricção documental, organizar o fluxo do atendimento e apresentar ferramentas úteis no momento certo, sem substituir julgamento clínico, protocolos institucionais ou revisão médica.
+O Zera PS é um MVP offline-first de apoio à documentação clínica no pronto-socorro. O produto organiza dados, acelera registros repetitivos e oferece ferramentas clínicas estruturadas sem substituir julgamento médico, protocolos institucionais ou revisão profissional.
 
-## Status do projeto
+> **Princípio de segurança:** nenhuma transformação documental pode aumentar o grau de certeza, alterar a polaridade ou fabricar um fato clínico ausente.
 
-O projeto está em fase de MVP funcional e evolução de arquitetura. A versão atual já permite testar o núcleo de documentação, mas ainda não deve ser tratada como produto assistencial homologado.
+## Status
+
+O projeto está em evolução arquitetural. O núcleo funcional inclui evolução, reavaliação, solicitação de internação, alta, scores, rascunhos locais e PWA. A arquitetura atual está sendo consolidada para separar estado clínico, transformação documental, interface, scores e persistência.
+
+O Zera PS ainda não deve ser tratado como produto assistencial homologado.
 
 ## O que existe hoje
 
-- Evolução no padrão atualmente configurado para o Hospital Meridional Serra
-- QP, HDA, HPP, exame físico, exames complementares, hipóteses e conduta
-- Saída final em caixa alta, editável e pronta para copiar
-- Modelos rápidos para cenários clínicos frequentes
-- Reavaliação, solicitação de internação e alta
-- Scores CRB-65, CURB-65, qSOFA e Glasgow
-- Seleções rápidas em HPP e exame físico
-- Autosave e rascunhos em `localStorage`
-- Funcionamento offline após o primeiro carregamento
-- Sem backend e sem chamadas a APIs externas nesta fase
-
-## Visão do produto
-
-A evolução futura do Zera PS será centrada em um objeto único chamado **Atendimento**.
-
-```text
-ATENDIMENTO
-├── QP
-├── HDA
-├── HPP
-├── EXAME FÍSICO
-├── EXAMES COMPLEMENTARES
-├── HIPÓTESES + CID
-├── CONDUTA
-├── REAVALIAÇÕES
-├── LAUDOS
-├── DESFECHO
-└── HORÁRIOS E MÉTRICAS
-```
-
-A interface deverá manter um bloco de evolução imponente e editável no topo, com sete seções progressivas abaixo:
-
-```text
-1. QP
-2. HDA
-3. HPP
-4. EXAME FÍSICO
-5. EXAMES COMPLEMENTARES
-6. HIPÓTESES + CID
-7. CONDUTA
-```
-
-As ferramentas existirão no menu para acesso independente, mas também deverão surgir automaticamente dentro do atendimento quando o contexto exigir. Exemplos:
-
-- suspeita de pneumonia → oferecer CURB-65;
-- laboratório colado → abrir organizador de exames;
-- hipótese registrada → sugerir CID para confirmação;
-- tomografia ou ressonância solicitada → oferecer laudo para o plano;
-- internação selecionada → gerar justificativa editável;
-- reavaliação escolhida → inserir o caso na fila de pendências.
-
-## Roadmap
-
-### v0.1 — MVP atual
-
-- gerador de evolução;
+- evolução estruturada para o fluxo atualmente configurado do Hospital Meridional Serra;
+- QP, HDA, HPP, exame físico, exames complementares, hipóteses e conduta;
 - reavaliação, internação e alta;
-- scores;
-- autosave e rascunhos locais;
-- PWA offline-first.
+- CRB-65, CURB-65, qSOFA e Glasgow;
+- atalhos de HPP e exame físico com intenção explícita;
+- templates sindrômicos sem pré-confirmar negativas clínicas;
+- saída em caixa alta e editável;
+- rascunhos e autosave locais;
+- migração de armazenamento v1 → v2 sem inferir confirmação clínica;
+- funcionamento offline por Service Worker;
+- sem backend ou chamadas externas nesta fase;
+- testes automatizados para invariantes clínico-documentais.
 
-### v0.2 — Estrutura de atendimento
+## O que o Zera PS não faz
 
-- criar o modelo central de Atendimento;
-- reorganizar o formulário nos sete cards;
-- manter navegação livre entre as seções;
-- preservar o bloco final de evolução.
+- não diagnostica de forma autônoma;
+- não prescreve automaticamente;
+- não decide alta ou internação;
+- não transforma campo vazio em negativa;
+- não considera template como exame realizado sem ação médica explícita;
+- não calcula score incompleto como zero;
+- não garante autorização de exames ou procedimentos;
+- não substitui o prontuário institucional.
 
-### v0.3 — Fluxo do plantão
+## Arquitetura
 
-- múltiplos atendimentos;
-- reavaliações pendentes;
-- histórico por cards;
-- desfechos e horários.
+```text
+Ação médica
+    ↓
+Dado clínico
+    ↓
+Estado + proveniência
+    ↓
+Transformação documental
+    ↓
+Saída editável
+    ↓
+Revisão médica
+```
 
-### v0.4 — Métricas
-
-- atendimentos totais;
-- altas, internações e reavaliações;
-- média de atendimentos por hora;
-- gráficos por horário, QP, CID e desfecho.
-
-### v0.5 — Ferramentas contextuais
-
-- organizador de exames laboratoriais;
-- sugestões de scores;
-- sugestão de CID com confirmação médica;
-- laudos editáveis e impressão em A4.
-
-### v0.6 — Validação de uso
-
-- testes com médicos de pronto-socorro;
-- análise de cliques, hesitação e tempo de preenchimento;
-- revisão clínica dos scores, modelos e textos gerados.
-
-### v0.7 — Conta e sincronização
-
-- login;
-- perfil profissional;
-- preferências e métricas sincronizadas;
-- arquitetura segura para dados clínicos e adequação à LGPD.
-
-### v0.8 — Inteligência clínica assistiva
-
-- HDA narrativa;
-- exame físico contextual;
-- diferenciais e pontos a revisar;
-- apoio a CID, laudos e condutas sempre sujeito à validação médica.
-
-## Estrutura atual
+Estrutura principal:
 
 ```text
 Zera-PS/
@@ -127,19 +62,94 @@ Zera-PS/
 ├── app.html
 ├── manifest.json
 ├── service-worker.js
+├── package.json
+├── README.md
+├── ROADMAP.md
+├── docs/
+│   └── ARCHITECTURE.md
 ├── assets/
 │   ├── app.js
+│   ├── clinical-state.js
 │   ├── data.js
-│   ├── templates.js
+│   ├── document-engine.js
 │   ├── scores.js
+│   ├── storage.js
+│   ├── templates.js
+│   ├── ui.js
 │   ├── styles.css
 │   └── logo.svg
-└── README.md
+└── tests/
+    ├── clinical-state.test.mjs
+    ├── document-engine.test.mjs
+    ├── scores.test.mjs
+    └── storage.test.mjs
 ```
+
+### Responsabilidades
+
+`clinical-state.js` — estado, proveniência e confirmação clínica.
+
+`document-engine.js` — transformação determinística de dados confirmados em texto.
+
+`scores.js` — definições, respostas, completude e cálculo dos scores.
+
+`storage.js` — persistência local versionada e migração.
+
+`ui.js` — renderização e interação com DOM.
+
+`data.js` — somente dados e configurações declarativas.
+
+`app.js` — coordenação entre os módulos.
+
+Veja `docs/ARCHITECTURE.md` para os invariantes e contratos internos.
+
+## Segurança clínica
+
+### Campo vazio
+
+Campo vazio representa ausência de informação no sistema. Ele não autoriza geração de `NEGA`, `NORMAL`, `AUSENTE` ou qualquer outra afirmação clínica.
+
+### Negativas em HPP
+
+O comando **Confirmar NEGA em HPP** representa intenção explícita da médica. Só então os respectivos campos recebem estado `denied` e podem gerar `NEGA` na saída.
+
+### Exame físico normal
+
+O comando **Usar modelo de exame normal** registra ação médica explícita, associa o `templateId`, grava timestamp de confirmação e mantém os achados editáveis.
+
+### Templates sindrômicos
+
+Templates fornecem estrutura, perguntas e pontos de revisão. Não devem carregar negativas clínicas como fatos já confirmados.
+
+### Scores
+
+Um score começa como `incomplete`, com `score: null`. Resultado e interpretação só surgem quando todas as variáveis obrigatórias foram respondidas.
+
+## Testes
+
+Requer Node.js 20 ou superior.
+
+```bash
+npm test
+```
+
+Os testes atuais cobrem:
+
+- estado clínico inicial;
+- negativa explícita;
+- proveniência de relato e observação;
+- confirmação de template;
+- proibição de `vazio → NEGA`;
+- renderização condicional do exame físico;
+- score incompleto;
+- cálculo após completude;
+- Glasgow incompleto e completo;
+- schema de armazenamento;
+- migração v1 → v2 sem fabricação de estado clínico.
 
 ## Desenvolvimento local
 
-Abra o projeto por um servidor local para testar corretamente o service worker.
+Use um servidor HTTP local para testar corretamente módulos ES e Service Worker:
 
 ```bash
 python3 -m http.server 8000
@@ -147,21 +157,20 @@ python3 -m http.server 8000
 
 Depois acesse `http://localhost:8000`.
 
-## Dados, segurança e uso responsável
+## Dados e privacidade
 
-- A versão atual armazena rascunhos somente no dispositivo, por meio de `localStorage`.
-- Não existe sincronização em nuvem nesta fase.
-- Não utilize dados identificáveis de pacientes em testes ou demonstrações.
-- Todo texto deve ser revisado e validado pelo médico antes do registro em prontuário.
-- A ferramenta não substitui avaliação clínica, protocolos institucionais ou decisão profissional.
+Nesta fase, os dados ficam no dispositivo por `localStorage`. Não existe sincronização em nuvem. Não utilize dados identificáveis de pacientes em testes ou demonstrações fora de ambiente institucional autorizado.
 
 ## Versionamento
 
-- `main`: versão estável e demonstrável;
-- `develop`: desenvolvimento da próxima versão;
-- releases numeradas, como `v0.1.0`, preservam os marcos estáveis do projeto.
+- `main`: versão estável/demonstrável;
+- branches de trabalho: mudanças isoladas;
+- integração somente após regressão e revisão;
+- versões estáveis devem receber tag/release.
 
-As mudanças futuras devem ser feitas em `develop` e levadas para `main` apenas após teste. Quando uma versão estiver estável, ela recebe uma nova release.
+## Roadmap
+
+O roadmap executável e os gates de conclusão estão em `ROADMAP.md`.
 
 ## Licença
 

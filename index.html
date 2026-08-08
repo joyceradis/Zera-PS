@@ -12,10 +12,7 @@
 </head>
 <body class="landing-body">
   <header class="landing-nav container">
-    <a class="brand" href="index.html" aria-label="Zera PS — início">
-      <img src="assets/logo.svg" alt="" width="36" height="36">
-      <span>Zera PS</span>
-    </a>
+    <a class="brand" href="index.html" aria-label="Zera PS — início"><img src="assets/logo.svg" alt="" width="36" height="36"><span>Zera PS</span></a>
     <a class="button button-ghost" href="app.html">Abrir aplicativo</a>
   </header>
 
@@ -23,65 +20,28 @@
     <section class="hero container">
       <div class="hero-copy">
         <p class="eyebrow">DOCUMENTAÇÃO CLÍNICA PARA PRONTO-SOCORRO</p>
-        <h1>Menos tempo digitando.<br>Mais plantão resolvido.</h1>
-        <p class="hero-text">Monte evoluções padronizadas, edite o texto final e copie para o prontuário em poucos cliques. Sem pacientes fictícios, sem botões decorativos e sem depender de internet depois do primeiro acesso.</p>
-        <div class="hero-actions">
-          <a class="button button-primary button-large" href="app.html">Começar agora</a>
-          <span class="microcopy">MVP em desenvolvimento · dados salvos somente neste dispositivo</span>
-        </div>
+        <h1>Menos atrito documental.<br>Mais foco no atendimento.</h1>
+        <p class="hero-text">Estruture evoluções, reavaliações, internações, altas e scores em uma interface rápida. O texto permanece editável e deve ser revisado pelo médico antes do registro no prontuário.</p>
+        <div class="hero-actions"><a class="button button-primary button-large" href="app.html">Abrir o Zera PS</a><span class="microcopy">MVP em desenvolvimento · dados locais · sem backend nesta fase</span></div>
       </div>
-
       <div class="hero-card" aria-label="Prévia do Zera PS">
-        <div class="hero-card-top">
-          <span>EVOLUÇÃO PRONTO-SOCORRO</span>
-          <span class="status-dot">OFFLINE</span>
-        </div>
-        <div class="mock-line mock-line-short"></div>
-        <div class="mock-title"># HDA:</div>
-        <div class="mock-line"></div>
-        <div class="mock-line"></div>
-        <div class="mock-title"># HPP:</div>
-        <div class="mock-grid">
-          <div class="mock-chip">COMORBIDADES</div>
-          <div class="mock-chip">ALERGIAS</div>
-          <div class="mock-chip">MUC</div>
-          <div class="mock-chip">HÁBITOS</div>
-        </div>
-        <div class="mock-footer">
-          <span>GERAR</span>
-          <span>COPIAR</span>
-        </div>
+        <div class="hero-card-top"><span>EVOLUÇÃO PRONTO-SOCORRO</span><span class="status-dot">OFFLINE-FIRST</span></div>
+        <div class="mock-line mock-line-short"></div><div class="mock-title"># HDA:</div><div class="mock-line"></div><div class="mock-line"></div><div class="mock-title"># HPP:</div>
+        <div class="mock-grid"><div class="mock-chip">COMORBIDADES</div><div class="mock-chip">ALERGIAS</div><div class="mock-chip">MUC</div><div class="mock-chip">HÁBITOS</div></div>
+        <div class="mock-footer"><span>GERAR</span><span>REVISAR</span></div>
       </div>
     </section>
 
     <section class="feature-section container" aria-label="Diferenciais">
-      <article class="feature-card">
-        <span class="feature-number">01</span>
-        <h2>Padrão real de plantão</h2>
-        <p>QP, HDA, HPP, exame físico, exames complementares, hipóteses, conduta e EM TEMPO.</p>
-      </article>
-      <article class="feature-card">
-        <span class="feature-number">02</span>
-        <h2>Texto pronto para o MV</h2>
-        <p>Saída em caixa alta, editável antes de copiar, com NEGA e NA usados no lugar correto.</p>
-      </article>
-      <article class="feature-card">
-        <span class="feature-number">03</span>
-        <h2>Funciona no ritmo do PS</h2>
-        <p>Rascunhos locais, atalhos por síndrome e scores clínicos em uma interface objetiva.</p>
-      </article>
+      <article class="feature-card"><span class="feature-number">01</span><h2>Fluxo real de plantão</h2><p>QP, HDA, HPP, exame físico, exames complementares, hipóteses, conduta, reavaliação e desfecho.</p></article>
+      <article class="feature-card"><span class="feature-number">02</span><h2>Confirmação antes de afirmação</h2><p>Campo vazio não vira negativa. Atalhos clínicos registram intenção explícita e o texto final deriva dos dados confirmados.</p></article>
+      <article class="feature-card"><span class="feature-number">03</span><h2>Scores sem falso zero</h2><p>Scores permanecem incompletos até que todas as variáveis necessárias tenham sido respondidas.</p></article>
     </section>
   </main>
 
-  <footer class="landing-footer container">
-    <span>Zera PS</span>
-    <span>Apoio à documentação. A decisão clínica permanece do médico responsável.</span>
-  </footer>
-
+  <footer class="landing-footer container"><span>Zera PS</span><span>Apoio à documentação. A decisão clínica permanece do médico responsável.</span></footer>
   <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js').catch(() => {}));
-    }
+    if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js').catch(() => {}));
   </script>
 </body>
 </html>
