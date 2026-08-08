@@ -73,6 +73,23 @@ function startReassessment(encounter, now = new Date().toISOString()) {
   };
 }
 
+function evaluateVisibilityRule(rule, context = {}) {
+  if (!rule) return true;
+  return context[rule.field] === rule.equals;
+}
+
+function isSectionInStage(section, stage) {
+  if (section.stage) return section.stage === stage;
+  if (Array.isArray(section.stages)) return section.stages.includes(stage);
+  return true;
+}
+
+function getVisibleSections(protocol, stage, context = {}) {
+  return (protocol?.sections || []).filter((section) => (
+    isSectionInStage(section, stage) && evaluateVisibilityRule(section.visibleWhen, context)
+  ));
+}
+
 function structuredCloneSafe(value) {
   if (value === undefined) return undefined;
   if (typeof globalThis.structuredClone === 'function') return globalThis.structuredClone(value);
@@ -85,5 +102,7 @@ export {
   transitionEncounter,
   addPendingItem,
   resolvePendingItem,
-  startReassessment
+  startReassessment,
+  evaluateVisibilityRule,
+  getVisibleSections
 };
