@@ -68,6 +68,14 @@ function addClinicalResult(encounter, result) {
   };
 }
 
+function upsertLinkedClinicalResult(encounter, result) {
+  const results = [...(encounter.results || [])];
+  const index = results.findIndex((entry) => entry.id === result.id);
+  if (index < 0) return addClinicalResult(encounter, result);
+  results[index] = structuredCloneSafe(result);
+  return { ...encounter, results };
+}
+
 function getClinicalResults(encounter, kind = null) {
   const results = [...(encounter.results || [])];
   const filtered = kind ? results.filter((result) => result.kind === kind) : results;
@@ -97,7 +105,7 @@ function resolvePendingItem(encounter, id, result = {}) {
   const resolved = { ...encounter, pendingItems };
   if (!found.kind || result.value === undefined) return resolved;
 
-  return addClinicalResult(resolved, {
+  return upsertLinkedClinicalResult(resolved, {
     id: result.id || `${id}:result`,
     kind: found.kind,
     label: found.label || null,
