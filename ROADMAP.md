@@ -1,129 +1,185 @@
 # Zera PS — Roadmap
 
-Este roadmap é orientado por risco. Nenhuma fase avança por quantidade de telas; cada fase possui um gate verificável.
+Este roadmap é orientado por risco e por gates verificáveis. Quantidade de telas não define maturidade.
 
 ## Fase 0 — Baseline e segurança estrutural
 
-**Objetivo:** transformar o MVP em uma base testável sem alterar silenciosamente o significado clínico.
+**Status:** fundação automatizada concluída; regressão manual permanece contínua.
 
-- [x] branch isolada para refatoração;
-- [x] inventário do fluxo atual;
-- [x] identificar `vazio → NEGA`;
-- [x] identificar exame normal em massa;
-- [x] identificar templates com negativas pré-escritas;
-- [x] identificar scores iniciando como zero/Glasgow 15;
-- [x] criar modelo explícito de estado e proveniência;
-- [x] criar `document-engine.js`;
-- [x] separar dados declarativos de comportamento;
-- [x] criar persistência v2 com migração conservadora;
-- [x] adicionar testes automatizados e comando reproduzível;
-- [x] adicionar CI;
-- [x] validar CI em pull request;
-- [x] validar integração estática DOM/PWA no pós-merge;
-- [ ] executar regressão manual em navegador desktop e mobile.
+- [x] inventário do MVP inicial;
+- [x] eliminar `vazio → NEGA`;
+- [x] tornar NEGA em HPP ação explícita;
+- [x] tornar exame normal template confirmado;
+- [x] remover fatos clínicos pré-confirmados dos roteiros;
+- [x] impedir falso zero nos scores e falso Glasgow 15;
+- [x] separar estado clínico, documento, UI, storage e scores;
+- [x] persistência v2 conservadora;
+- [x] testes automatizados e CI;
+- [x] integração estática DOM/PWA;
+- [ ] regressão manual desktop/mobile a cada marco de interface.
 
-**Gate automatizado:** concluído em 2026-08-08 com verificação de sintaxe e 27/27 testes automatizados aprovados. O gate de interface continua dependente da regressão manual em navegador real.
+**Gate permanente:** nenhum campo vazio ou template não confirmado pode produzir afirmação clínica.
 
-## Fase 1 — Segurança documental do núcleo
+## Fase 1 — Workflow temporal de Atendimento
 
-**Objetivo:** consolidar evolução segura e rápida.
+**Status:** implementação v1 em consolidação.
 
-- [x] HPP com confirmação explícita;
-- [x] `NEGA` em massa somente por ação médica;
-- [x] exame normal como template explicitamente confirmado;
-- [x] campos de exame editáveis após template;
-- [x] templates sem negativas clínicas pré-confirmadas;
-- [x] saída condicionada ao estado clínico;
-- [x] campos sem confirmação omitidos do texto final;
-- [ ] indicador visual de campos HPP pendentes;
-- [ ] histórico de alteração de estado em atendimento ativo;
-- [ ] confirmação diferenciada para `not_investigated` e `not_applicable` quando necessário.
-
-**Gate:** nenhum fato clínico aparece na evolução sem entrada explícita, confirmação ou ação médica rastreável.
-
-## Fase 2 — Scores e ferramentas clínicas estruturadas
-
-**Objetivo:** impedir falso zero e diferenciar score de checklist clínica.
-
-- [x] CRB-65 com estado incompleto;
-- [x] CURB-65 com estado incompleto;
-- [x] qSOFA com estado incompleto;
-- [x] Glasgow sem valor inicial implícito;
-- [x] resultado apenas após todas as respostas obrigatórias;
-- [ ] persistir scores vinculados ao atendimento;
-- [ ] registrar horário e versão do instrumento;
-- [ ] classificar ferramentas em `score`, `checklist`, `rule` e `reference`;
-- [ ] implementar SNNOOP10 como checklist estruturada, não como score numérico;
-- [ ] vincular ferramentas aos contextos clínicos sem execução automática.
-
-**Gate:** ausência de resposta nunca produz pontuação ou interpretação clínica.
-
-## Fase 3 — Entidade Atendimento
-
-**Objetivo:** deixar de tratar evolução, reavaliação e desfecho como ilhas independentes.
+**Objetivo:** representar o atendimento como processo temporal, e não como formulários independentes.
 
 ```text
-ATENDIMENTO
-├── identificação local não nominal
-├── timestamps
-├── evolução inicial
-├── reavaliações[]
-├── scores[]
-├── documentos[]
-└── desfecho
+initial_assessment
+→ initial_conduct
+→ pending_results
+→ reassessment
+→ final_documentation
 ```
 
-- [ ] schema v3 de Atendimento;
+- [x] schema v3 de Atendimento temporal;
+- [x] `currentStage` e histórico de etapas;
+- [x] snapshot de admissão;
+- [x] pendências e resultados disponibilizados;
+- [x] múltiplas reavaliações como eventos filhos;
+- [x] `Reavaliar atendimento` no fluxo;
+- [x] persistência v3 separada do autosave/rascunhos v2;
+- [x] preservar admissão durante reavaliação;
+- [x] permitir atualização do snapshot enquanto a admissão ainda está em construção;
+- [x] congelar o snapshot depois da primeira reavaliação;
+- [x] persistir contexto do workflow para recuperação após reload;
 - [ ] múltiplos atendimentos simultâneos;
-- [ ] reavaliações vinculadas ao atendimento;
-- [ ] internação/alta vinculadas ao atendimento;
-- [ ] histórico por versão;
-- [ ] fila de pendências;
-- [ ] recuperação após reload sem perda de contexto.
+- [ ] fila de atendimentos/reavaliações;
+- [ ] destino como estado formal do Atendimento.
 
-**Gate:** cada documento pode ser rastreado ao atendimento que o originou sem misturar dados entre pacientes.
+**Gate:** reavaliar nunca sobrescreve a admissão e reload não perde o contexto temporal ativo.
 
-## Fase 4 — Document Engine versionado
+## Fase 2 — Progressive disclosure e configurações clínicas
 
-**Objetivo:** tornar templates institucionais auditáveis.
+**Status:** cenário de referência SCA implementado; generalização pendente.
 
-- [ ] `templateId` e `templateVersion` em cada documento;
-- [ ] configuração institucional separada do código clínico;
-- [ ] teste de regressão textual por template;
-- [ ] preservar documentos antigos quando template mudar;
-- [ ] suporte a formato institucional sem alterar o dado de origem.
+**Objetivo:** mostrar apenas o que é necessário conforme cenário + etapa + estado.
 
-**Gate:** mudança de template não altera retroativamente documentos previamente gerados.
+- [x] `protocols/sca.js` como configuração declarativa;
+- [x] `workflow-engine.js` genérico, sem conhecimento de SCA;
+- [x] regras de visibilidade por etapa e contexto;
+- [x] campos condicionais de ECG e troponina no cenário de referência;
+- [x] pendências visuais com semântica de estado;
+- [x] cores funcionais para disponível / incompleto / disponível como resultado / reavaliação;
+- [ ] extrair toda configuração de UI específica do cenário para renderer declarativo;
+- [ ] schema formal e validador de arquivos em `protocols/`;
+- [ ] garantir que todo campo/regra/ferramenta referenciado em uma configuração exista;
+- [ ] impedir seções obrigatórias inalcançáveis por configuração incorreta;
+- [ ] novos cenários apenas após validação do padrão com SCA.
 
-## Fase 5 — Persistência robusta
+**Gate:** adicionar um segundo cenário não deve exigir `if (scenario === ...)` no motor genérico.
 
-**Objetivo:** evoluir além do `localStorage` quando o modelo de Atendimento estiver estável.
+## Fase 3 — Ferramentas clínicas estruturadas
 
+**Princípio:**
+
+```text
+available ≠ applicable ≠ calculable
+```
+
+- [x] estado genérico de ferramenta;
+- [x] lista de variáveis faltantes;
+- [x] mensagem de não calculabilidade;
+- [x] HEART disponível no cenário SCA;
+- [x] suspeita clínica determina pertinência do HEART;
+- [x] ausência de troponina impede cálculo;
+- [x] `# SCORES:` somente para ferramenta aplicada e calculada;
+- [x] CRB-65, CURB-65, qSOFA e Glasgow permanecem sem falso resultado inicial;
+- [ ] validar UX clínica do preenchimento do HEART — os campos de pontos atuais são infraestrutura de referência, não desenho final de coleta;
+- [ ] registrar versão/metadados do instrumento em resultado persistido;
+- [ ] classificar ferramentas em `score`, `checklist`, `rule`, `calculator`, `reference`;
+- [ ] SNNOOP10 como checklist estruturada, não score numérico;
+- [ ] vincular demais ferramentas a contextos após revisão de indicação e limitações.
+
+**Gate:** ferramenta não produz resultado enquanto não for simultaneamente aplicável e calculável.
+
+## Fase 4 — Documento temporal
+
+**Status:** contrato de reavaliação v1 implementado.
+
+Formato protegido:
+
+```text
+## REAVALIAÇÃO PRONTO SOCORRO - HOSPITAL MERIDIONAL SERRA ##
+
+# QP: "DOR TORÁCICA"
+
+# SCORES:
+- HEART: ...
+
+# HDA (ADMISSÃO): ...
+
+... EM TEMPO (REAVALIAÇÃO): ...
+
+[CONTINUIDADE DAS SEÇÕES CLÍNICAS]
+
+# CONDUTA:
+- ...
+```
+
+- [x] QP inline e entre aspas na reavaliação;
+- [x] `# SCORES:` imediatamente abaixo da QP quando aplicável;
+- [x] omitir seção de scores quando não houver resultado válido;
+- [x] HDA de admissão preservada;
+- [x] `EM TEMPO (REAVALIAÇÃO)` como delta narrativo;
+- [x] carry-forward exclui cabeçalho, QP, HDA e conduta antiga;
+- [x] conduta final deriva da reavaliação atual;
+- [ ] versionar templates institucionais (`templateId`, `templateVersion`);
+- [ ] definir política fina de carry-forward para cada domínio temporal;
+- [ ] representar exame físico atualizado como snapshot explícito da reavaliação quando utilizado;
+- [ ] testes de regressão textual por template institucional.
+
+**Gate:** o documento não pode apresentar um dado antigo como se tivesse sido novamente observado.
+
+## Fase 5 — Persistência e histórico robustos
+
+- [x] v2 para núcleo documental/rascunhos;
+- [x] v3 independente para Atendimento temporal ativo;
+- [ ] múltiplos Atendimentos;
+- [ ] histórico de documentos por Atendimento;
+- [ ] versionamento de reavaliações;
 - [ ] avaliar IndexedDB;
-- [ ] política explícita de retenção local;
+- [ ] política de retenção local;
 - [ ] exportação/importação segura;
-- [ ] estratégia de migração de schema;
 - [ ] testes de corrupção e recuperação;
-- [ ] avaliar backend somente após requisitos de LGPD e fluxo institucional.
+- [ ] backend apenas após requisitos institucionais e LGPD.
 
-**Gate:** atualização de versão não perde atendimento salvo nem fabrica novo estado clínico.
+**Gate:** atualização de versão não perde Atendimento nem fabrica estado clínico.
 
 ## Fase 6 — Fluxo operacional do plantão
 
 - [ ] painel de atendimentos ativos;
 - [ ] reavaliações pendentes;
-- [ ] horário de entrada e última ação;
-- [ ] desfecho;
+- [ ] hora de entrada, última ação e tempo de espera;
+- [ ] destino/desfecho;
 - [ ] métricas locais de tempo de documentação;
-- [ ] filtros por status sem dados identificáveis em demonstração.
+- [ ] filtros por status;
+- [ ] indicadores sem dados identificáveis em demonstração.
 
-**Gate:** o produto reduz atrito documental sem aumentar omissões ou cliques desnecessários.
+**Gate:** a ferramenta reduz atrito sem aumentar omissões ou carga de interação.
 
-## Fase 7 — Módulos documentais adicionais
+## Fase 7 — Novos cenários
 
-Somente depois do núcleo estabilizado.
+Somente após regressão cognitiva do cenário SCA.
 
-Antes de implementar qualquer documento para exame/procedimento de maior complexidade, definir a entidade exata:
+Candidatos, sujeitos a especificação clínica própria:
+
+- cefaleia;
+- pneumonia;
+- dispneia;
+- sepse/infecção;
+- trauma;
+- dor abdominal.
+
+Cada cenário deve declarar campos, etapas, regras e ferramentas. Nenhum arquivo de cenário pode executar diagnóstico ou conduta automaticamente.
+
+**Gate:** fonte/finalidade/limitação das ferramentas do cenário estão definidas antes do código de produção.
+
+## Fase 8 — Módulos documentais adicionais
+
+Antes de implementar documento para exame/procedimento de maior complexidade, definir sua entidade exata:
 
 - justificativa clínica de solicitação;
 - relatório médico;
@@ -132,11 +188,9 @@ Antes de implementar qualquer documento para exame/procedimento de maior complex
 - relatório de acompanhamento;
 - parecer técnico.
 
-Não usar o rótulo genérico “laudo para o plano” como entidade técnica.
+Não usar “laudo para o plano” como entidade técnica genérica.
 
-**Gate:** finalidade, autoria, campos mínimos e responsabilidade de cada documento estão definidos antes do código.
-
-## Fase 8 — Piloto controlado
+## Fase 9 — Piloto controlado
 
 - [ ] casos sintéticos padronizados;
 - [ ] teste com médicos de PS em ambiente autorizado;
@@ -144,19 +198,19 @@ Não usar o rótulo genérico “laudo para o plano” como entidade técnica.
 - [ ] taxa de edição do texto gerado;
 - [ ] campos esquecidos;
 - [ ] incidentes de afirmação não confirmada;
-- [ ] perda de dados;
+- [ ] perda de contexto entre admissão e reavaliação;
 - [ ] satisfação e carga de interação.
 
 **Meta de segurança:** zero saídas com informação clínica fabricada pelo sistema.
 
-## Fase 9 — Produção institucional
+## Fase 10 — Produção institucional
 
-Somente após piloto e definição de requisitos institucionais:
+Somente após piloto e requisitos institucionais:
 
 - autenticação;
 - controle de acesso;
 - criptografia;
-- logs e auditoria;
+- logs/auditoria;
 - backup;
 - retenção;
 - gestão de incidentes;
@@ -164,14 +218,18 @@ Somente após piloto e definição de requisitos institucionais:
 - termos e responsabilidades;
 - integração autorizada com sistemas institucionais.
 
-## Critérios permanentes
+## Critérios permanentes de mudança
 
-Qualquer alteração clínica deve responder:
+Qualquer alteração clínico-documental deve responder:
 
 1. Qual dado entra?
-2. Quem/qual fonte o informou ou observou?
-3. Qual estado ele possui?
-4. O que autoriza sua transformação em texto?
-5. A mudança pode aumentar certeza ou alterar polaridade?
-6. Existe teste cobrindo a regressão?
-7. A saída continua editável e revisável?
+2. Quem ou qual fonte o originou?
+3. Qual estado possui?
+4. Em qual etapa temporal ele existe?
+5. É dado histórico, atual, pendente ou resultado novo?
+6. O que autoriza sua transformação em texto?
+7. A ferramenta está disponível, aplicável e calculável?
+8. A mudança pode aumentar certeza ou alterar polaridade?
+9. Existe teste de regressão?
+10. O fluxo antigo e suas microfunções foram preservados?
+11. A saída continua editável e revisável?
