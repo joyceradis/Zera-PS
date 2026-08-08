@@ -7,16 +7,17 @@ const legacyApp = await readFile('assets/app.js', 'utf8');
 const temporalUi = await readFile('src/temporal-ui.js', 'utf8');
 const rootApp = await readFile('app.js', 'utf8');
 const serviceWorker = await readFile('service-worker.js', 'utf8');
+const DYNAMIC_IDS = new Set(['zera-temporal-styles']);
 
 test('application loads the root coordinator as an ES module', () => {
   assert.match(appHtml, /<script\s+type="module"\s+src="app\.js"><\/script>/);
   assert.match(rootApp, /src\/app\.js/);
 });
 
-test('every direct DOM id referenced by application layers exists in app.html', () => {
+test('every static DOM id referenced by application layers exists in app.html', () => {
   const source = `${legacyApp}\n${temporalUi}`;
   const ids = [...source.matchAll(/(?<!\$)\$\('([^']+)'\)/g)].map((match) => match[1]);
-  const uniqueIds = [...new Set(ids)];
+  const uniqueIds = [...new Set(ids)].filter((id) => !DYNAMIC_IDS.has(id));
   const missing = uniqueIds.filter((id) => !appHtml.includes(`id="${id}"`));
   assert.deepEqual(missing, []);
 });
