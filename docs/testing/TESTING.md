@@ -25,7 +25,17 @@ O gate executa verificação de sintaxe e toda a suíte `node:test`.
 - QP da reavaliação permanece inline e entre aspas;
 - `# SCORES:` aparece somente para resultado aplicável e calculado;
 - carry-forward não reutiliza conduta antiga como conduta atual;
-- reload não deve fabricar contexto clínico.
+- reload não deve fabricar contexto clínico;
+- protocolo inválido falha no registro em vez de gerar interface parcial;
+- renderer respeita etapa, `visibleWhen` e recálculo por mudança de contexto;
+- campos do formulário de evolução não são duplicados pela camada de protocolo;
+- intenção de aplicação persistida só é restaurada para ferramenta calculável.
+
+## Contrato de protocolos
+
+`npm test` cobre validação de protocolo (id ausente, ids duplicados, etapa inexistente, campo inexistente, regra de visibilidade inválida, ferramenta com referência inválida), resolução pelo registry e comportamento do renderer declarativo. Detalhes do contrato: [`../architecture/PROTOCOL_CONTRACT.md`](../architecture/PROTOCOL_CONTRACT.md).
+
+Ao adicionar um cenário, o gate mínimo é: `validateProtocol` sem erros, teste de comportamento das ferramentas do cenário e revalidação manual de desktop, mobile e PWA.
 
 ## PWA
 

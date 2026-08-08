@@ -1,4 +1,4 @@
-const CACHE_NAME = 'zera-ps-v4';
+const CACHE_NAME = 'zera-ps-v5';
 
 const APP_SHELL = [
   './',
@@ -26,6 +26,10 @@ const APP_SHELL = [
   './src/workflow-engine.js',
   './src/score-engine.js',
   './src/document-engine.js',
+  './src/protocol-schema.js',
+  './src/protocol-engine.js',
+  './src/protocol-registry.js',
+  './src/protocol-renderer.js',
   './protocols/sca.js'
 ];
 

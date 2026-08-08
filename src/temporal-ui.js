@@ -9,7 +9,15 @@ import {
   startReassessment
 } from './workflow-engine.js';
 import { createToolState, evaluateToolState, setToolApplied } from './score-engine.js';
-import { HEART_TOOL } from '../protocols/sca.js';
+import { getProtocol, listProtocolOptions } from './protocol-registry.js';
+import {
+  applyPersistedToolIntent,
+  deriveTemporalOperations,
+  readPersistedToolApplication,
+  resolveToolVariables,
+  serializeToolApplications
+} from './protocol-engine.js';
+import { createProtocolRenderer } from './protocol-renderer.js';
 import { createEncounterStorage } from './storage.js';
 import {
   renderTemporalReassessment,
@@ -28,58 +36,24 @@ const STAGE_LABELS = Object.freeze({
 });
 
 let encounter = encounterStorage.loadActiveEncounter();
-let heartState = createToolState(HEART_TOOL);
+let protocol = null;
+let renderer = null;
+let toolStates = {};
 
-function nullableNumber(id) {
-  const value = $(id)?.value;
-  return value === '' || value === undefined ? null : Number(value);
+function currentStage() {
+  return encounter?.currentStage || WORKFLOW_STAGES.INITIAL_ASSESSMENT;
+}
+
+function protocolContext() {
+  return renderer ? renderer.readContext() : {};
+}
+
+function toolStateList() {
+  return Object.values(toolStates);
 }
 
 function readTemporalContext() {
-  return {
-    suspectedAcs: Boolean($('sca-suspected')?.checked),
-    ecgStatus: $('sca-ecg-status')?.value || 'not_informed',
-    ecgResult: $('sca-ecg-result')?.value || '',
-    troponinStatus: $('sca-troponin-status')?.value || 'not_informed',
-    troponinValue: $('sca-troponin-value')?.value || '',
-    troponinRatio: nullableNumber('sca-troponin-ratio'),
-    heartHistory: nullableNumber('heart-history'),
-    heartEcg: nullableNumber('heart-ecg'),
-    heartAge: nullableNumber('heart-age'),
-    heartRisk: nullableNumber('heart-risk'),
-    heartApplied: Boolean(heartState.applied)
-  };
-}
-
-function currentScenarioContext() {
-  const context = readTemporalContext();
-  return {
-    suspectedAcs: context.suspectedAcs,
-    heartHistory: context.heartHistory,
-    heartEcg: context.heartEcg,
-    age: context.heartAge,
-    heartRiskFactors: context.heartRisk,
-    troponinRatio: context.troponinStatus === 'available' ? context.troponinRatio : null
-  };
-}
-
-function restoreInput(id, value) {
-  const node = $(id);
-  if (!node || value === null || value === undefined) return;
-  node.value = String(value);
-}
-
-function restoreTemporalContext(context = {}) {
-  if ($('sca-suspected')) $('sca-suspected').checked = Boolean(context.suspectedAcs);
-  restoreInput('sca-ecg-status', context.ecgStatus || 'not_informed');
-  restoreInput('sca-ecg-result', context.ecgResult || '');
-  restoreInput('sca-troponin-status', context.troponinStatus || 'not_informed');
-  restoreInput('sca-troponin-value', context.troponinValue || '');
-  restoreInput('sca-troponin-ratio', context.troponinRatio);
-  restoreInput('heart-history', context.heartHistory);
-  restoreInput('heart-ecg', context.heartEcg);
-  restoreInput('heart-age', context.heartAge);
-  restoreInput('heart-risk', context.heartRisk);
+  return { ...protocolContext(), appliedTools: serializeToolApplications(toolStateList()) };
 }
 
 function persistEncounter() {
@@ -99,13 +73,10 @@ function renderStage() {
   badge.dataset.stage = encounter?.currentStage || 'none';
 }
 
-function renderScenarioVisibility() {
-  const isSca = $('workflow-scenario')?.value === 'sca';
-  if ($('workflow-context')) $('workflow-context').hidden = !isSca;
-  const suspected = Boolean($('sca-suspected')?.checked);
-  if ($('sca-details')) $('sca-details').hidden = !(isSca && suspected);
-  if ($('sca-ecg-result-field')) $('sca-ecg-result-field').hidden = $('sca-ecg-status')?.value !== 'available';
-  if ($('sca-troponin-result-fields')) $('sca-troponin-result-fields').hidden = $('sca-troponin-status')?.value !== 'available';
+function renderProtocolVisibility() {
+  if ($('workflow-context')) $('workflow-context').hidden = !protocol;
+  if (!renderer) return;
+  renderer.update({ stage: currentStage(), context: protocolContext() });
 }
 
 function ensurePendingItem(id, kind, label) {
@@ -123,19 +94,21 @@ function markAvailable(id, result) {
 }
 
 function syncTemporalResults() {
-  if (!encounter || $('workflow-scenario')?.value !== 'sca') return;
-  const context = readTemporalContext();
+  if (!encounter || !protocol || !renderer) return;
+  const context = protocolContext();
 
-  if (context.ecgStatus === 'pending') ensurePendingItem('ecg_initial', 'ecg', 'ECG');
-  if (context.ecgStatus === 'available') markAvailable('ecg_initial', {
-    kind: 'ecg', label: 'ECG', value: context.ecgResult, availableAt: new Date().toISOString()
-  });
-
-  if (context.troponinStatus === 'pending') ensurePendingItem('troponin_1', 'troponin', 'Troponina');
-  if (context.troponinStatus === 'available') markAvailable('troponin_1', {
-    kind: 'troponin', label: 'Troponina', value: context.troponinValue,
-    ratio: context.troponinRatio, availableAt: new Date().toISOString()
-  });
+  for (const operation of deriveTemporalOperations(protocol, context)) {
+    if (operation.action === 'pending') {
+      ensurePendingItem(operation.id, operation.kind, operation.label);
+      continue;
+    }
+    markAvailable(operation.id, {
+      kind: operation.kind,
+      label: operation.label,
+      ...operation.payload,
+      availableAt: new Date().toISOString()
+    });
+  }
 
   const hasPending = (encounter.pendingItems || []).some((item) => item.status === 'pending');
   if (hasPending && ![WORKFLOW_STAGES.PENDING_RESULTS, WORKFLOW_STAGES.REASSESSMENT].includes(encounter.currentStage)) {
@@ -165,48 +138,83 @@ function renderPending() {
   ].join('');
 }
 
-function ensureHeartApplyButton() {
-  const status = $('heart-tool-status');
-  if (!status || $('heart-apply-tool')) return;
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.id = 'heart-apply-tool';
-  button.className = 'button button-secondary button-small';
-  button.hidden = true;
-  button.addEventListener('click', () => {
-    heartState = setToolApplied(heartState, !heartState.applied);
-    persistTemporalContext();
-    updateHeart();
-  });
-  status.insertAdjacentElement('afterend', button);
+function renderToolState(tool, state) {
+  const nodes = renderer?.getToolNodes(tool.id);
+  if (!nodes?.status) return;
+  const { status, button } = nodes;
+
+  if (state.applicability !== 'applicable') {
+    status.dataset.state = 'available';
+    status.textContent = tool.messages?.notApplicable
+      || `${tool.label} DISPONÍVEL PARA O CENÁRIO — AINDA NÃO PERTINENTE NESTE CASO.`;
+    if (button) button.hidden = true;
+    return;
+  }
+  if (state.calculability !== 'calculable') {
+    status.dataset.state = 'incomplete';
+    status.textContent = state.message
+      || tool.messages?.incomplete
+      || `${tool.label} NÃO CALCULADO — COMPLETE AS VARIÁVEIS OBRIGATÓRIAS.`;
+    if (button) button.hidden = true;
+    return;
+  }
+  status.dataset.state = 'complete';
+  status.textContent = `${tool.label}: ${state.score} ${state.score === 1 ? 'PONTO' : 'PONTOS'} — ${state.interpretation}${state.applied ? ' · INCLUÍDO NO REGISTRO' : ' · AINDA NÃO INCLUÍDO NO REGISTRO'}`;
+  if (button) {
+    button.hidden = false;
+    button.textContent = state.applied ? `Remover ${tool.label} do registro` : `Incluir ${tool.label} no registro`;
+  }
 }
 
-function updateHeart() {
-  heartState = evaluateToolState(HEART_TOOL, heartState, currentScenarioContext());
-  if (heartState.calculability === 'calculable' && encounter?.context?.heartApplied && !heartState.applied) {
-    heartState = setToolApplied(heartState, true, encounter.context.heartAppliedAt || new Date().toISOString());
+function updateTools() {
+  if (!protocol || !renderer) return;
+  const context = protocolContext();
+  for (const tool of protocol.tools || []) {
+    const evaluated = evaluateToolState(tool, toolStates[tool.id] || createToolState(tool), resolveToolVariables(tool, context));
+    const intent = readPersistedToolApplication(encounter?.context, tool.id);
+    const state = applyPersistedToolIntent(evaluated, intent);
+    toolStates[tool.id] = state;
+    renderToolState(tool, state);
   }
-  const node = $('heart-tool-status');
-  const applyButton = $('heart-apply-tool');
-  if (!node) return;
+}
 
-  if (heartState.applicability !== 'applicable') {
-    node.dataset.state = 'available';
-    node.textContent = 'HEART DISPONÍVEL PARA O CENÁRIO — AINDA NÃO PERTINENTE SEM SUSPEITA CLÍNICA DE SCA / EQUIVALENTE ANGINOSO.';
-    if (applyButton) applyButton.hidden = true;
+function handleToolApply(toolId) {
+  const state = toolStates[toolId];
+  if (!state) return;
+  if (!state.applied && state.calculability !== 'calculable') return;
+  toolStates[toolId] = setToolApplied(state, !state.applied);
+  persistTemporalContext();
+  updateTools();
+}
+
+function mountProtocol(protocolId) {
+  protocol = protocolId ? getProtocol(protocolId) : null;
+  toolStates = {};
+  renderer = null;
+  const mount = $('workflow-protocol-fields');
+  if (!mount) return;
+  if (!protocol) {
+    mount.replaceChildren();
     return;
   }
-  if (heartState.calculability !== 'calculable') {
-    node.dataset.state = 'incomplete';
-    node.textContent = heartState.message || 'HEART SCORE NÃO CALCULADO — COMPLETE AS VARIÁVEIS OBRIGATÓRIAS.';
-    if (applyButton) applyButton.hidden = true;
-    return;
-  }
-  node.dataset.state = 'complete';
-  node.textContent = `HEART: ${heartState.score} ${heartState.score === 1 ? 'PONTO' : 'PONTOS'} — ${heartState.interpretation}${heartState.applied ? ' · INCLUÍDO NO REGISTRO' : ' · AINDA NÃO INCLUÍDO NO REGISTRO'}`;
-  if (applyButton) {
-    applyButton.hidden = false;
-    applyButton.textContent = heartState.applied ? 'Remover HEART do registro' : 'Incluir HEART no registro';
+  renderer = createProtocolRenderer({
+    protocol,
+    mount,
+    onFieldChange: handleContextChange,
+    onToolApply: handleToolApply
+  });
+  for (const tool of protocol.tools || []) toolStates[tool.id] = createToolState(tool);
+}
+
+function populateScenarioOptions() {
+  const select = $('workflow-scenario');
+  if (!select) return;
+  for (const item of listProtocolOptions()) {
+    if (select.querySelector(`option[value="${item.id}"]`)) continue;
+    const option = document.createElement('option');
+    option.value = item.id;
+    option.textContent = item.label;
+    select.appendChild(option);
   }
 }
 
@@ -225,8 +233,8 @@ function handleScenarioChange() {
   if (!scenario) {
     encounter = null;
     encounterStorage.clearActiveEncounter();
-    heartState = createToolState(HEART_TOOL);
-    renderScenarioVisibility();
+    mountProtocol('');
+    renderProtocolVisibility();
     renderStage();
     renderPending();
     return;
@@ -235,26 +243,30 @@ function handleScenarioChange() {
   if (!encounter || encounter.workflowId !== scenario) {
     encounter = createEncounter({ workflowId: scenario, admissionSnapshot: {}, context: {} });
   }
+  mountProtocol(scenario);
+  renderer?.setContext(encounter.context || {});
   persistTemporalContext();
-  renderScenarioVisibility();
+  renderProtocolVisibility();
   renderStage();
   renderPending();
-  updateHeart();
+  updateTools();
 }
 
 function handleContextChange() {
-  if (heartState.applied) heartState = setToolApplied(heartState, false);
+  for (const [id, state] of Object.entries(toolStates)) {
+    if (state.applied) toolStates[id] = setToolApplied(state, false);
+  }
   persistTemporalContext();
-  renderScenarioVisibility();
+  renderProtocolVisibility();
   syncTemporalResults();
-  updateHeart();
+  updateTools();
 }
 
 function handleEvolutionGenerated() {
   if (!encounter) return;
   const output = $('evolution-output');
   if (!output) return;
-  output.value = injectScoresIntoEvolution(output.value, [heartState]);
+  output.value = injectScoresIntoEvolution(output.value, toolStateList());
   captureAdmissionSnapshot();
 }
 
@@ -265,6 +277,7 @@ function handleStartReassessment() {
   encounter = startReassessment(encounter);
   persistEncounter();
   renderStage();
+  renderProtocolVisibility();
   document.querySelector('.nav-button[data-view="reavaliacao"]')?.click();
 }
 
@@ -275,14 +288,15 @@ function splitLines(value) {
 function handleReassessmentGenerated() {
   if (!encounter) return;
   persistTemporalContext();
-  updateHeart();
+  updateTools();
+  const scores = toolStateList();
   const admission = encounter.admissionSnapshot || {};
   const narrativeParts = [$('reav-evolucao')?.value || '', $('reav-exames')?.value || '']
     .map((item) => item.trim()).filter(Boolean);
   const carryForwardSections = extractCarryForwardSections(admission.evolutionText || $('evolution-output')?.value || '');
   const output = renderTemporalReassessment({
     qp: admission.qp || $('qp')?.value || '',
-    scores: [heartState],
+    scores,
     admissionHda: admission.hda || $('hda')?.value || '',
     reassessmentNarrative: narrativeParts.join(' '),
     carryForwardSections,
@@ -296,7 +310,7 @@ function handleReassessmentGenerated() {
       ...reassessments[reassessments.length - 1],
       generatedAt: new Date().toISOString(),
       narrative: narrativeParts.join(' '),
-      scores: heartState.applied ? [heartState] : [],
+      scores: scores.filter((state) => state.applied),
       conduct: splitLines($('reav-conduta')?.value),
       document: output
     };
@@ -306,13 +320,14 @@ function handleReassessmentGenerated() {
 }
 
 function restoreTemporalUi() {
-  if (!encounter) return;
-  if ($('workflow-scenario')) $('workflow-scenario').value = encounter.workflowId || '';
-  restoreTemporalContext(encounter.context || {});
-  renderScenarioVisibility();
+  const scenario = encounter?.workflowId || '';
+  if ($('workflow-scenario')) $('workflow-scenario').value = scenario;
+  mountProtocol(scenario);
+  renderer?.setContext(encounter?.context || {});
+  renderProtocolVisibility();
   renderStage();
   renderPending();
-  updateHeart();
+  updateTools();
 }
 
 function injectTemporalStyles() {
@@ -333,8 +348,6 @@ function injectTemporalStyles() {
 
 function bindTemporalEvents() {
   $('workflow-scenario')?.addEventListener('change', handleScenarioChange);
-  ['sca-suspected','sca-ecg-status','sca-ecg-result','sca-troponin-status','sca-troponin-value','sca-troponin-ratio','heart-history','heart-ecg','heart-age','heart-risk']
-    .forEach((id) => $(id)?.addEventListener('input', handleContextChange));
   $('reassess-encounter')?.addEventListener('click', handleStartReassessment);
   $('generate-evolution')?.addEventListener('click', () => queueMicrotask(handleEvolutionGenerated));
   $('generate-reassessment')?.addEventListener('click', () => queueMicrotask(handleReassessmentGenerated));
@@ -342,12 +355,9 @@ function bindTemporalEvents() {
 
 function initTemporalWorkflow() {
   injectTemporalStyles();
-  ensureHeartApplyButton();
+  populateScenarioOptions();
   restoreTemporalUi();
   bindTemporalEvents();
-  renderStage();
-  renderPending();
-  updateHeart();
 }
 
 document.addEventListener('DOMContentLoaded', initTemporalWorkflow);

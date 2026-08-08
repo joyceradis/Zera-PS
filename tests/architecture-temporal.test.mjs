@@ -7,6 +7,10 @@ const requiredFiles = [
   'src/clinical-state.js',
   'src/workflow-engine.js',
   'src/score-engine.js',
+  'src/protocol-schema.js',
+  'src/protocol-engine.js',
+  'src/protocol-registry.js',
+  'src/protocol-renderer.js',
   'src/document-engine.js',
   'src/storage.js',
   'src/ui.js',
@@ -14,6 +18,17 @@ const requiredFiles = [
   'src/templates.js',
   'protocols/sca.js'
 ];
+
+const GENERIC_MODULES = [
+  'src/workflow-engine.js',
+  'src/score-engine.js',
+  'src/protocol-schema.js',
+  'src/protocol-engine.js',
+  'src/protocol-renderer.js',
+  'src/temporal-ui.js'
+];
+
+const CLINICAL_TERMS = [/\bheart\b/i, /tropon/i, /angin/i, /suspectedAcs/, /\becg\b/i, /\bsca\b/i];
 
 test('temporal architecture files exist in the new house', async () => {
   const missing = [];
@@ -32,4 +47,29 @@ test('root app.js imports implementation from src and does not contain clinical 
   const root = await readFile('app.js', 'utf8');
   assert.match(root, /src\/app\.js/);
   assert.doesNotMatch(root, /suspectedAcs|HEART|troponin/i);
+});
+
+test('generic engines carry no scenario specific clinical vocabulary', async () => {
+  for (const path of GENERIC_MODULES) {
+    const source = await readFile(path, 'utf8');
+    for (const term of CLINICAL_TERMS) {
+      assert.doesNotMatch(source, term, `${path} não deve conhecer conceitos clínicos de um cenário específico`);
+    }
+  }
+});
+
+test('only the registry resolves concrete protocol configurations', async () => {
+  const registry = await readFile('src/protocol-registry.js', 'utf8');
+  assert.match(registry, /from '\.\.\/protocols\/sca\.js'/);
+
+  const temporalUi = await readFile('src/temporal-ui.js', 'utf8');
+  assert.doesNotMatch(temporalUi, /protocols\//);
+  assert.match(temporalUi, /protocol-registry\.js/);
+});
+
+test('service worker caches every protocol infrastructure module', async () => {
+  const serviceWorker = await readFile('service-worker.js', 'utf8');
+  for (const path of ['src/protocol-schema.js', 'src/protocol-engine.js', 'src/protocol-registry.js', 'src/protocol-renderer.js', 'protocols/sca.js']) {
+    assert.match(serviceWorker, new RegExp(`'\\./${path.replace('/', '\\/')}'`));
+  }
 });

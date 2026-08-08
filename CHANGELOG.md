@@ -4,6 +4,14 @@ Registro de marcos relevantes do Zera PS. Commits e pull requests permanecem com
 
 ## 2026-08-08
 
+### Infraestrutura de protocolos clínicos
+
+- contrato formal de protocolo com validador determinístico e falha explícita em configuração inválida;
+- registry único de cenários; a interface deixou de importar ferramenta clínica concreta;
+- renderer declarativo do contexto clínico, com etapa, `visibleWhen` e acessibilidade preservadas;
+- SCA migrado como implementação de referência do contrato, sem novos protocolos;
+- aplicação de ferramenta persistida por id, com leitura compatível do formato anterior.
+
 ### Workflow temporal
 
 - Atendimento v3 com etapas temporais, contexto, pendências e reavaliações;

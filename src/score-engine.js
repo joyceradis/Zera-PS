@@ -21,6 +21,11 @@ function evaluateRule(rule, context = {}) {
   return context[rule.field] === rule.equals;
 }
 
+function isMissingValue(value) {
+  if (value === null || value === undefined || value === '') return true;
+  return typeof value === 'number' && !Number.isFinite(value);
+}
+
 function evaluateToolState(tool, state, context = {}) {
   const availability = tool.availability || state.availability || 'unavailable';
   if (availability !== 'available') {
@@ -44,7 +49,7 @@ function evaluateToolState(tool, state, context = {}) {
     };
   }
 
-  const missingVariables = (tool.requiredVariables || []).filter((key) => context[key] === null || context[key] === undefined || context[key] === '');
+  const missingVariables = (tool.requiredVariables || []).filter((key) => isMissingValue(context[key]));
   if (missingVariables.length) {
     const first = missingVariables[0];
     return {
@@ -63,6 +68,21 @@ function evaluateToolState(tool, state, context = {}) {
   }
 
   const score = tool.calculate(context);
+  if (!Number.isFinite(score)) {
+    return {
+      ...state,
+      availability,
+      applicability: 'applicable',
+      calculability: 'not_calculable',
+      applied: false,
+      appliedAt: null,
+      status: 'incomplete',
+      score: null,
+      interpretation: null,
+      missingVariables: [...(tool.requiredVariables || [])],
+      message: tool.messages?.incomplete || `${tool.label} não calculado: dado obrigatório ainda não informado.`
+    };
+  }
   return {
     ...state,
     availability,
