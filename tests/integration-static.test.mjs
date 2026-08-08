@@ -3,15 +3,19 @@ import assert from 'node:assert/strict';
 import { readFile, access } from 'node:fs/promises';
 
 const appHtml = await readFile('app.html', 'utf8');
-const appJs = await readFile('assets/app.js', 'utf8');
+const legacyApp = await readFile('assets/app.js', 'utf8');
+const temporalUi = await readFile('src/temporal-ui.js', 'utf8');
+const rootApp = await readFile('app.js', 'utf8');
 const serviceWorker = await readFile('service-worker.js', 'utf8');
 
-test('application loads the coordinator as an ES module', () => {
-  assert.match(appHtml, /<script\s+type="module"\s+src="assets\/app\.js"><\/script>/);
+test('application loads the root coordinator as an ES module', () => {
+  assert.match(appHtml, /<script\s+type="module"\s+src="app\.js"><\/script>/);
+  assert.match(rootApp, /src\/app\.js/);
 });
 
-test('every direct DOM id referenced by app.js exists in app.html', () => {
-  const ids = [...appJs.matchAll(/(?<!\$)\$\('([^']+)'\)/g)].map((match) => match[1]);
+test('every direct DOM id referenced by application layers exists in app.html', () => {
+  const source = `${legacyApp}\n${temporalUi}`;
+  const ids = [...source.matchAll(/(?<!\$)\$\('([^']+)'\)/g)].map((match) => match[1]);
   const uniqueIds = [...new Set(ids)];
   const missing = uniqueIds.filter((id) => !appHtml.includes(`id="${id}"`));
   assert.deepEqual(missing, []);
