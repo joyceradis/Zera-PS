@@ -7,10 +7,10 @@ Roadmap orientado por **risco + gate verificável**. Quantidade de telas não de
 | Fase | Estado | Gate principal |
 | --- | --- | --- |
 | 0. Fundação de segurança | Concluída | Sem fabricação clínica |
-| 1. Workflow temporal | v1 implementada | Reavaliação preserva admissão |
+| 1. Workflow temporal | v1.1 implementada | Reavaliação preserva admissão e resultados seriados |
 | 2. Progressive disclosure | Referência SCA implementada | Motor continua genérico |
-| 3. Ferramentas clínicas | Em evolução | `available ≠ applicable ≠ calculable` |
-| 4. Documento temporal | v1 implementada | Dado antigo não aparece como novo |
+| 3. Ferramentas clínicas | v1.1 implementada | `available ≠ applicable ≠ calculable ≠ applied` |
+| 4. Documento temporal | v1.1 implementada | Estado operacional não vaza para o prontuário |
 | 5. Persistência/histórico | Parcial | Sem perda ou reinterpretação de estado |
 | 6. Fluxo operacional | Planejada | Menor atrito sem omissões |
 | 7. Novos cenários | Bloqueada por validação SCA | Configuração antes de código |
@@ -34,9 +34,11 @@ initial_assessment
 → final_documentation
 ```
 
-Concluído em v1: schema v3, etapa atual, histórico, snapshot de admissão, pendências/resultados, reavaliações filhas, `Reavaliar atendimento`, persistência temporal independente e proteção do snapshot após início das reavaliações.
+Concluído: schema v3, etapa atual, histórico, snapshot de admissão, pendências, `results[]` temporal append-only, reavaliações filhas, `Reavaliar atendimento`, persistência temporal independente e proteção do snapshot após início das reavaliações.
 
-Próximos itens: múltiplos Atendimentos, fila de reavaliações e destino como estado formal.
+Resultados seriados passam a ser eventos distintos. Troponina inicial não é sobrescrita por troponina de controle. O mesmo modelo deverá ser reutilizado para ECG, sinais vitais e demais variáveis temporais.
+
+Próximos itens: UI explícita para múltiplas coletas/resultados seriados, múltiplos Atendimentos, fila de reavaliações e destino como estado formal.
 
 ## 2 — Progressive disclosure e configurações clínicas
 
@@ -49,12 +51,12 @@ Próximos itens: renderer declarativo, schema/validador de protocolos e garantia
 Princípio obrigatório:
 
 ```text
-available ≠ applicable ≠ calculable
+available ≠ applicable ≠ calculable ≠ applied
 ```
 
-Concluído: estado genérico, variáveis faltantes, HEART contextual, bloqueio de cálculo sem troponina e `# SCORES:` apenas para ferramenta aplicada e calculada.
+Concluído: estado genérico, variáveis faltantes, HEART contextual, bloqueio de cálculo sem troponina, cálculo determinístico quando completo e aplicação documental explícita. Uma ferramenta calculável não entra automaticamente em `# SCORES:`.
 
-Próximos itens: validar UX do HEART, persistir versão/metadados do instrumento, classificar ferramentas (`score`, `checklist`, `rule`, `calculator`, `reference`) e implementar SNNOOP10 como checklist estruturada.
+Próximos itens: validar UX do HEART no plantão, persistir versão/metadados do instrumento, classificar ferramentas (`score`, `checklist`, `rule`, `calculator`, `reference`) e implementar SNNOOP10 como checklist estruturada.
 
 ## 4 — Documento temporal
 
@@ -77,6 +79,8 @@ Contrato protegido de reavaliação:
 # CONDUTA:
 - ...
 ```
+
+Regra nova formalizada: **estado operacional ≠ conteúdo documental**. Pendência de troponina, HEART incompleto e avisos de workflow permanecem na interface e não entram automaticamente no documento.
 
 Próximos itens: versionamento de template institucional, política fina de carry-forward, snapshot explícito de exame físico reavaliado e regressão textual por template.
 
