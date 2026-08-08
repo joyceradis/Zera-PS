@@ -8,7 +8,7 @@ import {
   resolvePendingItem,
   startReassessment
 } from './workflow-engine.js';
-import { createToolState, evaluateToolState } from './score-engine.js';
+import { createToolState, evaluateToolState, setToolApplied } from './score-engine.js';
 import { HEART_TOOL } from '../protocols/sca.js';
 import { createEncounterStorage } from './storage.js';
 import {
@@ -46,7 +46,8 @@ function readTemporalContext() {
     heartHistory: nullableNumber('heart-history'),
     heartEcg: nullableNumber('heart-ecg'),
     heartAge: nullableNumber('heart-age'),
-    heartRisk: nullableNumber('heart-risk')
+    heartRisk: nullableNumber('heart-risk'),
+    heartApplied: Boolean(heartState.applied)
   };
 }
 
@@ -130,9 +131,9 @@ function syncTemporalResults() {
     kind: 'ecg', label: 'ECG', value: context.ecgResult, availableAt: new Date().toISOString()
   });
 
-  if (context.troponinStatus === 'pending') ensurePendingItem('troponin_1', 'lab', 'Troponina');
+  if (context.troponinStatus === 'pending') ensurePendingItem('troponin_1', 'troponin', 'Troponina');
   if (context.troponinStatus === 'available') markAvailable('troponin_1', {
-    kind: 'lab', label: 'Troponina', value: context.troponinValue,
+    kind: 'troponin', label: 'Troponina', value: context.troponinValue,
     ratio: context.troponinRatio, availableAt: new Date().toISOString()
   });
 
@@ -164,23 +165,49 @@ function renderPending() {
   ].join('');
 }
 
+function ensureHeartApplyButton() {
+  const status = $('heart-tool-status');
+  if (!status || $('heart-apply-tool')) return;
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.id = 'heart-apply-tool';
+  button.className = 'button button-secondary button-small';
+  button.hidden = true;
+  button.addEventListener('click', () => {
+    heartState = setToolApplied(heartState, !heartState.applied);
+    persistTemporalContext();
+    updateHeart();
+  });
+  status.insertAdjacentElement('afterend', button);
+}
+
 function updateHeart() {
   heartState = evaluateToolState(HEART_TOOL, heartState, currentScenarioContext());
+  if (heartState.calculability === 'calculable' && encounter?.context?.heartApplied && !heartState.applied) {
+    heartState = setToolApplied(heartState, true, encounter.context.heartAppliedAt || new Date().toISOString());
+  }
   const node = $('heart-tool-status');
+  const applyButton = $('heart-apply-tool');
   if (!node) return;
 
   if (heartState.applicability !== 'applicable') {
     node.dataset.state = 'available';
     node.textContent = 'HEART DISPONÍVEL PARA O CENÁRIO — AINDA NÃO PERTINENTE SEM SUSPEITA CLÍNICA DE SCA / EQUIVALENTE ANGINOSO.';
+    if (applyButton) applyButton.hidden = true;
     return;
   }
   if (heartState.calculability !== 'calculable') {
     node.dataset.state = 'incomplete';
     node.textContent = heartState.message || 'HEART SCORE NÃO CALCULADO — COMPLETE AS VARIÁVEIS OBRIGATÓRIAS.';
+    if (applyButton) applyButton.hidden = true;
     return;
   }
   node.dataset.state = 'complete';
-  node.textContent = `HEART: ${heartState.score} ${heartState.score === 1 ? 'PONTO' : 'PONTOS'} — ${heartState.interpretation}`;
+  node.textContent = `HEART: ${heartState.score} ${heartState.score === 1 ? 'PONTO' : 'PONTOS'} — ${heartState.interpretation}${heartState.applied ? ' · INCLUÍDO NO REGISTRO' : ' · AINDA NÃO INCLUÍDO NO REGISTRO'}`;
+  if (applyButton) {
+    applyButton.hidden = false;
+    applyButton.textContent = heartState.applied ? 'Remover HEART do registro' : 'Incluir HEART no registro';
+  }
 }
 
 function captureAdmissionSnapshot() {
@@ -216,6 +243,7 @@ function handleScenarioChange() {
 }
 
 function handleContextChange() {
+  if (heartState.applied) heartState = setToolApplied(heartState, false);
   persistTemporalContext();
   renderScenarioVisibility();
   syncTemporalResults();
@@ -268,7 +296,7 @@ function handleReassessmentGenerated() {
       ...reassessments[reassessments.length - 1],
       generatedAt: new Date().toISOString(),
       narrative: narrativeParts.join(' '),
-      scores: heartState.calculability === 'calculable' ? [heartState] : [],
+      scores: heartState.applied ? [heartState] : [],
       conduct: splitLines($('reav-conduta')?.value),
       document: output
     };
@@ -314,6 +342,7 @@ function bindTemporalEvents() {
 
 function initTemporalWorkflow() {
   injectTemporalStyles();
+  ensureHeartApplyButton();
   restoreTemporalUi();
   bindTemporalEvents();
   renderStage();
