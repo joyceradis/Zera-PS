@@ -7,7 +7,7 @@ on:
       - refactor/clinical-safety-foundation
 
 jobs:
-  test:
+  verify:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -16,5 +16,5 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Run tests
-        run: npm test
+      - name: Verify
+        run: npm run verify
