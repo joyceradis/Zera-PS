@@ -7,7 +7,9 @@ import {
   addPendingItem,
   resolvePendingItem,
   startReassessment,
-  getVisibleSections
+  getVisibleSections,
+  updateEncounterContext,
+  updateAdmissionSnapshot
 } from '../src/workflow-engine.js';
 import { SCA_PROTOCOL } from '../protocols/sca.js';
 
@@ -17,6 +19,7 @@ test('new encounter starts at initial assessment without inventing pending items
   assert.equal(encounter.currentStage, WORKFLOW_STAGES.INITIAL_ASSESSMENT);
   assert.deepEqual(encounter.pendingItems, []);
   assert.deepEqual(encounter.reassessments, []);
+  assert.deepEqual(encounter.context, {});
 });
 
 test('workflow stages progress explicitly and preserve previous stage timestamps', () => {
@@ -64,4 +67,20 @@ test('progressive disclosure uses both stage and clinical context', () => {
 
   const pendingStage = getVisibleSections(SCA_PROTOCOL, WORKFLOW_STAGES.PENDING_RESULTS, { suspectedAcs: true });
   assert.deepEqual(pendingStage.map((section) => section.id), ['troponin']);
+});
+
+test('workflow context is persisted as explicit state without mutating the previous encounter', () => {
+  const initial = createEncounter({ workflowId: 'sca' });
+  const updated = updateEncounterContext(initial, { suspectedAcs: true, troponinStatus: 'pending' });
+  assert.deepEqual(initial.context, {});
+  assert.deepEqual(updated.context, { suspectedAcs: true, troponinStatus: 'pending' });
+});
+
+test('admission snapshot can be refreshed before reassessment and becomes immutable afterwards', () => {
+  const initial = createEncounter({ workflowId: 'sca', admissionSnapshot: { qp: 'DOR', hda: 'HDA 1' } });
+  const refreshed = updateAdmissionSnapshot(initial, { qp: 'DOR TORÁCICA', hda: 'HDA FINAL DA ADMISSÃO' }, '2026-08-08T10:30:00.000Z');
+  assert.equal(refreshed.admissionSnapshot.hda, 'HDA FINAL DA ADMISSÃO');
+  const reassessed = startReassessment(refreshed, '2026-08-08T11:00:00.000Z');
+  const attemptedRewrite = updateAdmissionSnapshot(reassessed, { qp: 'OUTRA', hda: 'NÃO DEVE SUBSTITUIR' }, '2026-08-08T11:05:00.000Z');
+  assert.equal(attemptedRewrite.admissionSnapshot.hda, 'HDA FINAL DA ADMISSÃO');
 });
