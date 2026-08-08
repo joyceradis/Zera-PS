@@ -7,7 +7,7 @@ const legacyApp = await readFile('assets/app.js', 'utf8');
 const temporalUi = await readFile('src/temporal-ui.js', 'utf8');
 const rootApp = await readFile('app.js', 'utf8');
 const serviceWorker = await readFile('service-worker.js', 'utf8');
-const DYNAMIC_IDS = new Set(['zera-temporal-styles']);
+const DYNAMIC_IDS = new Set(['zera-temporal-styles', 'heart-apply-tool']);
 
 test('application loads the root coordinator as an ES module', () => {
   assert.match(appHtml, /<script\s+type="module"\s+src="app\.js"><\/script>/);
@@ -20,6 +20,12 @@ test('every static DOM id referenced by application layers exists in app.html', 
   const uniqueIds = [...new Set(ids)].filter((id) => !DYNAMIC_IDS.has(id));
   const missing = uniqueIds.filter((id) => !appHtml.includes(`id="${id}"`));
   assert.deepEqual(missing, []);
+});
+
+test('declared dynamic ids are actually created by application code', () => {
+  for (const id of DYNAMIC_IDS) {
+    assert.match(temporalUi, new RegExp(`(?:id\\s*=\\s*['\"]${id}['\"]|\\.id\\s*=\\s*['\"]${id}['\"])`));
+  }
 });
 
 test('PWA app shell contains only existing local files', async () => {
