@@ -29,7 +29,7 @@
       <header class="app-header">
         <button class="icon-button menu-button" id="menu-button" aria-label="Abrir menu">Menu</button>
         <div><p class="eyebrow">PLANTÃO ATIVO</p><h1 id="view-title">Evolução</h1></div>
-        <div class="header-actions"><span class="offline-badge" id="connection-status">ONLINE</span><button class="button button-ghost button-small" id="install-button" hidden>Instalar</button></div>
+        <div class="header-actions"><span class="workflow-stage-badge" id="workflow-stage">SEM CENÁRIO</span><span class="offline-badge" id="connection-status">ONLINE</span><button class="button button-ghost button-small" id="install-button" hidden>Instalar</button></div>
       </header>
 
       <section class="view active" id="view-evolucao" data-title="Evolução">
@@ -38,6 +38,48 @@
           <section class="form-panel">
             <div class="section-heading"><div><p class="section-kicker">ATALHOS CLÍNICOS</p><h2>Comece por um cenário</h2></div><button class="text-button" id="clear-template" type="button">Remover roteiro</button></div>
             <div class="template-grid" id="template-grid"></div>
+
+            <section class="workflow-card" aria-labelledby="workflow-title">
+              <div class="section-heading compact"><div><p class="section-kicker">WORKFLOW CONTEXTUAL</p><h2 id="workflow-title">Escolha o cenário. Preencha o essencial.</h2></div></div>
+              <label class="field"><span>Cenário do atendimento</span>
+                <select id="workflow-scenario">
+                  <option value="">SEM WORKFLOW ESPECÍFICO</option>
+                  <option value="sca">DOR TORÁCICA / SUSPEITA DE SCA</option>
+                </select>
+                <small>O cenário organiza campos e ferramentas. Não define diagnóstico ou conduta.</small>
+              </label>
+
+              <div id="workflow-context" hidden>
+                <label class="toggle-row"><input type="checkbox" id="sca-suspected"><span>Suspeita clínica de SCA / equivalente anginoso</span></label>
+
+                <div id="sca-details" hidden>
+                  <div class="field-grid two-columns">
+                    <label class="field"><span>ECG</span><select id="sca-ecg-status"><option value="not_informed">NÃO INFORMADO</option><option value="pending">SOLICITADO / PENDENTE</option><option value="available">DISPONÍVEL</option><option value="not_applicable">NÃO APLICÁVEL</option></select></label>
+                    <label class="field"><span>Troponina</span><select id="sca-troponin-status"><option value="not_informed">NÃO INFORMADA</option><option value="pending">SOLICITADA / PENDENTE</option><option value="available">DISPONÍVEL</option><option value="not_applicable">NÃO APLICÁVEL</option></select></label>
+                  </div>
+
+                  <label class="field" id="sca-ecg-result-field" hidden><span>Resultado / descrição do ECG</span><textarea id="sca-ecg-result" rows="3" placeholder="DESCREVA O ECG EFETIVAMENTE DISPONÍVEL"></textarea></label>
+                  <div class="field-grid two-columns" id="sca-troponin-result-fields" hidden>
+                    <label class="field"><span>Troponina — valor</span><input id="sca-troponin-value" placeholder="VALOR + UNIDADE"></label>
+                    <label class="field"><span>Troponina — relação com limite superior da referência</span><input id="sca-troponin-ratio" type="number" min="0" step="0.01" placeholder="EX.: 0.8, 1.5, 4"></label>
+                  </div>
+
+                  <div class="workflow-subsection">
+                    <div class="section-heading compact"><div><p class="section-kicker">HEART SCORE</p><h3>Disponível ≠ aplicável ≠ calculável</h3></div></div>
+                    <div class="tool-status" id="heart-tool-status" data-state="available">HEART disponível para este cenário. Marque a suspeita clínica para avaliar aplicabilidade.</div>
+                    <div class="field-grid two-columns">
+                      <label class="field"><span>History — pontos</span><select id="heart-history"><option value="">NÃO INFORMADO</option><option value="0">0</option><option value="1">1</option><option value="2">2</option></select></label>
+                      <label class="field"><span>ECG — pontos</span><select id="heart-ecg"><option value="">NÃO INFORMADO</option><option value="0">0</option><option value="1">1</option><option value="2">2</option></select></label>
+                      <label class="field"><span>Idade</span><input id="heart-age" type="number" min="0" max="130" placeholder="ANOS"></label>
+                      <label class="field"><span>Fatores de risco — pontos</span><select id="heart-risk"><option value="">NÃO INFORMADO</option><option value="0">0</option><option value="1">1</option><option value="2">2</option></select></label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="workflow-pending" id="workflow-pending" aria-live="polite"></div>
+                <div class="action-row"><button class="button button-secondary" id="reassess-encounter" type="button">Reavaliar atendimento</button></div>
+              </div>
+            </section>
 
             <form id="evolution-form" autocomplete="off">
               <div class="form-section">
@@ -95,7 +137,7 @@
       </section>
 
       <section class="view" id="view-reavaliacao" data-title="Reavaliação">
-        <div class="simple-layout"><section class="form-panel"><div class="section-heading"><div><p class="section-kicker">REAVALIAÇÃO</p><h2>Atualização clínica objetiva</h2></div></div><label class="field"><span>Evolução após medidas iniciais</span><textarea id="reav-evolucao" rows="5"></textarea></label><label class="field"><span>Exames disponibilizados</span><textarea id="reav-exames" rows="4"></textarea></label><label class="field"><span>Conduta após reavaliação</span><textarea id="reav-conduta" rows="5"></textarea></label><div class="action-row"><button class="button button-primary" id="generate-reassessment" type="button">Gerar reavaliação</button><button class="button button-dark" data-copy-target="reassessment-output" type="button">Copiar</button></div></section><section class="preview-panel"><textarea id="reassessment-output" class="output-area tall" spellcheck="false"></textarea></section></div>
+        <div class="simple-layout"><section class="form-panel"><div class="section-heading"><div><p class="section-kicker">REAVALIAÇÃO</p><h2>Mesmo atendimento, novo momento clínico</h2></div></div><label class="field"><span>Em tempo (reavaliação)</span><textarea id="reav-evolucao" rows="5" placeholder="REAVALIO PACIENTE..."></textarea></label><label class="field"><span>Resultados novos / disponibilizados</span><textarea id="reav-exames" rows="4" placeholder="ECG, TROPONINA, PARECERES OU OUTROS RESULTADOS NOVOS"></textarea></label><label class="field"><span>Conduta após reavaliação</span><textarea id="reav-conduta" rows="5"></textarea></label><div class="action-row"><button class="button button-primary" id="generate-reassessment" type="button">Gerar reavaliação</button><button class="button button-dark" data-copy-target="reassessment-output" type="button">Copiar</button></div></section><section class="preview-panel"><textarea id="reassessment-output" class="output-area tall" spellcheck="false"></textarea></section></div>
       </section>
 
       <section class="view" id="view-internacao" data-title="Internação">
@@ -113,6 +155,6 @@
   </div>
 
   <div class="sidebar-overlay" id="sidebar-overlay"></div>
-  <script type="module" src="assets/app.js"></script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>
