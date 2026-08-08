@@ -1,9 +1,10 @@
-const CACHE_NAME = 'zera-ps-v3';
+const CACHE_NAME = 'zera-ps-v4';
 
 const APP_SHELL = [
   './',
   './index.html',
   './app.html',
+  './app.js',
   './manifest.json',
   './assets/styles.css',
   './assets/data.js',
@@ -14,7 +15,18 @@ const APP_SHELL = [
   './assets/storage.js',
   './assets/ui.js',
   './assets/app.js',
-  './assets/logo.svg'
+  './assets/logo.svg',
+  './src/app.js',
+  './src/temporal-ui.js',
+  './src/clinical-state.js',
+  './src/data.js',
+  './src/templates.js',
+  './src/ui.js',
+  './src/storage.js',
+  './src/workflow-engine.js',
+  './src/score-engine.js',
+  './src/document-engine.js',
+  './protocols/sca.js'
 ];
 
 self.addEventListener('install', (event) => {
