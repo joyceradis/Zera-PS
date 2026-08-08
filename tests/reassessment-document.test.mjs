@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { renderTemporalReassessment } from '../src/document-engine.js';
+import { renderTemporalReassessment, extractCarryForwardSections } from '../src/document-engine.js';
 
 test('reassessment preserves exact QP inline quoted format and admission HDA label', () => {
   const text = renderTemporalReassessment({
@@ -55,4 +55,37 @@ test('carry-forward content stays between reassessment narrative and final condu
   });
   assert.ok(text.indexOf('EM TEMPO (REAVALIAÇÃO)') < text.indexOf('# HPP:'));
   assert.ok(text.indexOf('# HPP:') < text.indexOf('# CONDUTA:'));
+});
+
+test('carry-forward extraction preserves clinical sections but excludes old header, QP, HDA and conduct', () => {
+  const evolution = [
+    '## EVOLUÇÃO PRONTO SOCORRO - HOSPITAL MERIDIONAL SERRA ##',
+    '',
+    '# QP: DOR TORÁCICA',
+    '',
+    '# HDA: DOR HÁ 2 HORAS',
+    '',
+    '# HPP:',
+    '- ALERGIAS: NEGA',
+    '',
+    '# EXAME FÍSICO:',
+    '- ACV: RCR 2T',
+    '',
+    '# EXAMES COMPLEMENTARES:',
+    '- IMAGEM: ECG SEM SUPRA',
+    '',
+    '# HIPÓTESES DIAGNÓSTICAS:',
+    '- SCA?',
+    '',
+    '# CONDUTA:',
+    '- AGUARDO TROPONINA'
+  ].join('\n');
+  const carry = extractCarryForwardSections(evolution).join('\n');
+  assert.match(carry, /# HPP:/);
+  assert.match(carry, /# EXAME FÍSICO:/);
+  assert.match(carry, /# EXAMES COMPLEMENTARES:/);
+  assert.match(carry, /# HIPÓTESES DIAGNÓSTICAS:/);
+  assert.doesNotMatch(carry, /# QP:/);
+  assert.doesNotMatch(carry, /# HDA:/);
+  assert.doesNotMatch(carry, /# CONDUTA:/);
 });
