@@ -6,6 +6,8 @@ function createToolState(tool) {
     availability: tool.availability || 'unavailable',
     applicability: 'unknown',
     calculability: 'not_calculable',
+    applied: false,
+    appliedAt: null,
     status: 'incomplete',
     score: null,
     interpretation: null,
@@ -32,6 +34,8 @@ function evaluateToolState(tool, state, context = {}) {
       availability,
       applicability: 'not_applicable',
       calculability: 'not_calculable',
+      applied: false,
+      appliedAt: null,
       status: 'incomplete',
       score: null,
       interpretation: null,
@@ -48,6 +52,8 @@ function evaluateToolState(tool, state, context = {}) {
       availability,
       applicability: 'applicable',
       calculability: 'not_calculable',
+      applied: false,
+      appliedAt: null,
       status: 'incomplete',
       score: null,
       interpretation: null,
@@ -70,4 +76,15 @@ function evaluateToolState(tool, state, context = {}) {
   };
 }
 
-export { createToolState, evaluateToolState, evaluateRule };
+function setToolApplied(state, applied = true, now = new Date().toISOString()) {
+  if (applied && (state.applicability !== 'applicable' || state.calculability !== 'calculable')) {
+    throw new RangeError('Tool can only be applied when applicable and calculable.');
+  }
+  return {
+    ...state,
+    applied: Boolean(applied),
+    appliedAt: applied ? now : null
+  };
+}
+
+export { createToolState, evaluateToolState, evaluateRule, setToolApplied };

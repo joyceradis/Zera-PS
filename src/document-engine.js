@@ -3,7 +3,7 @@ export * from '../assets/document-engine.js';
 const normalize = (value) => String(value ?? '').trim().toUpperCase();
 
 function renderScores(scores = []) {
-  const calculated = scores.filter((tool) => tool?.applicability === 'applicable' && tool?.calculability === 'calculable' && Number.isFinite(tool?.score));
+  const calculated = scores.filter((tool) => tool?.applicability === 'applicable' && tool?.calculability === 'calculable' && tool?.applied === true && Number.isFinite(tool?.score));
   if (!calculated.length) return [];
   return [
     '# SCORES:',

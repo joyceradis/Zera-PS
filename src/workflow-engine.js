@@ -19,6 +19,7 @@ function createEncounter({ workflowId = null, now = new Date().toISOString(), ad
     admissionSnapshot: structuredCloneSafe(admissionSnapshot),
     stageHistory: [{ stage: WORKFLOW_STAGES.INITIAL_ASSESSMENT, enteredAt: now }],
     pendingItems: [],
+    results: [],
     reassessments: [],
     documents: []
   };
@@ -55,6 +56,32 @@ function updateAdmissionSnapshot(encounter, snapshot = {}, now = new Date().toIS
   };
 }
 
+function addClinicalResult(encounter, result) {
+  if (!result?.id) throw new TypeError('Clinical result requires an id.');
+  if (!result?.kind) throw new TypeError('Clinical result requires a kind.');
+  if ((encounter.results || []).some((entry) => entry.id === result.id)) {
+    throw new RangeError(`Clinical result already exists: ${result.id}`);
+  }
+  return {
+    ...encounter,
+    results: [...(encounter.results || []), structuredCloneSafe(result)]
+  };
+}
+
+function upsertLinkedClinicalResult(encounter, result) {
+  const results = [...(encounter.results || [])];
+  const index = results.findIndex((entry) => entry.id === result.id);
+  if (index < 0) return addClinicalResult(encounter, result);
+  results[index] = structuredCloneSafe(result);
+  return { ...encounter, results };
+}
+
+function getClinicalResults(encounter, kind = null) {
+  const results = [...(encounter.results || [])];
+  const filtered = kind ? results.filter((result) => result.kind === kind) : results;
+  return filtered.sort((a, b) => String(a.collectedAt || a.availableAt || '').localeCompare(String(b.collectedAt || b.availableAt || '')));
+}
+
 function addPendingItem(encounter, item) {
   if (!item?.id) throw new TypeError('Pending item requires an id.');
   if ((encounter.pendingItems || []).some((entry) => entry.id === item.id)) {
@@ -67,14 +94,25 @@ function addPendingItem(encounter, item) {
 }
 
 function resolvePendingItem(encounter, id, result = {}) {
-  let found = false;
+  let found = null;
   const pendingItems = (encounter.pendingItems || []).map((item) => {
     if (item.id !== id) return item;
-    found = true;
+    found = item;
     return { ...item, status: 'available', result: structuredCloneSafe(result) };
   });
   if (!found) throw new RangeError(`Unknown pending item: ${id}`);
-  return { ...encounter, pendingItems };
+
+  const resolved = { ...encounter, pendingItems };
+  if (!found.kind || result.value === undefined) return resolved;
+
+  return upsertLinkedClinicalResult(resolved, {
+    id: result.id || `${id}:result`,
+    kind: found.kind,
+    label: found.label || null,
+    sourcePendingItemId: id,
+    requestedAt: found.requestedAt || null,
+    ...structuredCloneSafe(result)
+  });
 }
 
 function startReassessment(encounter, now = new Date().toISOString()) {
@@ -124,6 +162,8 @@ export {
   transitionEncounter,
   updateEncounterContext,
   updateAdmissionSnapshot,
+  addClinicalResult,
+  getClinicalResults,
   addPendingItem,
   resolvePendingItem,
   startReassessment,
