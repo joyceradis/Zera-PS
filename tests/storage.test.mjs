@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { STORAGE_KEYS, createStorage, migrateLegacyAutosave } from '../assets/storage.js';
+import { STORAGE_KEYS, createStorage, migrateLegacyAutosave, migrateLegacyDrafts } from '../assets/storage.js';
 
 class MemoryStorage {
   constructor(seed = {}) { this.map = new Map(Object.entries(seed)); }
@@ -23,9 +23,28 @@ test('legacy v1 autosave migrates without fabricating clinical state', () => {
   assert.equal(migrated.clinicalState.hpp.alergias.confirmed, false);
 });
 
+test('legacy drafts migrate to v2 snapshots without confirming old clinical values', () => {
+  const drafts = migrateLegacyDrafts([{ id: '1', title: 'DOR', createdAt: '2026-08-01T00:00:00.000Z', state: { qp: 'DOR', alergias: 'NEGA' } }]);
+  assert.equal(drafts[0].snapshot.schemaVersion, 2);
+  assert.equal(drafts[0].snapshot.form.alergias, 'NEGA');
+  assert.equal(drafts[0].snapshot.clinicalState.hpp.alergias.confirmed, false);
+});
+
 test('storage adapter saves and loads JSON state', () => {
   const memory = new MemoryStorage();
   const storage = createStorage(memory);
   storage.saveAutosave({ schemaVersion: 2, form: { qp: 'DOR' } });
   assert.deepEqual(storage.loadAutosave(), { schemaVersion: 2, form: { qp: 'DOR' } });
+});
+
+test('storage adapter lazily migrates legacy drafts', () => {
+  const memory = new MemoryStorage({
+    [STORAGE_KEYS.legacyDrafts]: JSON.stringify([{ id: '1', title: 'DOR', state: { qp: 'DOR', comorbidades: 'NEGA' } }])
+  });
+  const storage = createStorage(memory);
+  const drafts = storage.loadDrafts();
+  assert.equal(drafts.length, 1);
+  assert.equal(drafts[0].snapshot.form.comorbidades, 'NEGA');
+  assert.equal(drafts[0].snapshot.clinicalState.hpp.comorbidades.confirmed, false);
+  assert.notEqual(memory.getItem(STORAGE_KEYS.drafts), null);
 });
