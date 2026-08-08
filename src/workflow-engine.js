@@ -8,13 +8,14 @@ const WORKFLOW_STAGES = Object.freeze({
 
 const VALID_STAGES = new Set(Object.values(WORKFLOW_STAGES));
 
-function createEncounter({ workflowId = null, now = new Date().toISOString(), admissionSnapshot = {} } = {}) {
+function createEncounter({ workflowId = null, now = new Date().toISOString(), admissionSnapshot = {}, context = {} } = {}) {
   return {
     schemaVersion: 3,
     encounterId: globalThis.crypto?.randomUUID?.() || `encounter-${Date.now()}`,
     workflowId,
     currentStage: WORKFLOW_STAGES.INITIAL_ASSESSMENT,
     startedAt: now,
+    context: structuredCloneSafe(context),
     admissionSnapshot: structuredCloneSafe(admissionSnapshot),
     stageHistory: [{ stage: WORKFLOW_STAGES.INITIAL_ASSESSMENT, enteredAt: now }],
     pendingItems: [],
@@ -30,6 +31,27 @@ function transitionEncounter(encounter, stage, now = new Date().toISOString()) {
     ...encounter,
     currentStage: stage,
     stageHistory: [...(encounter.stageHistory || []), { stage, enteredAt: now }]
+  };
+}
+
+function updateEncounterContext(encounter, patch = {}) {
+  return {
+    ...encounter,
+    context: {
+      ...(encounter.context || {}),
+      ...structuredCloneSafe(patch)
+    }
+  };
+}
+
+function updateAdmissionSnapshot(encounter, snapshot = {}, now = new Date().toISOString()) {
+  if ((encounter.reassessments || []).length > 0) return encounter;
+  return {
+    ...encounter,
+    admissionSnapshot: {
+      ...structuredCloneSafe(snapshot),
+      capturedAt: now
+    }
   };
 }
 
@@ -100,6 +122,8 @@ export {
   WORKFLOW_STAGES,
   createEncounter,
   transitionEncounter,
+  updateEncounterContext,
+  updateAdmissionSnapshot,
   addPendingItem,
   resolvePendingItem,
   startReassessment,
