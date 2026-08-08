@@ -18,8 +18,8 @@ test('scores appear immediately below QP only when applied and calculated', () =
   const text = renderTemporalReassessment({
     qp: 'DOR TORÁCICA',
     scores: [
-      { id: 'heart', label: 'HEART', applicability: 'applicable', calculability: 'calculable', score: 3, interpretation: 'BAIXO RISCO' },
-      { id: 'other', label: 'OUTRO', applicability: 'applicable', calculability: 'not_calculable', score: null }
+      { id: 'heart', label: 'HEART', applicability: 'applicable', calculability: 'calculable', applied: true, score: 3, interpretation: 'BAIXO RISCO' },
+      { id: 'other', label: 'OUTRO', applicability: 'applicable', calculability: 'not_calculable', applied: false, score: null }
     ],
     admissionHda: 'DOR RETROESTERNAL.',
     reassessmentNarrative: 'REAVALIO PACIENTE.',
@@ -34,10 +34,10 @@ test('scores appear immediately below QP only when applied and calculated', () =
   assert.doesNotMatch(text, /OUTRO/);
 });
 
-test('scores section disappears when no score is applicable and calculable', () => {
+test('scores section disappears when no score is applied and calculable', () => {
   const text = renderTemporalReassessment({
     qp: 'DOR TORÁCICA',
-    scores: [{ id: 'heart', label: 'HEART', applicability: 'applicable', calculability: 'not_calculable', score: null }],
+    scores: [{ id: 'heart', label: 'HEART', applicability: 'applicable', calculability: 'calculable', applied: false, score: 3 }],
     admissionHda: 'DOR.',
     reassessmentNarrative: 'REAVALIO PACIENTE.',
     conduct: ['MANTENHO OBSERVAÇÃO.']
@@ -59,26 +59,7 @@ test('carry-forward content stays between reassessment narrative and final condu
 
 test('carry-forward extraction preserves clinical sections but excludes old header, QP, HDA and conduct', () => {
   const evolution = [
-    '## EVOLUÇÃO PRONTO SOCORRO - HOSPITAL MERIDIONAL SERRA ##',
-    '',
-    '# QP: DOR TORÁCICA',
-    '',
-    '# HDA: DOR HÁ 2 HORAS',
-    '',
-    '# HPP:',
-    '- ALERGIAS: NEGA',
-    '',
-    '# EXAME FÍSICO:',
-    '- ACV: RCR 2T',
-    '',
-    '# EXAMES COMPLEMENTARES:',
-    '- IMAGEM: ECG SEM SUPRA',
-    '',
-    '# HIPÓTESES DIAGNÓSTICAS:',
-    '- SCA?',
-    '',
-    '# CONDUTA:',
-    '- AGUARDO TROPONINA'
+    '## EVOLUÇÃO PRONTO SOCORRO - HOSPITAL MERIDIONAL SERRA ##', '', '# QP: DOR TORÁCICA', '', '# HDA: DOR HÁ 2 HORAS', '', '# HPP:', '- ALERGIAS: NEGA', '', '# EXAME FÍSICO:', '- ACV: RCR 2T', '', '# EXAMES COMPLEMENTARES:', '- IMAGEM: ECG SEM SUPRA', '', '# HIPÓTESES DIAGNÓSTICAS:', '- SCA?', '', '# CONDUTA:', '- AGUARDO TROPONINA'
   ].join('\n');
   const carry = extractCarryForwardSections(evolution).join('\n');
   assert.match(carry, /# HPP:/);
@@ -91,18 +72,9 @@ test('carry-forward extraction preserves clinical sections but excludes old head
 });
 
 test('evolution score block is injected below QP without changing the remaining text', () => {
-  const evolution = [
-    '## EVOLUÇÃO PRONTO SOCORRO - HOSPITAL MERIDIONAL SERRA ##',
-    '',
-    '# QP: DOR TORÁCICA',
-    '',
-    '# HDA: DOR HÁ 2 HORAS',
-    '',
-    '# HPP:',
-    '- ALERGIAS: NEGA'
-  ].join('\n');
+  const evolution = ['## EVOLUÇÃO PRONTO SOCORRO - HOSPITAL MERIDIONAL SERRA ##', '', '# QP: DOR TORÁCICA', '', '# HDA: DOR HÁ 2 HORAS', '', '# HPP:', '- ALERGIAS: NEGA'].join('\n');
   const output = injectScoresIntoEvolution(evolution, [
-    { id: 'heart', label: 'HEART', applicability: 'applicable', calculability: 'calculable', score: 4, interpretation: 'RISCO INTERMEDIÁRIO' }
+    { id: 'heart', label: 'HEART', applicability: 'applicable', calculability: 'calculable', applied: true, score: 4, interpretation: 'RISCO INTERMEDIÁRIO' }
   ]);
   assert.match(output, /# QP: DOR TORÁCICA\n\n# SCORES:\n- HEART: 4 PONTOS — RISCO INTERMEDIÁRIO\n\n# HDA:/);
   assert.match(output, /# HPP:\n- ALERGIAS: NEGA/);

@@ -13,6 +13,18 @@ ação médica
 → saída revisável
 ```
 
+O sistema possui duas superfícies semanticamente distintas:
+
+```text
+workspace operacional
+→ etapa, pendências, dados faltantes, ferramentas e status
+
+documento clínico
+→ somente conteúdo autorizado para registro
+```
+
+**Estado operacional não é conteúdo documental.**
+
 ## Camadas
 
 ```text
@@ -20,16 +32,16 @@ protocols/
 → configuração clínica declarativa
 
 src/workflow-engine.js
-→ etapas, transições, pendências e progressive disclosure
+→ etapas, transições, pendências, resultados temporais e progressive disclosure
 
 src/score-engine.js
-→ disponibilidade, aplicabilidade, calculabilidade e cálculo
+→ disponibilidade, aplicabilidade, calculabilidade, cálculo e aplicação documental
 
 assets/clinical-state.js
 → estado, proveniência e confirmação clínica
 
 src/document-engine.js
-→ documento temporal e bloco de scores
+→ documento temporal e bloco de scores autorizados
 
 src/storage.js
 → persistência do Atendimento v3
@@ -51,7 +63,22 @@ Campos clínicos podem registrar valor, estado, fonte, confirmação e timestamp
 
 ## Atendimento temporal
 
-O schema v3 mantém `workflowId`, `currentStage`, `stageHistory`, `context`, `admissionSnapshot`, `pendingItems`, `reassessments` e `documents`. O snapshot pode ser atualizado durante a admissão e fica protegido após o início das reavaliações.
+O schema v3 mantém `workflowId`, `currentStage`, `stageHistory`, `context`, `admissionSnapshot`, `pendingItems`, `results`, `reassessments` e `documents`. O snapshot pode ser atualizado durante a admissão e fica protegido após o início das reavaliações.
+
+`results[]` preserva eventos seriados sem sobrescrever o valor inicial. Um resultado de troponina 0h e um resultado de controle são entidades temporais distintas.
+
+## Ferramentas clínicas
+
+O contrato é:
+
+```text
+available
+≠ applicable
+≠ calculable
+≠ applied
+```
+
+O motor pode calcular deterministicamente quando todos os dados estão presentes, mas o document engine só renderiza a ferramenta quando ela foi explicitamente aplicada/documentada.
 
 ## Persistência
 
