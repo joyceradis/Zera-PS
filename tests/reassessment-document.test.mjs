@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { renderTemporalReassessment, extractCarryForwardSections } from '../src/document-engine.js';
+import { renderTemporalReassessment, extractCarryForwardSections, injectScoresIntoEvolution } from '../src/document-engine.js';
 
 test('reassessment preserves exact QP inline quoted format and admission HDA label', () => {
   const text = renderTemporalReassessment({
@@ -88,4 +88,22 @@ test('carry-forward extraction preserves clinical sections but excludes old head
   assert.doesNotMatch(carry, /# QP:/);
   assert.doesNotMatch(carry, /# HDA:/);
   assert.doesNotMatch(carry, /# CONDUTA:/);
+});
+
+test('evolution score block is injected below QP without changing the remaining text', () => {
+  const evolution = [
+    '## EVOLUÇÃO PRONTO SOCORRO - HOSPITAL MERIDIONAL SERRA ##',
+    '',
+    '# QP: DOR TORÁCICA',
+    '',
+    '# HDA: DOR HÁ 2 HORAS',
+    '',
+    '# HPP:',
+    '- ALERGIAS: NEGA'
+  ].join('\n');
+  const output = injectScoresIntoEvolution(evolution, [
+    { id: 'heart', label: 'HEART', applicability: 'applicable', calculability: 'calculable', score: 4, interpretation: 'RISCO INTERMEDIÁRIO' }
+  ]);
+  assert.match(output, /# QP: DOR TORÁCICA\n\n# SCORES:\n- HEART: 4 PONTOS — RISCO INTERMEDIÁRIO\n\n# HDA:/);
+  assert.match(output, /# HPP:\n- ALERGIAS: NEGA/);
 });
