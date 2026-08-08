@@ -36,4 +36,4 @@ O Service Worker existia e era registrado, mas o fallback offline era amplo: uma
 
 ## Escopo da refatoração
 
-A intervenção desta branch é estrutural e incremental. Não inclui backend, autenticação, integração institucional, decisão clínica autônoma ou módulo genérico de autorização de exames.
+A intervenção desta branch foi estrutural e incremental. Não incluiu backend, autenticação, integração institucional, decisão clínica autônoma ou módulo genérico de autorização de exames.
