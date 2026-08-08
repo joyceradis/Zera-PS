@@ -18,10 +18,11 @@ Este roadmap é orientado por risco. Nenhuma fase avança por quantidade de tela
 - [x] criar persistência v2 com migração conservadora;
 - [x] adicionar testes automatizados e comando reproduzível;
 - [x] adicionar CI;
-- [ ] validar CI em pull request;
+- [x] validar CI em pull request;
+- [x] validar integração estática DOM/PWA no pós-merge;
 - [ ] executar regressão manual em navegador desktop e mobile.
 
-**Gate:** testes automatizados verdes + revisão do diff + nenhum campo vazio gerando afirmação clínica.
+**Gate automatizado:** concluído em 2026-08-08 com verificação de sintaxe e 27/27 testes automatizados aprovados. O gate de interface continua dependente da regressão manual em navegador real.
 
 ## Fase 1 — Segurança documental do núcleo
 
