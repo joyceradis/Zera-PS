@@ -90,15 +90,32 @@ A fundação anterior permanece sob `assets/` e é carregada pelo novo entrypoin
 6. Regressão manual desktop/mobile, PWA instalado e offline real continuam pendentes.
 7. CI não equivale a homologação assistencial.
 
-## Gate automatizado
+## Evidência automatizada
 
-O gate final deste ciclo deve executar `npm run verify`, incluindo sintaxe e toda a suíte de regressão. O resultado exato da execução no PR é a evidência operacional; este documento não fixa contagem de testes para evitar documentação obsoleta quando a suíte crescer.
+Pull request #10, workflow `checks`, execução `npm run verify`:
+
+```text
+syntax checks: success
+tests: 52
+pass: 52
+fail: 0
+skipped: 0
+```
+
+A execução cobriu a regressão anterior e acrescentou contratos para:
+
+- persistência explícita do contexto temporal;
+- atualização imutável do contexto;
+- atualização do snapshot durante a admissão;
+- proteção do snapshot após o início da reavaliação.
+
+Como este documento faz parte do mesmo PR, qualquer alteração posterior ao commit auditado exige nova execução verde antes da integração.
 
 ## Decisão
 
 O bloco pode ser integrado somente se:
 
-- CI estiver verde;
+- a execução final do CI após esta atualização documental permanecer verde;
 - a branch estiver baseada na `main` sem divergência inesperada;
 - o diff final permanecer limitado às correções de persistência/arquitetura/documentação declaradas;
 - não houver regressão automatizada conhecida.
