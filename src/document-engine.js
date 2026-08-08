@@ -14,6 +14,19 @@ function renderScores(scores = []) {
   ];
 }
 
+function injectScoresIntoEvolution(evolutionText = '', scores = []) {
+  const scoreLines = renderScores(scores);
+  if (!scoreLines.length) return String(evolutionText);
+  const lines = String(evolutionText).split('\n');
+  const qpIndex = lines.findIndex((line) => line.trim().startsWith('# QP:'));
+  if (qpIndex < 0) return String(evolutionText);
+  let insertAt = qpIndex + 1;
+  while (insertAt < lines.length && !lines[insertAt].trim()) insertAt += 1;
+  const before = lines.slice(0, qpIndex + 1);
+  const after = lines.slice(insertAt);
+  return [...before, '', ...scoreLines, '', ...after].join('\n');
+}
+
 function normalizeCarryForward(lines = []) {
   return lines
     .map((line) => String(line ?? '').trimEnd())
@@ -22,7 +35,7 @@ function normalizeCarryForward(lines = []) {
 
 function extractCarryForwardSections(evolutionText = '') {
   const allowed = new Set(['# HPP:', '# EXAME FÍSICO:', '# EXAMES COMPLEMENTARES:', '# HIPÓTESES DIAGNÓSTICAS:']);
-  const stop = new Set(['# QP:', '# HDA:', '# CONDUTA:', '# EM TEMPO:']);
+  const stop = new Set(['# QP:', '# HDA:', '# CONDUTA:', '# EM TEMPO:', '# SCORES:']);
   const lines = String(evolutionText).split('\n');
   const output = [];
   let capturing = false;
@@ -79,4 +92,4 @@ function renderTemporalReassessment({
   return output.join('\n');
 }
 
-export { renderTemporalReassessment, renderScores, extractCarryForwardSections };
+export { renderTemporalReassessment, renderScores, injectScoresIntoEvolution, extractCarryForwardSections };
