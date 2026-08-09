@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createClinicalField, confirmDenied, confirmReported, confirmObserved, confirmTemplate } from '../assets/clinical-state.js';
-import { renderEvolution } from '../assets/document-engine.js';
+import { renderEvolution, renderAdmission } from '../assets/document-engine.js';
 
 function baseClinicalState() {
   return {
@@ -83,4 +83,19 @@ test('a category with no complementary exam content is omitted entirely, not fab
 test('no complementary exam content omits the whole section, same as before', () => {
   const text = renderEvolution({ qp: 'DOR', hda: 'DOR HÁ 1 DIA' }, baseClinicalState());
   assert.doesNotMatch(text, /# EXAMES COMPLEMENTARES:/);
+});
+
+test('admission justification renders as its own block, not glued after the header on one line', () => {
+  const text = renderAdmission({
+    diagnostico: 'ABDOME AGUDO INFLAMATÓRIO',
+    justificativa: '# QUADRO CLÍNICO:\nDOR ABDOMINAL HÁ 2 DIAS.\n\n# SOLICITAÇÃO DE INTERNAÇÃO:\n- SOLICITO INTERNAÇÃO HOSPITALAR PARA CONTINUIDADE DE INVESTIGAÇÃO E CONDUTA.',
+    destino: 'ENFERMARIA'
+  });
+  assert.match(text, /# JUSTIFICATIVA CLÍNICA:\n# QUADRO CLÍNICO:\nDOR ABDOMINAL HÁ 2 DIAS\./);
+  assert.doesNotMatch(text, /# JUSTIFICATIVA CLÍNICA: #/);
+});
+
+test('a short, manually typed admission justification still renders correctly', () => {
+  const text = renderAdmission({ diagnostico: 'PNEUMONIA', justificativa: 'NECESSITA ANTIBIOTICOTERAPIA ENDOVENOSA.' });
+  assert.match(text, /# JUSTIFICATIVA CLÍNICA:\nNECESSITA ANTIBIOTICOTERAPIA ENDOVENOSA\./);
 });

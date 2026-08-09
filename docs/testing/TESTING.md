@@ -29,7 +29,9 @@ O gate executa verificação de sintaxe e toda a suíte `node:test`.
 - protocolo inválido falha no registro em vez de gerar interface parcial;
 - renderer respeita etapa, `visibleWhen` e recálculo por mudança de contexto;
 - campos do formulário de evolução não são duplicados pela camada de protocolo;
-- intenção de aplicação persistida só é restaurada para ferramenta calculável.
+- intenção de aplicação persistida só é restaurada para ferramenta calculável;
+- exames complementares transcritos mantêm um item por linha, sem colar múltiplas linhas num único bullet;
+- justificativa de exame/internação nunca inclui achado, risco ou urgência ausente do formulário/estado clínico confirmado — dado faltante vira `[COMPLETAR: ...]` visível.
 
 ## Contrato de protocolos
 

@@ -97,7 +97,7 @@ function renderAdmission(raw = {}) {
   const output = ['## SOLICITAÇÃO DE INTERNAÇÃO - HOSPITAL MERIDIONAL SERRA ##'];
   const diagnosis = renderListSection('# DIAGNÓSTICO / HIPÓTESE PRINCIPAL:', raw.diagnostico);
   if (diagnosis.length) output.push('', ...diagnosis);
-  if (normalize(raw.justificativa)) output.push('', `# JUSTIFICATIVA CLÍNICA: ${normalize(raw.justificativa)}`);
+  if (normalize(raw.justificativa)) output.push('', '# JUSTIFICATIVA CLÍNICA:', normalize(raw.justificativa));
   if (normalize(raw.destino)) output.push('', `# DESTINO SOLICITADO: ${normalize(raw.destino)}`);
   const care = renderListSection('# PRESCRIÇÃO / CUIDADOS INICIAIS:', raw.prescricao);
   if (care.length) output.push('', ...care);
@@ -116,4 +116,12 @@ function renderDischarge(raw = {}) {
   return output.join('\n');
 }
 
-export { renderEvolution, renderReassessment, renderAdmission, renderDischarge };
+export {
+  renderEvolution,
+  renderReassessment,
+  renderAdmission,
+  renderDischarge,
+  renderField,
+  renderListSection,
+  renderExamComplementSection
+};
