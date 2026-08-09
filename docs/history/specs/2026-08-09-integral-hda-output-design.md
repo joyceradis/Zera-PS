@@ -35,3 +35,7 @@ O compositor produz um parágrafo integral em caixa alta. A HDA continua editáv
 ## Gate
 
 Testes devem provar composição por dados confirmados, omissão de dados não informados, preservação de edição manual, migração dos aliases e presença dos elementos estáticos. `npm run verify` e `git diff --check` precisam permanecer verdes.
+
+## Revisão após validação de produto
+
+A validação da médica demonstrou que iniciar apenas com a frase-base ainda transferia a redação para cliques. A decisão final é abrir cada roteiro com HDA integral editável, incluindo as negativas usuais visíveis no próprio rascunho. A escolha do roteiro cria um rascunho, não um registro final; a médica deve ajustar qualquer divergência antes de gerar e copiar. O compositor permanece como refinamento opcional e nunca sobrescreve edição manual silenciosamente.

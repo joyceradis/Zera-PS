@@ -24,7 +24,7 @@ Registro de marcos relevantes do Zera PS. Commits e pull requests permanecem com
 
 - `GEA` e `GECA` foram consolidadas em uma única entrada sindrômica, com aliases para rascunhos antigos;
 - primeiro compositor de HDA integral: temporalidade, frequência, consistência, sintomas, características das fezes e sinais de alarme;
-- fatos não informados permanecem ausentes e negativas exigem seleção explícita;
+- após o rascunho integral inicial, o compositor distingue fatos presentes, negados e não informados; a geração final continua sujeita à revisão médica;
 - edição manual da HDA é preservada e só pode ser substituída por ação médica explícita;
 - saída completa em Markdown permanece editável e ganhou ação principal de cópia;
 - auditoria independente registrou que a limpeza remota de branches declarada anteriormente não foi executada.

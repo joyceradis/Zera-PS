@@ -41,7 +41,7 @@ O projeto já possui fundação de segurança clínico-documental, testes automa
 Principais capacidades atuais:
 
 - evolução estruturada;
-- roteiros documentais gerais; a síndrome diarreica já possui o primeiro compositor de HDA integral, editável e sem negativas implícitas, enquanto os demais roteiros ainda usam orientação de preenchimento;
+- todos os roteiros abrem com HDA integral editável; a síndrome diarreica também possui compositor estruturado para refinar o rascunho sem redigitação;
 - reavaliação vinculada ao mesmo Atendimento;
 - HPP com negativas apenas por ação explícita;
 - modelo de exame físico normal confirmado pela médica;
