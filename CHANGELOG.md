@@ -4,6 +4,13 @@ Registro de marcos relevantes do Zera PS. Commits e pull requests permanecem com
 
 ## 2026-08-09
 
+### fix: QP presa ao trocar de roteiro
+
+- corrigido bug reproduzível em que trocar de roteiro documental (ex.: GECA → Rinossinusite) deixava a QP travada no texto sugerido pelo roteiro anterior, mesmo com o novo roteiro visivelmente selecionado;
+- causa: o evento de coordenação entre roteiros documentais nunca foi implementado — só existia coordenação entre roteiro e workflow clínico (protocolo); a QP só era preenchida quando o campo estava vazio, então a sugestão do roteiro anterior nunca cedia lugar à do novo;
+- `decideTemplateReplacement` reconhece a QP sugerida por um roteiro como texto de sugestão, não como dado da médica: trocar de roteiro sem nenhum conteúdo além dessa sugestão substitui a QP sem diálogo; qualquer conteúdo real (QP editada, HDA, HPP, exame, evolução já gerada) exige confirmação antes da troca, preservando a documentação anterior em Rascunhos;
+- 7 testes de regressão novos.
+
 ### Doutrina de produto
 
 - finalidade normativa explicitada: o paciente deve ser ouvido e o médico poupado de redigitar a mesma informação;

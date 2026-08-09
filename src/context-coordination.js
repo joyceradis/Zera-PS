@@ -76,6 +76,47 @@ function decideTemplateSelection({
   return confirmationDecision(confirmed, 'clearWorkflow', hasDocumentContent);
 }
 
+function normalizeText(value) {
+  return String(value ?? '').trim().toUpperCase();
+}
+
+function isTemplateBoilerplateQp(qpValue, template) {
+  const current = normalizeText(qpValue);
+  if (!current) return true;
+  const templateQp = normalizeText(template?.qp);
+  return Boolean(templateQp) && current === templateQp;
+}
+
+function hasFormContentBeyondTemplate(form = {}, template) {
+  return Object.entries(form).some(([key, value]) => {
+    if (key === 'includeEmTempo') return value === true;
+    if (key === 'qp') return !isTemplateBoilerplateQp(value, template);
+    return normalizeText(value).length > 0;
+  });
+}
+
+function decideTemplateReplacement({
+  previousSelection,
+  previousTemplate,
+  nextSelection,
+  form = {},
+  hasGeneratedOutput = false,
+  confirmed
+} = {}) {
+  const switchingTemplate = Boolean(previousSelection?.templateId)
+    && previousSelection.templateId !== nextSelection?.templateId;
+  if (!switchingTemplate) {
+    return { status: CONTEXT_DECISIONS.ALLOW, resetDocument: false };
+  }
+  const hasContentBeyondTemplate = hasGeneratedOutput || hasFormContentBeyondTemplate(form, previousTemplate);
+  if (!hasContentBeyondTemplate) {
+    return { status: CONTEXT_DECISIONS.ALLOW, resetDocument: false };
+  }
+  if (confirmed === false) return { status: CONTEXT_DECISIONS.CANCEL, resetDocument: false };
+  if (confirmed === true) return { status: CONTEXT_DECISIONS.ALLOW, resetDocument: true };
+  return { status: CONTEXT_DECISIONS.CONFIRM, resetDocument: false };
+}
+
 function decideWorkflowSelection({
   workflowId,
   templateSelection,
@@ -100,7 +141,10 @@ export {
   CONTEXT_EVENTS,
   isTemplateWorkflowCompatible,
   hasSignificantEncounter,
+  isTemplateBoilerplateQp,
+  hasFormContentBeyondTemplate,
   decideEncounterReplacement,
   decideTemplateSelection,
+  decideTemplateReplacement,
   decideWorkflowSelection
 };
