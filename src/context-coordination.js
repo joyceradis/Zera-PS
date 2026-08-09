@@ -36,20 +36,44 @@ function hasSignificantEncounter(encounter) {
     .some((key) => Array.isArray(encounter[key]) && encounter[key].length > 0);
 }
 
-function confirmationDecision(confirmed, clearKey) {
-  if (confirmed === false) return { status: CONTEXT_DECISIONS.CANCEL, [clearKey]: false };
-  if (confirmed === true) return { status: CONTEXT_DECISIONS.ALLOW, [clearKey]: true };
-  return { status: CONTEXT_DECISIONS.CONFIRM, [clearKey]: false };
+function confirmationDecision(confirmed, clearKey, resetDocument) {
+  if (confirmed === false) {
+    return { status: CONTEXT_DECISIONS.CANCEL, [clearKey]: false, resetDocument: false };
+  }
+  if (confirmed === true) {
+    return { status: CONTEXT_DECISIONS.ALLOW, [clearKey]: true, resetDocument };
+  }
+  return { status: CONTEXT_DECISIONS.CONFIRM, [clearKey]: false, resetDocument: false };
 }
 
-function decideTemplateSelection({ templateSelection, workflowId, encounter, confirmed } = {}) {
+function decideEncounterReplacement({
+  currentWorkflowId,
+  nextWorkflowId,
+  encounter,
+  confirmed
+} = {}) {
+  if (!currentWorkflowId || currentWorkflowId === nextWorkflowId || !hasSignificantEncounter(encounter)) {
+    return { status: CONTEXT_DECISIONS.ALLOW, replaceEncounter: currentWorkflowId !== nextWorkflowId };
+  }
+  if (confirmed === false) return { status: CONTEXT_DECISIONS.CANCEL, replaceEncounter: false };
+  if (confirmed === true) return { status: CONTEXT_DECISIONS.ALLOW, replaceEncounter: true };
+  return { status: CONTEXT_DECISIONS.CONFIRM, replaceEncounter: false };
+}
+
+function decideTemplateSelection({
+  templateSelection,
+  workflowId,
+  encounter,
+  hasDocumentContent = false,
+  confirmed
+} = {}) {
   if (isTemplateWorkflowCompatible(templateSelection, workflowId)) {
-    return { status: CONTEXT_DECISIONS.ALLOW, clearWorkflow: false };
+    return { status: CONTEXT_DECISIONS.ALLOW, clearWorkflow: false, resetDocument: false };
   }
-  if (!hasSignificantEncounter(encounter)) {
-    return { status: CONTEXT_DECISIONS.ALLOW, clearWorkflow: true };
+  if (!hasSignificantEncounter(encounter) && !hasDocumentContent) {
+    return { status: CONTEXT_DECISIONS.ALLOW, clearWorkflow: true, resetDocument: false };
   }
-  return confirmationDecision(confirmed, 'clearWorkflow');
+  return confirmationDecision(confirmed, 'clearWorkflow', hasDocumentContent);
 }
 
 function decideWorkflowSelection({
@@ -63,12 +87,12 @@ function decideWorkflowSelection({
   const legacyRelationUnknown = restoring && !selectionKnown && hasDocumentContent && Boolean(workflowId);
   const incompatible = !isTemplateWorkflowCompatible(templateSelection, workflowId);
   if (!legacyRelationUnknown && !incompatible) {
-    return { status: CONTEXT_DECISIONS.ALLOW, clearTemplate: false };
+    return { status: CONTEXT_DECISIONS.ALLOW, clearTemplate: false, resetDocument: false };
   }
   if (!hasDocumentContent && !legacyRelationUnknown) {
-    return { status: CONTEXT_DECISIONS.ALLOW, clearTemplate: true };
+    return { status: CONTEXT_DECISIONS.ALLOW, clearTemplate: true, resetDocument: false };
   }
-  return confirmationDecision(confirmed, 'clearTemplate');
+  return confirmationDecision(confirmed, 'clearTemplate', true);
 }
 
 export {
@@ -76,6 +100,7 @@ export {
   CONTEXT_EVENTS,
   isTemplateWorkflowCompatible,
   hasSignificantEncounter,
+  decideEncounterReplacement,
   decideTemplateSelection,
   decideWorkflowSelection
 };

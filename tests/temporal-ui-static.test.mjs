@@ -4,6 +4,8 @@ import { readFile } from 'node:fs/promises';
 import { SCA_PROTOCOL } from '../protocols/sca.js';
 
 const html = await readFile('app.html', 'utf8');
+const appScript = await readFile('assets/app.js', 'utf8');
+const temporalScript = await readFile('src/temporal-ui.js', 'utf8');
 
 test('evolution screen exposes only generic workflow anchors', () => {
   for (const id of ['workflow-scenario', 'workflow-stage', 'workflow-context', 'workflow-protocol-fields', 'workflow-pending', 'reassess-encounter']) {
@@ -36,4 +38,12 @@ test('template cards are identified as documentation scripts rather than protoco
   assert.match(html, /ROTEIROS DE DOCUMENTAÇÃO/);
   assert.match(html, /Comece por um roteiro/);
   assert.doesNotMatch(html, /<h2>Comece por um cenário<\/h2>/);
+});
+
+test('confirmed incompatible switches archive documentation before opening a clean context', () => {
+  assert.match(appScript, /reason: 'context_switch'/);
+  assert.match(appScript, /archiveDocumentationForContextSwitch\(\)/);
+  assert.match(appScript, /resetDocumentationSurface\(\)/);
+  assert.match(appScript, /Documentação anterior preservada em Rascunhos/);
+  assert.match(temporalScript, /event\.detail\.resetDocument = Boolean\(decision\.resetDocument\)/);
 });

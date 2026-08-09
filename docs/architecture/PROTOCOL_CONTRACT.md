@@ -86,7 +86,7 @@ Disponibilidade é avaliada antes de aplicabilidade. Uma ferramenta `unavailable
 
 Os cards da evolução são roteiros de documentação: podem sugerir QP e orientar a coleta da HDA, mas não ativam protocolo clínico por inferência. A associação entre roteiro e protocolo, quando existir, deve ser declarada por `protocolId`. Ausência dessa chave significa “sem protocolo correspondente”.
 
-O coordenador de contexto impede que um roteiro sem protocolo permaneça simultaneamente ativo com workflow específico. Trocas preservam o texto clínico; estado temporal significativo só é desvinculado após confirmação explícita. QP, HDA, hipóteses ou conduta nunca são usados para inferir diagnóstico ou compatibilidade.
+O coordenador de contexto impede que um roteiro sem protocolo permaneça simultaneamente ativo com workflow específico. Em uma troca confirmada, a documentação anterior é preservada em Rascunhos e a superfície do novo contexto começa limpa; estado temporal significativo só é desvinculado após confirmação explícita. QP, HDA, hipóteses ou conduta nunca são usados para inferir diagnóstico ou compatibilidade.
 
 ### Resultados temporais (`temporalResults[]`)
 

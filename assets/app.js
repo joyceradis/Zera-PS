@@ -184,6 +184,41 @@ function documentHasContent() {
   )) || normalize($('evolution-output')?.value).length > 0;
 }
 
+function archiveDocumentationForContextSwitch() {
+  if (!documentHasContent()) return false;
+  const snapshot = currentSnapshot();
+  const drafts = getDrafts();
+  drafts.unshift({
+    id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+    title: `${normalize(snapshot.form.qp) || 'RASCUNHO SEM QP'} — TROCA DE CONTEXTO`,
+    createdAt: new Date().toISOString(),
+    reason: 'context_switch',
+    snapshot
+  });
+  storage.saveDrafts(drafts.slice(0, 30));
+  renderDrafts();
+  return true;
+}
+
+function resetDocumentationSurface() {
+  restoreForm({});
+  clinicalState = emptyClinicalState();
+  scoreStates = Object.fromEntries(SCORE_LIST.map((definition) => [definition.id, createScoreState(definition)]));
+  glasgowAnswers = { eye: null, verbal: null, motor: null };
+  renderScores(SCORE_LIST, handleScoreAnswer, handleGlasgowChange);
+  if ($('evolution-output')) $('evolution-output').value = '';
+  deactivateTemplate({ persist: false });
+  syncAllQuickChoices(QUICK_CHOICES, FIELD_MAP);
+  storage.saveAutosave(currentSnapshot());
+  if ($('save-status')) $('save-status').textContent = 'NOVO CONTEXTO';
+}
+
+function prepareFreshDocumentation() {
+  const archived = archiveDocumentationForContextSwitch();
+  resetDocumentationSurface();
+  if (archived) showFeedback('Documentação anterior preservada em Rascunhos. Novo contexto iniciado sem mistura.');
+}
+
 function restoreTemplateSelection(snapshot = {}) {
   templateSelectionKnown = Object.hasOwn(snapshot, 'templateSelection');
   activeTemplateSelection = snapshot.templateSelection || null;
@@ -213,8 +248,8 @@ function handleWorkflowSelectionRequest(event) {
   if (decision.status === CONTEXT_DECISIONS.CONFIRM) {
     const accepted = window.confirm(
       input.restoring && !input.selectionKnown
-        ? 'Há dados recuperados e um workflow específico sem vínculo verificável. Manter o workflow? O texto clínico será preservado.'
-        : 'Este roteiro não corresponde ao workflow selecionado. Manter o workflow e remover somente a associação do roteiro? O texto clínico será preservado.'
+        ? 'Há documentação recuperada e um workflow sem vínculo verificável. Manter o workflow? A documentação atual será salva em Rascunhos e o workflow abrirá em um contexto limpo.'
+        : 'Este roteiro não corresponde ao workflow selecionado. Continuar? A documentação atual será salva em Rascunhos e o workflow abrirá em um contexto limpo.'
     );
     decision = decideWorkflowSelection({ ...input, confirmed: accepted });
   }
@@ -222,17 +257,24 @@ function handleWorkflowSelectionRequest(event) {
     event.preventDefault();
     return;
   }
-  if (decision.clearTemplate || (input.restoring && !input.selectionKnown)) {
+  if (decision.resetDocument) {
+    prepareFreshDocumentation();
+  } else if (decision.clearTemplate || (input.restoring && !input.selectionKnown)) {
     deactivateTemplate();
   }
 }
 
 function requestTemplateActivation(selection) {
+  const detail = {
+    templateSelection: selection,
+    hasDocumentContent: documentHasContent(),
+    resetDocument: false
+  };
   const request = new CustomEvent(CONTEXT_EVENTS.TEMPLATE_SELECTION_REQUEST, {
     cancelable: true,
-    detail: { templateSelection: selection }
+    detail
   });
-  return document.dispatchEvent(request);
+  return { allowed: document.dispatchEvent(request), resetDocument: detail.resetDocument };
 }
 
 function applyTemplate(id) {
@@ -243,7 +285,9 @@ function applyTemplate(id) {
     protocolId: template.protocolId || null,
     selectedAt: new Date().toISOString()
   };
-  if (!requestTemplateActivation(selection)) return;
+  const activation = requestTemplateActivation(selection);
+  if (!activation.allowed) return;
+  if (activation.resetDocument) prepareFreshDocumentation();
   if ($('qp') && !normalize($('qp').value)) $('qp').value = template.qp || '';
   if ($('hda')) $('hda').placeholder = template.hdaPrompt || DEFAULT_HDA_PLACEHOLDER;
   activeTemplateSelection = selection;
@@ -251,7 +295,8 @@ function applyTemplate(id) {
   setActiveTemplate(id);
   autosave();
   const toolNote = template.clinicalTools?.length ? ` Ferramenta clínica vinculada: ${template.clinicalTools.join(', ').toUpperCase()}.` : '';
-  showFeedback(`Roteiro ${template.label} aplicado sem sobrescrever HDA, hipóteses ou conduta.${toolNote}`);
+  const archiveNote = activation.resetDocument ? ' A documentação anterior foi preservada em Rascunhos.' : '';
+  showFeedback(`Roteiro ${template.label} aplicado sem misturar contextos.${archiveNote}${toolNote}`);
 }
 
 function clearTemplate() {
@@ -331,7 +376,12 @@ function loadDraft(id) {
   if (!draft) return;
   const snapshot = draft.snapshot || draft.state;
   if (snapshot?.form) {
-    if (snapshot.templateSelection?.templateId && !requestTemplateActivation(snapshot.templateSelection)) return;
+    const coordinationSelection = snapshot.templateSelection?.templateId
+      ? snapshot.templateSelection
+      : { templateId: `draft:${id}`, protocolId: null };
+    const activation = requestTemplateActivation(coordinationSelection);
+    if (!activation.allowed) return;
+    if (activation.resetDocument) prepareFreshDocumentation();
     restoreForm(snapshot.form);
     clinicalState = snapshot.clinicalState || emptyClinicalState();
     restoreTemplateSelection(snapshot);
