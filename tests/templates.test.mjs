@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { TEMPLATES } from '../assets/templates.js';
+import { SCORE_DEFINITIONS } from '../assets/scores.js';
+
+const KNOWN_STANDALONE_TOOLS = new Set([...Object.keys(SCORE_DEFINITIONS), 'glasgow']);
 
 test('syndrome templates do not preconfirm clinical negatives', () => {
   for (const template of TEMPLATES) {
@@ -16,7 +19,19 @@ test('templates do not inject diagnosis or conduct into the medical record', () 
   }
 });
 
-test('headache template links SNNOOP10 as a structured clinical tool', () => {
-  const headache = TEMPLATES.find((template) => template.id === 'cefaleia');
-  assert.equal(headache.clinicalTools.includes('snnoop10'), true);
+test('a roteiro never advertises a clinical tool that does not exist in the app', () => {
+  for (const template of TEMPLATES) {
+    for (const toolId of template.clinicalTools || []) {
+      assert.equal(
+        KNOWN_STANDALONE_TOOLS.has(toolId),
+        true,
+        `${template.id} links "${toolId}", which has no card in the Scores tab — regression of the dangling-tool bug (SNNOOP10 was removed from Cefaleia for exactly this reason; it must not be advertised again until it is actually implemented)`
+      );
+    }
+  }
+});
+
+test('PAC links only clinical tools that are actually implemented in the Scores tab', () => {
+  const pac = TEMPLATES.find((template) => template.id === 'pac');
+  assert.deepEqual(pac.clinicalTools, ['crb65', 'curb65']);
 });

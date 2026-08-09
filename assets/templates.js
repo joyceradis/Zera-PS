@@ -9,8 +9,7 @@ const TEMPLATES = Object.freeze([
     id: 'cefaleia',
     label: 'Cefaleia',
     qp: 'CEFALEIA',
-    hdaPrompt: 'DESCREVA INÍCIO, CARÁTER, LOCALIZAÇÃO, INTENSIDADE, DURAÇÃO, SINTOMAS ASSOCIADOS E RED/ORANGE FLAGS EFETIVAMENTE INVESTIGADAS.',
-    clinicalTools: ['snnoop10']
+    hdaPrompt: 'DESCREVA INÍCIO, CARÁTER, LOCALIZAÇÃO, INTENSIDADE, DURAÇÃO, SINTOMAS ASSOCIADOS E RED/ORANGE FLAGS EFETIVAMENTE INVESTIGADAS.'
   },
   {
     id: 'gea',

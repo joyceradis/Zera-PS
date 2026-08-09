@@ -4,6 +4,12 @@ Registro de marcos relevantes do Zera PS. Commits e pull requests permanecem com
 
 ## 2026-08-09
 
+### fix: roteiro Cefaleia anunciava ferramenta clínica inexistente
+
+- o roteiro Cefaleia declarava `clinicalTools: ['snnoop10']`, exibindo "Ferramenta clínica vinculada: SNNOOP10" ao ser selecionado — mas nenhum checklist SNNOOP10 existe em nenhum lugar do aplicativo; o próprio ROADMAP já registrava SNNOOP10 como item futuro, não implementado;
+- referência removida até a ferramenta existir de fato; implementá-la é decisão de produto separada, com validação clínica própria, não um ajuste de housekeeping;
+- teste novo garante que nenhum roteiro possa voltar a anunciar uma ferramenta sem card correspondente na aba Scores.
+
 ### fix: QP presa ao trocar de roteiro
 
 - corrigido bug reproduzível em que trocar de roteiro documental (ex.: GECA → Rinossinusite) deixava a QP travada no texto sugerido pelo roteiro anterior, mesmo com o novo roteiro visivelmente selecionado;
