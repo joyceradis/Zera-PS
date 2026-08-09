@@ -340,6 +340,18 @@ test('section must declare stage or stages, never both', () => {
   assert.equal(validateProtocol(singleStage).valid, true);
 });
 
+test('plural section.stages requires an array while singular section.stage accepts one stage', () => {
+  const malformedPlural = fixture({
+    sections: [{ id: 'main', stages: 'reassessment', fields: ['flag', 'note'] }]
+  });
+  assert.ok(codesOf(malformedPlural).includes(PROTOCOL_ERRORS.INVALID_SECTION));
+
+  const validSingular = fixture({
+    sections: [{ id: 'main', stage: 'reassessment', fields: ['flag', 'note'] }]
+  });
+  assert.equal(validateProtocol(validSingular).valid, true);
+});
+
 test('configuration errors fail loudly instead of producing partial interfaces', () => {
   assert.throws(
     () => assertValidProtocol(fixture({ sections: [{ id: 'main', stages: ['initial_assessment'], fields: ['ghost'] }] })),

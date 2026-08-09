@@ -37,6 +37,21 @@ test('storage adapter saves and loads JSON state', () => {
   assert.deepEqual(storage.loadAutosave(), { schemaVersion: 2, form: { qp: 'DOR' } });
 });
 
+test('autosave preserves explicit template selection without deriving it from QP', () => {
+  const memory = new MemoryStorage();
+  const storage = createStorage(memory);
+  const snapshot = {
+    schemaVersion: 2,
+    form: { qp: 'CONGESTÃO NASAL E DOR FACIAL' },
+    templateSelection: { templateId: 'rinossinusite', protocolId: null, selectedAt: '2026-08-09T00:00:00.000Z' }
+  };
+  storage.saveAutosave(snapshot);
+  assert.deepEqual(storage.loadAutosave().templateSelection, snapshot.templateSelection);
+
+  storage.saveAutosave({ schemaVersion: 2, form: { qp: 'DOR TORÁCICA' } });
+  assert.equal('templateSelection' in storage.loadAutosave(), false);
+});
+
 test('storage adapter lazily migrates legacy drafts', () => {
   const memory = new MemoryStorage({
     [STORAGE_KEYS.legacyDrafts]: JSON.stringify([{ id: '1', title: 'DOR', state: { qp: 'DOR', comorbidades: 'NEGA' } }])

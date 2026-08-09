@@ -20,6 +20,12 @@ import {
 import { createProtocolRenderer } from './protocol-renderer.js';
 import { createEncounterStorage } from './storage.js';
 import {
+  CONTEXT_DECISIONS,
+  CONTEXT_EVENTS,
+  decideTemplateSelection
+} from './context-coordination.js';
+import { deriveToolPresentation } from './tool-presentation.js';
+import {
   renderTemporalReassessment,
   extractCarryForwardSections,
   injectScoresIntoEvolution
@@ -142,27 +148,12 @@ function renderToolState(tool, state) {
   const nodes = renderer?.getToolNodes(tool.id);
   if (!nodes?.status) return;
   const { status, button } = nodes;
-
-  if (state.applicability !== 'applicable') {
-    status.dataset.state = 'available';
-    status.textContent = tool.messages?.notApplicable
-      || `${tool.label} DISPONÍVEL PARA O CENÁRIO — AINDA NÃO PERTINENTE NESTE CASO.`;
-    if (button) button.hidden = true;
-    return;
-  }
-  if (state.calculability !== 'calculable') {
-    status.dataset.state = 'incomplete';
-    status.textContent = state.message
-      || tool.messages?.incomplete
-      || `${tool.label} NÃO CALCULADO — COMPLETE AS VARIÁVEIS OBRIGATÓRIAS.`;
-    if (button) button.hidden = true;
-    return;
-  }
-  status.dataset.state = 'complete';
-  status.textContent = `${tool.label}: ${state.score} ${state.score === 1 ? 'PONTO' : 'PONTOS'} — ${state.interpretation}${state.applied ? ' · INCLUÍDO NO REGISTRO' : ' · AINDA NÃO INCLUÍDO NO REGISTRO'}`;
+  const presentation = deriveToolPresentation(tool, state);
+  status.dataset.state = presentation.state;
+  status.textContent = presentation.message;
   if (button) {
-    button.hidden = false;
-    button.textContent = state.applied ? `Remover ${tool.label} do registro` : `Incluir ${tool.label} no registro`;
+    button.hidden = presentation.buttonHidden;
+    button.textContent = presentation.buttonText;
   }
 }
 
@@ -206,6 +197,44 @@ function mountProtocol(protocolId) {
   for (const tool of protocol.tools || []) toolStates[tool.id] = createToolState(tool);
 }
 
+function clearActiveWorkflow() {
+  encounter = null;
+  encounterStorage.clearActiveEncounter();
+  mountProtocol('');
+  if ($('workflow-scenario')) $('workflow-scenario').value = '';
+  renderProtocolVisibility();
+  renderStage();
+  renderPending();
+}
+
+function requestWorkflowSelection(workflowId, restoring = false) {
+  const request = new CustomEvent(CONTEXT_EVENTS.WORKFLOW_SELECTION_REQUEST, {
+    cancelable: true,
+    detail: { workflowId, restoring }
+  });
+  return document.dispatchEvent(request);
+}
+
+function handleTemplateSelectionRequest(event) {
+  const input = {
+    templateSelection: event.detail?.templateSelection || null,
+    workflowId: encounter?.workflowId || '',
+    encounter
+  };
+  let decision = decideTemplateSelection(input);
+  if (decision.status === CONTEXT_DECISIONS.CONFIRM) {
+    const accepted = window.confirm(
+      'O workflow atual contém estado clínico ou temporal. Desativar esse workflow para aplicar o roteiro? Os campos da evolução serão preservados.'
+    );
+    decision = decideTemplateSelection({ ...input, confirmed: accepted });
+  }
+  if (decision.status === CONTEXT_DECISIONS.CANCEL) {
+    event.preventDefault();
+    return;
+  }
+  if (decision.clearWorkflow) clearActiveWorkflow();
+}
+
 function populateScenarioOptions() {
   const select = $('workflow-scenario');
   if (!select) return;
@@ -231,16 +260,16 @@ function captureAdmissionSnapshot() {
 function handleScenarioChange() {
   const scenario = $('workflow-scenario')?.value || '';
   if (!scenario) {
-    encounter = null;
-    encounterStorage.clearActiveEncounter();
-    mountProtocol('');
-    renderProtocolVisibility();
-    renderStage();
-    renderPending();
+    clearActiveWorkflow();
     return;
   }
 
   if (!encounter || encounter.workflowId !== scenario) {
+    const previousScenario = encounter?.workflowId || '';
+    if (!requestWorkflowSelection(scenario)) {
+      if ($('workflow-scenario')) $('workflow-scenario').value = previousScenario;
+      return;
+    }
     encounter = createEncounter({ workflowId: scenario, admissionSnapshot: {}, context: {} });
   }
   mountProtocol(scenario);
@@ -321,6 +350,10 @@ function handleReassessmentGenerated() {
 
 function restoreTemporalUi() {
   const scenario = encounter?.workflowId || '';
+  if (scenario && !requestWorkflowSelection(scenario, true)) {
+    clearActiveWorkflow();
+    return;
+  }
   if ($('workflow-scenario')) $('workflow-scenario').value = scenario;
   mountProtocol(scenario);
   renderer?.setContext(encounter?.context || {});
@@ -340,13 +373,14 @@ function injectTemporalStyles() {
     .workflow-stage-badge{display:inline-flex;align-items:center;padding:7px 10px;border-radius:999px;font-size:.72rem;font-weight:800;letter-spacing:.04em;background:#e8edf2;color:#314052}
     .workflow-stage-badge[data-stage="pending_results"]{background:#fff3cd;color:#705500}.workflow-stage-badge[data-stage="reassessment"]{background:#d9ecff;color:#114f86}
     .tool-status{padding:12px 14px;border-radius:12px;margin:8px 0 14px;font-weight:700;font-size:.86rem;background:#d9ecff;color:#114f86}
-    .tool-status[data-state="incomplete"]{background:#fff3cd;color:#705500}.tool-status[data-state="complete"]{background:#dff4e5;color:#1f6334}
+    .tool-status[data-state="unavailable"]{background:#eef1f4;color:#526171}.tool-status[data-state="incomplete"]{background:#fff3cd;color:#705500}.tool-status[data-state="complete"]{background:#dff4e5;color:#1f6334}
     .workflow-pending{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.pending-chip{padding:7px 10px;border-radius:999px;font-size:.74rem;font-weight:800}.pending-chip.pending{background:#fff3cd;color:#705500}.pending-chip.available{background:#dff4e5;color:#1f6334}.workflow-empty{font-size:.78rem;color:#637083}
   `;
   document.head.appendChild(style);
 }
 
 function bindTemporalEvents() {
+  document.addEventListener(CONTEXT_EVENTS.TEMPLATE_SELECTION_REQUEST, handleTemplateSelectionRequest);
   $('workflow-scenario')?.addEventListener('change', handleScenarioChange);
   $('reassess-encounter')?.addEventListener('click', handleStartReassessment);
   $('generate-evolution')?.addEventListener('click', () => queueMicrotask(handleEvolutionGenerated));

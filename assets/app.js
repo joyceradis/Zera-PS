@@ -38,6 +38,11 @@ import {
   setupPwa,
   updateConnection
 } from './ui.js';
+import {
+  CONTEXT_DECISIONS,
+  CONTEXT_EVENTS,
+  decideWorkflowSelection
+} from '../src/context-coordination.js';
 
 const storage = createStorage();
 const HPP_KEYS = ['comorbidades', 'muc', 'alergias', 'habitos', 'cirurgias'];
@@ -52,6 +57,8 @@ const DEFAULT_HDA_PLACEHOLDER = 'HISTÓRIA CRONOLÓGICA DO QUADRO E DADOS EFETIV
 let clinicalState = emptyClinicalState();
 let scoreStates = Object.fromEntries(SCORE_LIST.map((definition) => [definition.id, createScoreState(definition)]));
 let glasgowAnswers = { eye: null, verbal: null, motor: null };
+let activeTemplateSelection = null;
+let templateSelectionKnown = true;
 
 const normalize = (value) => String(value ?? '').trim().toUpperCase();
 
@@ -93,12 +100,14 @@ function currentSnapshot() {
     schemaVersion: 2,
     form: readForm(),
     clinicalState,
+    templateSelection: activeTemplateSelection,
     output: $('evolution-output')?.value || ''
   };
 }
 
 function autosave() {
   try {
+    templateSelectionKnown = true;
     storage.saveAutosave(currentSnapshot());
     if ($('save-status')) $('save-status').textContent = 'AUTOSSALVO';
   } catch {
@@ -168,11 +177,77 @@ function useNormalExamTemplate() {
   showFeedback('Modelo de exame normal confirmado por ação médica. Edite qualquer achado divergente.');
 }
 
+function documentHasContent() {
+  const form = readForm();
+  return Object.entries(form).some(([key, value]) => (
+    key === 'includeEmTempo' ? value === true : normalize(value).length > 0
+  )) || normalize($('evolution-output')?.value).length > 0;
+}
+
+function restoreTemplateSelection(snapshot = {}) {
+  templateSelectionKnown = Object.hasOwn(snapshot, 'templateSelection');
+  activeTemplateSelection = snapshot.templateSelection || null;
+  const template = TEMPLATES.find((item) => item.id === activeTemplateSelection?.templateId);
+  if (!template) activeTemplateSelection = null;
+  setActiveTemplate(activeTemplateSelection?.templateId || null);
+  if ($('hda')) $('hda').placeholder = template?.hdaPrompt || DEFAULT_HDA_PLACEHOLDER;
+}
+
+function deactivateTemplate({ persist = true } = {}) {
+  activeTemplateSelection = null;
+  templateSelectionKnown = true;
+  setActiveTemplate(null);
+  if ($('hda')) $('hda').placeholder = DEFAULT_HDA_PLACEHOLDER;
+  if (persist) autosave();
+}
+
+function handleWorkflowSelectionRequest(event) {
+  const input = {
+    workflowId: event.detail?.workflowId || '',
+    templateSelection: activeTemplateSelection,
+    hasDocumentContent: documentHasContent(),
+    selectionKnown: templateSelectionKnown,
+    restoring: Boolean(event.detail?.restoring)
+  };
+  let decision = decideWorkflowSelection(input);
+  if (decision.status === CONTEXT_DECISIONS.CONFIRM) {
+    const accepted = window.confirm(
+      input.restoring && !input.selectionKnown
+        ? 'Há dados recuperados e um workflow específico sem vínculo verificável. Manter o workflow? O texto clínico será preservado.'
+        : 'Este roteiro não corresponde ao workflow selecionado. Manter o workflow e remover somente a associação do roteiro? O texto clínico será preservado.'
+    );
+    decision = decideWorkflowSelection({ ...input, confirmed: accepted });
+  }
+  if (decision.status === CONTEXT_DECISIONS.CANCEL) {
+    event.preventDefault();
+    return;
+  }
+  if (decision.clearTemplate || (input.restoring && !input.selectionKnown)) {
+    deactivateTemplate();
+  }
+}
+
+function requestTemplateActivation(selection) {
+  const request = new CustomEvent(CONTEXT_EVENTS.TEMPLATE_SELECTION_REQUEST, {
+    cancelable: true,
+    detail: { templateSelection: selection }
+  });
+  return document.dispatchEvent(request);
+}
+
 function applyTemplate(id) {
   const template = TEMPLATES.find((item) => item.id === id);
   if (!template) return;
+  const selection = {
+    templateId: template.id,
+    protocolId: template.protocolId || null,
+    selectedAt: new Date().toISOString()
+  };
+  if (!requestTemplateActivation(selection)) return;
   if ($('qp') && !normalize($('qp').value)) $('qp').value = template.qp || '';
   if ($('hda')) $('hda').placeholder = template.hdaPrompt || DEFAULT_HDA_PLACEHOLDER;
+  activeTemplateSelection = selection;
+  templateSelectionKnown = true;
   setActiveTemplate(id);
   autosave();
   const toolNote = template.clinicalTools?.length ? ` Ferramenta clínica vinculada: ${template.clinicalTools.join(', ').toUpperCase()}.` : '';
@@ -180,8 +255,7 @@ function applyTemplate(id) {
 }
 
 function clearTemplate() {
-  setActiveTemplate(null);
-  if ($('hda')) $('hda').placeholder = DEFAULT_HDA_PLACEHOLDER;
+  deactivateTemplate();
   showFeedback('Roteiro removido. Os dados já digitados foram preservados.');
 }
 
@@ -257,8 +331,10 @@ function loadDraft(id) {
   if (!draft) return;
   const snapshot = draft.snapshot || draft.state;
   if (snapshot?.form) {
+    if (snapshot.templateSelection?.templateId && !requestTemplateActivation(snapshot.templateSelection)) return;
     restoreForm(snapshot.form);
     clinicalState = snapshot.clinicalState || emptyClinicalState();
+    restoreTemplateSelection(snapshot);
     $('evolution-output').value = snapshot.output || '';
   }
   syncAllQuickChoices(QUICK_CHOICES, FIELD_MAP);
@@ -284,8 +360,7 @@ function clearForm() {
   $('evolution-output').value = '';
   clinicalState = emptyClinicalState();
   storage.clearAutosave();
-  setActiveTemplate(null);
-  if ($('hda')) $('hda').placeholder = DEFAULT_HDA_PLACEHOLDER;
+  deactivateTemplate({ persist: false });
   toggleEmTempo();
   syncAllQuickChoices(QUICK_CHOICES, FIELD_MAP);
   $('save-status').textContent = 'NÃO SALVO';
@@ -344,6 +419,7 @@ function loadAutosave() {
     if (!snapshot) return;
     restoreForm(snapshot.form || {});
     clinicalState = snapshot.clinicalState || emptyClinicalState();
+    restoreTemplateSelection(snapshot);
     $('evolution-output').value = snapshot.output || '';
     $('save-status').textContent = snapshot.migratedFrom ? 'MIGRADO — REVISE' : 'RECUPERADO';
   } catch {
@@ -352,6 +428,7 @@ function loadAutosave() {
 }
 
 function bindEvents() {
+  document.addEventListener(CONTEXT_EVENTS.WORKFLOW_SELECTION_REQUEST, handleWorkflowSelectionRequest);
   $('generate-evolution').addEventListener('click', generateEvolution);
   $('copy-evolution').addEventListener('click', () => copyTextFrom('evolution-output'));
   $('save-draft').addEventListener('click', saveDraft);
