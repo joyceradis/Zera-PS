@@ -114,9 +114,11 @@ Próximos itens: múltiplos Atendimentos, histórico de documentos, versionament
 
 Esta fase precede a expansão clínica. O objetivo é comprovar que o Zera realmente devolve tempo à escuta, em vez de apenas transferir a carga da digitação para cliques e navegação.
 
+Implementado como primeiro núcleo validável: compositor da **síndrome diarreica**, com temporalidade, frequência, consistência, sintomas, características das fezes e sinais de alarme em estados explícitos (`não informado`, `presente`, `negado`). A HDA é produzida integralmente em caixa alta, permanece editável e não é sobrescrita após edição manual sem ação explícita.
+
 Próximos itens:
 
-- redesenhar e validar HDAs semiprontas por síndrome;
+- validar cognitivamente a HDA semipronta da síndrome diarreica e então ampliar o mesmo contrato para as demais síndromes;
 - permitir fluxo keyboard-first, ordem previsível de foco e atalhos coerentes;
 - reduzir modais, confirmações banais, mudanças de tela e cliques sem valor clínico;
 - registrar o dado uma vez e reutilizá-lo com contexto em evolução, reavaliação, internação e alta;

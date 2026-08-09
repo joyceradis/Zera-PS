@@ -1,5 +1,5 @@
 import { NORMAL_EXAM_TEMPLATE, QUICK_CHOICES, FIELD_MAP } from './data.js';
-import { TEMPLATES } from './templates.js';
+import { TEMPLATES, resolveTemplateId } from './templates.js';
 import {
   createClinicalField,
   confirmDenied,
@@ -50,6 +50,12 @@ import {
   getJustificationProfile,
   assembleJustification
 } from '../src/justification-engine.js';
+import {
+  emptyDiarrheaHdaState,
+  defaultDiarrheaHdaState,
+  composeDiarrheaHda,
+  synchronizeGeneratedHda
+} from '../src/hda-composer.js';
 
 const storage = createStorage();
 const HPP_KEYS = ['comorbidades', 'muc', 'alergias', 'habitos', 'cirurgias'];
@@ -66,6 +72,11 @@ let scoreStates = Object.fromEntries(SCORE_LIST.map((definition) => [definition.
 let glasgowAnswers = { eye: null, verbal: null, motor: null };
 let activeTemplateSelection = null;
 let templateSelectionKnown = true;
+let hdaComposerState = {
+  templateId: null,
+  values: emptyDiarrheaHdaState(),
+  lastGeneratedText: ''
+};
 
 const normalize = (value) => String(value ?? '').trim().toUpperCase();
 
@@ -108,8 +119,100 @@ function currentSnapshot() {
     form: readForm(),
     clinicalState,
     templateSelection: activeTemplateSelection,
+    hdaComposer: hdaComposerState,
     output: $('evolution-output')?.value || ''
   };
+}
+
+function resetHdaComposer() {
+  hdaComposerState = {
+    templateId: null,
+    values: emptyDiarrheaHdaState(),
+    lastGeneratedText: ''
+  };
+  if ($('hda-diarrhea-guide')) $('hda-diarrhea-guide').hidden = true;
+  if ($('apply-generated-hda')) $('apply-generated-hda').hidden = true;
+}
+
+function readDiarrheaComposer() {
+  const findings = { ...emptyDiarrheaHdaState().findings };
+  $$('[data-hda-finding]').forEach((select) => {
+    findings[select.dataset.hdaFinding] = select.value;
+  });
+  return {
+    onsetValue: $('hda-diarrhea-onset-value')?.value || '',
+    onsetUnit: $('hda-diarrhea-onset-unit')?.value || 'dias',
+    episodes: $('hda-diarrhea-episodes')?.value || '',
+    consistency: $('hda-diarrhea-consistency')?.value || '',
+    findings,
+    details: $('hda-diarrhea-details')?.value || ''
+  };
+}
+
+function restoreDiarrheaComposer(values = {}) {
+  const state = {
+    ...emptyDiarrheaHdaState(),
+    ...values,
+    findings: { ...emptyDiarrheaHdaState().findings, ...(values.findings || {}) }
+  };
+  if ($('hda-diarrhea-onset-value')) $('hda-diarrhea-onset-value').value = state.onsetValue;
+  if ($('hda-diarrhea-onset-unit')) $('hda-diarrhea-onset-unit').value = state.onsetUnit;
+  if ($('hda-diarrhea-episodes')) $('hda-diarrhea-episodes').value = state.episodes;
+  if ($('hda-diarrhea-consistency')) $('hda-diarrhea-consistency').value = state.consistency;
+  if ($('hda-diarrhea-details')) $('hda-diarrhea-details').value = state.details;
+  $$('[data-hda-finding]').forEach((select) => {
+    select.value = state.findings[select.dataset.hdaFinding] || 'unknown';
+  });
+  return state;
+}
+
+function setHdaSyncPresentation(requiresConfirmation) {
+  const status = $('hda-sync-status');
+  const apply = $('apply-generated-hda');
+  if (status) {
+    status.textContent = requiresConfirmation ? 'EDIÇÃO MANUAL PRESERVADA' : 'HDA SINCRONIZADA';
+    status.classList.toggle('manual', requiresConfirmation);
+  }
+  if (apply) apply.hidden = !requiresConfirmation;
+}
+
+function synchronizeDiarrheaHda({ force = false, persist = true } = {}) {
+  if (hdaComposerState.templateId !== 'sindrome-diarreica') return;
+  const values = readDiarrheaComposer();
+  const nextGeneratedText = composeDiarrheaHda(values);
+  const result = force
+    ? { text: nextGeneratedText, requiresConfirmation: false }
+    : synchronizeGeneratedHda({
+        currentText: $('hda')?.value || '',
+        previousGeneratedText: hdaComposerState.lastGeneratedText,
+        nextGeneratedText
+      });
+  hdaComposerState = {
+    templateId: 'sindrome-diarreica',
+    values,
+    lastGeneratedText: nextGeneratedText
+  };
+  if ($('hda')) $('hda').value = result.text;
+  setHdaSyncPresentation(result.requiresConfirmation);
+  if (persist) autosave();
+}
+
+function activateHdaComposer(template, snapshot = null, { persist = true } = {}) {
+  const active = template?.composer === 'sindrome-diarreica';
+  if ($('hda-diarrhea-guide')) $('hda-diarrhea-guide').hidden = !active;
+  if (!active) {
+    resetHdaComposer();
+    return;
+  }
+  const restored = snapshot?.templateId === 'sindrome-diarreica'
+    ? snapshot
+    : { templateId: 'sindrome-diarreica', values: defaultDiarrheaHdaState(), lastGeneratedText: template.hdaDraft || '' };
+  hdaComposerState = {
+    templateId: 'sindrome-diarreica',
+    values: restoreDiarrheaComposer(restored.values),
+    lastGeneratedText: restored.lastGeneratedText || ''
+  };
+  synchronizeDiarrheaHda({ persist });
 }
 
 function autosave() {
@@ -209,6 +312,7 @@ function archiveDocumentationForContextSwitch() {
 
 function resetDocumentationSurface() {
   restoreForm({});
+  resetHdaComposer();
   clinicalState = emptyClinicalState();
   scoreStates = Object.fromEntries(SCORE_LIST.map((definition) => [definition.id, createScoreState(definition)]));
   glasgowAnswers = { eye: null, verbal: null, motor: null };
@@ -228,17 +332,21 @@ function prepareFreshDocumentation() {
 
 function restoreTemplateSelection(snapshot = {}) {
   templateSelectionKnown = Object.hasOwn(snapshot, 'templateSelection');
-  activeTemplateSelection = snapshot.templateSelection || null;
+  activeTemplateSelection = snapshot.templateSelection
+    ? { ...snapshot.templateSelection, templateId: resolveTemplateId(snapshot.templateSelection.templateId) }
+    : null;
   const template = TEMPLATES.find((item) => item.id === activeTemplateSelection?.templateId);
   if (!template) activeTemplateSelection = null;
   setActiveTemplate(activeTemplateSelection?.templateId || null);
   if ($('hda')) $('hda').placeholder = template?.hdaPrompt || DEFAULT_HDA_PLACEHOLDER;
+  activateHdaComposer(template, snapshot.hdaComposer || null, { persist: false });
 }
 
 function deactivateTemplate({ persist = true } = {}) {
   activeTemplateSelection = null;
   templateSelectionKnown = true;
   setActiveTemplate(null);
+  resetHdaComposer();
   if ($('hda')) $('hda').placeholder = DEFAULT_HDA_PLACEHOLDER;
   if (persist) autosave();
 }
@@ -324,9 +432,13 @@ function applyTemplate(id) {
     $('qp').value = template.qp || '';
   }
   if ($('hda')) $('hda').placeholder = template.hdaPrompt || DEFAULT_HDA_PLACEHOLDER;
+  if ($('hda') && (resetDocument || !normalize($('hda').value))) {
+    $('hda').value = template.hdaDraft || '';
+  }
   activeTemplateSelection = selection;
   templateSelectionKnown = true;
   setActiveTemplate(id);
+  activateHdaComposer(template);
   autosave();
   const toolNote = template.clinicalTools?.length ? ` Ferramenta clínica vinculada: ${template.clinicalTools.join(', ').toUpperCase()}.` : '';
   const archiveNote = resetDocument ? ' A documentação anterior foi preservada em Rascunhos.' : '';
@@ -447,6 +559,7 @@ function clearForm() {
   $('evolution-form').reset();
   $('evolution-output').value = '';
   clinicalState = emptyClinicalState();
+  resetHdaComposer();
   storage.clearAutosave();
   deactivateTemplate({ persist: false });
   toggleEmTempo();
@@ -579,7 +692,23 @@ function bindEvents() {
   $('fill-normal-exam').addEventListener('click', useNormalExamTemplate);
   $('clear-template').addEventListener('click', clearTemplate);
   $('include-em-tempo').addEventListener('change', () => { toggleEmTempo(); autosave(); });
-  ['qp','hda','laboratoriais','imagem','hipoteses','conduta','em-tempo'].forEach((id) => $(id)?.addEventListener('input', autosave));
+  ['qp','laboratoriais','imagem','hipoteses','conduta','em-tempo'].forEach((id) => $(id)?.addEventListener('input', autosave));
+  $('hda')?.addEventListener('input', () => {
+    if (hdaComposerState.templateId === 'sindrome-diarreica') {
+      setHdaSyncPresentation(normalize($('hda').value) !== normalize(hdaComposerState.lastGeneratedText));
+    }
+    autosave();
+  });
+  ['hda-diarrhea-onset-value', 'hda-diarrhea-details'].forEach((id) =>
+    $(id)?.addEventListener('input', () => synchronizeDiarrheaHda())
+  );
+  ['hda-diarrhea-onset-unit', 'hda-diarrhea-episodes', 'hda-diarrhea-consistency'].forEach((id) =>
+    $(id)?.addEventListener('change', () => synchronizeDiarrheaHda())
+  );
+  $$('[data-hda-finding]').forEach((select) =>
+    select.addEventListener('change', () => synchronizeDiarrheaHda())
+  );
+  $('apply-generated-hda')?.addEventListener('click', () => synchronizeDiarrheaHda({ force: true }));
   $('evolution-output').addEventListener('input', autosave);
 
   $('generate-reassessment').addEventListener('click', generateReassessment);

@@ -4,6 +4,13 @@ Registro de marcos relevantes do Zera PS. Commits e pull requests permanecem com
 
 ## 2026-08-09
 
+### fix: roteiro abre com HDA clínica integral
+
+- todos os roteiros voltam a preencher imediatamente o campo HDA com um parágrafo clínico completo e editável;
+- o núcleo sindrômico de diarreia abre com temporalidade, frequência, consistência e negativas de alarme visíveis no próprio texto, em vez de uma frase vazia;
+- os controles estruturados passam a refinar uma HDA já pronta, sem obrigar a médica a construí-la por cliques;
+- os textos permanecem rascunhos sujeitos à revisão médica antes da geração e da cópia.
+
 ### feat: justificativa de exame de alto custo e de internação (piloto)
 
 - motor novo `src/justification-engine.js` monta justificativa a partir do que já foi digitado na Evolução — QP, HDA, exame físico confirmado, exames complementares e hipóteses — reorganizando na estrutura QUADRO CLÍNICO → ANTECEDENTES → EXAME FÍSICO → EXAMES COMPLEMENTARES → HIPÓTESE/RISCO → SOLICITAÇÃO; nunca fabrica achado, risco ou urgência: o que faltar aparece como `[COMPLETAR: ...]` visível, nunca inventado nem omitido;
@@ -12,6 +19,15 @@ Registro de marcos relevantes do Zera PS. Commits e pull requests permanecem com
 - Internação ganha "Puxar dados da Evolução" ao lado de "Justificativa clínica", pedindo confirmação antes de substituir conteúdo já digitado;
 - corrigido de passagem: `renderAdmission` colava a justificativa inteira numa única linha após o cabeçalho — mesma classe de bug já corrigida em exames complementares; agora renderiza como bloco próprio;
 - 13 testes novos (`tests/justification-engine.test.mjs` + regressão de `renderAdmission`).
+
+### HDA integral — síndrome diarreica
+
+- `GEA` e `GECA` foram consolidadas em uma única entrada sindrômica, com aliases para rascunhos antigos;
+- primeiro compositor de HDA integral: temporalidade, frequência, consistência, sintomas, características das fezes e sinais de alarme;
+- fatos não informados permanecem ausentes e negativas exigem seleção explícita;
+- edição manual da HDA é preservada e só pode ser substituída por ação médica explícita;
+- saída completa em Markdown permanece editável e ganhou ação principal de cópia;
+- auditoria independente registrou que a limpeza remota de branches declarada anteriormente não foi executada.
 
 ### feat: transcrição estruturada de exames complementares
 

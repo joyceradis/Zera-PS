@@ -25,10 +25,12 @@ Estes arquivos são preservados como rastreabilidade: eles registram a intençã
 - [`plans/2026-08-08-clinical-safety-foundation.md`](plans/2026-08-08-clinical-safety-foundation.md) — fundação de segurança clínico-documental.
 - [`plans/2026-08-09-clinical-context-coherence.md`](plans/2026-08-09-clinical-context-coherence.md) — coerência entre roteiro documental e protocolo clínico.
 - [`plans/2026-08-09-product-doctrine.md`](plans/2026-08-09-product-doctrine.md) — doutrina de produto como fonte normativa.
+- [`plans/2026-08-09-integral-hda-output.md`](plans/2026-08-09-integral-hda-output.md) — recuperação da HDA integral com composição segura.
 
 ### Specs de desenho
 
 - [`specs/2026-08-09-clinical-context-coherence-design.md`](specs/2026-08-09-clinical-context-coherence-design.md) — desenho da coordenação de contexto.
 - [`specs/2026-08-09-product-doctrine-design.md`](specs/2026-08-09-product-doctrine-design.md) — desenho da doutrina de produto.
+- [`specs/2026-08-09-integral-hda-output-design.md`](specs/2026-08-09-integral-hda-output-design.md) — desenho da HDA integral e saída copiável.
 
 Evidência de verificação por marco fica em [`../audits/`](../audits/), que é uma categoria distinta: auditorias registram o estado observado; planos registram a intenção declarada.

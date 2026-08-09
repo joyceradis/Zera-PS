@@ -29,6 +29,7 @@ Esta pasta concentra a documentação de produto, arquitetura, segurança, teste
 - [`audits/baseline/AUDIT_BASELINE.md`](audits/baseline/AUDIT_BASELINE.md) — baseline anterior à fundação de segurança.
 - [`audits/clinical-safety/AUDIT_POST_REFACTOR.md`](audits/clinical-safety/AUDIT_POST_REFACTOR.md) — checklist pós-refatoração clínica.
 - [`audits/clinical-safety/AUDIT_RESULT.md`](audits/clinical-safety/AUDIT_RESULT.md) — evidência da fundação automatizada.
+- [`audits/clinical-safety/AUDIT_INTEGRAL_HDA_OUTPUT_2026-08-09.md`](audits/clinical-safety/AUDIT_INTEGRAL_HDA_OUTPUT_2026-08-09.md) — auditoria pós-Claude e recuperação da HDA integral.
 - [`audits/temporal-workflow/AUDIT_TEMPORAL_WORKFLOW_BASELINE.md`](audits/temporal-workflow/AUDIT_TEMPORAL_WORKFLOW_BASELINE.md) — baseline anterior ao workflow temporal.
 - [`audits/temporal-workflow/AUDIT_TEMPORAL_WORKFLOW_POST.md`](audits/temporal-workflow/AUDIT_TEMPORAL_WORKFLOW_POST.md) — auditoria do workflow temporal.
 - [`audits/repository/`](audits/repository/) — auditorias de organização e governança do repositório, incluindo a [organização de 2026-08-09](audits/repository/AUDIT_REPOSITORY_ORGANIZATION_2026-08-09.md).

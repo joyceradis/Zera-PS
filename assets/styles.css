@@ -141,6 +141,23 @@ img { display: block; }
 }
 .field textarea { resize: vertical; min-height: 88px; }
 .field input:focus, .field textarea:focus, .field select:focus { border-color: var(--accent-2); box-shadow: 0 0 0 3px rgba(13,148,136,.12); }
+.hda-guide { margin: 4px 0 18px; padding: 18px; border: 1px solid var(--line-strong); border-radius: 12px; background: #fafcfb; }
+.hda-guide-heading { display: flex; align-items: start; justify-content: space-between; gap: 16px; }
+.hda-guide-heading h3 { margin: 0; font-size: 1rem; letter-spacing: -.015em; }
+.hda-guide-help { margin: 8px 0 16px; color: var(--muted); font-size: .76rem; }
+.hda-sync-status { flex: 0 0 auto; color: var(--accent); font-size: .65rem; font-weight: 900; letter-spacing: .05em; }
+.hda-sync-status.manual { color: var(--warning); }
+.hda-course-grid { display: grid; grid-template-columns: .7fr .8fr 1.2fr 1.2fr; gap: 10px; }
+.hda-finding-group { margin: 2px 0 14px; padding: 0; border: 0; }
+.hda-finding-group legend, .hda-alarm-details summary { color: #344054; font-size: .74rem; font-weight: 850; letter-spacing: .035em; text-transform: uppercase; }
+.hda-finding-group legend { margin-bottom: 9px; }
+.hda-finding-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; }
+.hda-finding-grid label { display: grid; grid-template-columns: minmax(0, 1fr) 138px; align-items: center; gap: 10px; min-height: 42px; color: #344054; font-size: .78rem; font-weight: 720; }
+.hda-finding-grid select { width: 100%; min-height: 38px; border: 1px solid var(--line-strong); border-radius: 9px; background: #fff; padding: 7px 9px; color: var(--ink); }
+.hda-alarm-details { padding: 12px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.hda-alarm-details summary { cursor: pointer; }
+.hda-alarm-details[open] summary { margin-bottom: 10px; }
+.hda-details { margin-top: 14px; }
 .field-grid { display: grid; gap: 12px; }
 .two-columns { grid-template-columns: 1fr 1fr; }
 .full-width { grid-column: 1 / -1; }
@@ -188,6 +205,11 @@ img { display: block; }
   .output-area { min-height: 500px; }
 }
 
+@media (max-width: 1180px) {
+  .hda-course-grid { grid-template-columns: 1fr 1fr; }
+  .hda-finding-grid { grid-template-columns: 1fr; }
+}
+
 @media (max-width: 860px) {
   :root { --sidebar: 280px; }
   .app-shell { display: block; }
@@ -213,6 +235,9 @@ img { display: block; }
   .landing-footer { flex-direction: column; }
   .template-grid { grid-template-columns: 1fr 1fr; }
   .two-columns { grid-template-columns: 1fr; }
+  .hda-course-grid { grid-template-columns: 1fr 1fr; }
+  .hda-guide { padding: 14px; }
+  .hda-guide-heading { display: grid; }
   .full-width { grid-column: auto; }
   .form-panel, .preview-panel { padding: 16px; border-radius: 14px; }
   .app-header { height: 74px; }

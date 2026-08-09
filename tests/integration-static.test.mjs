@@ -42,3 +42,19 @@ test('offline fallback is limited to navigation requests', () => {
   assert.match(serviceWorker, /event\.request\.mode === 'navigate'/);
   assert.doesNotMatch(serviceWorker, /cached \|\|\s*caches\.match\('\.\/app\.html'\)/);
 });
+
+test('evolution screen contains the guided diarrhea HDA controls and an explicit complete Markdown output', () => {
+  assert.match(appHtml, /id="hda-diarrhea-guide"/);
+  assert.match(appHtml, /id="hda-diarrhea-onset-value"/);
+  assert.match(appHtml, /data-hda-finding="blood"/);
+  assert.match(appHtml, /data-hda-finding="mucus"/);
+  assert.match(appHtml, /data-hda-finding="pus"/);
+  assert.match(appHtml, /id="apply-generated-hda"/);
+  assert.match(appHtml, /TEXTO COMPLETO · MARKDOWN/);
+  assert.match(appHtml, />Copiar evolução completa</);
+});
+
+test('selecting a roteiro inserts its complete HDA draft into the editable HDA field', () => {
+  assert.match(legacyApp, /\$\('hda'\)\.value = template\.hdaDraft/);
+  assert.match(appHtml, /HDA · RASCUNHO CLÍNICO PRONTO PARA EDITAR/);
+});

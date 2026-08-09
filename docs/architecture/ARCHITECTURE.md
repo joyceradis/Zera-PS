@@ -49,6 +49,9 @@ src/workflow-engine.js
 src/score-engine.js
 → disponibilidade, aplicabilidade, calculabilidade, cálculo e aplicação documental
 
+src/hda-composer.js
+→ composição textual pura a partir de fatos explicitamente confirmados e proteção de edição manual
+
 assets/clinical-state.js
 → estado, proveniência e confirmação clínica
 
@@ -67,6 +70,8 @@ src/temporal-ui.js
 assets/
 → fundação documental estabilizada durante migração incremental
 ```
+
+O primeiro compositor sindrômico implementado é o da síndrome diarreica. Seus controles permanecem na interface atual, mas a regra de transformação reside em `src/hda-composer.js`, sem acesso ao DOM, storage ou decisão diagnóstica.
 
 ## Regra de isolamento
 

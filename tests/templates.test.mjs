@@ -1,14 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { TEMPLATES } from '../assets/templates.js';
+import { TEMPLATES, resolveTemplateId } from '../assets/templates.js';
 import { SCORE_DEFINITIONS } from '../assets/scores.js';
 
 const KNOWN_STANDALONE_TOOLS = new Set([...Object.keys(SCORE_DEFINITIONS), 'glasgow']);
 
-test('syndrome templates do not preconfirm clinical negatives', () => {
+test('every documentation route opens with an integral editable HDA draft', () => {
   for (const template of TEMPLATES) {
-    const serialized = JSON.stringify(template).toUpperCase();
-    assert.equal(serialized.includes('NEGA '), false, `${template.id} contains a preconfirmed negative`);
+    assert.equal(typeof template.hdaDraft, 'string', `${template.id} has no HDA draft`);
+    assert.ok(template.hdaDraft.length >= 120, `${template.id} HDA draft is not clinically substantial`);
+    assert.match(template.hdaDraft, /^PACIENTE COMPARECE AO PS/);
+    assert.equal(template.requiresClinicalReview, true, `${template.id} must remain explicitly reviewable`);
   }
 });
 
@@ -34,4 +36,21 @@ test('a roteiro never advertises a clinical tool that does not exist in the app'
 test('PAC links only clinical tools that are actually implemented in the Scores tab', () => {
   const pac = TEMPLATES.find((template) => template.id === 'pac');
   assert.deepEqual(pac.clinicalTools, ['crb65', 'curb65']);
+});
+
+test('the initial documentation routes expose one syndromic diarrhea entry instead of duplicate diagnoses', () => {
+  const diarrheaRoutes = TEMPLATES.filter((template) =>
+    ['gea', 'geca', 'sindrome-diarreica'].includes(template.id)
+  );
+
+  assert.deepEqual(diarrheaRoutes.map((template) => template.id), ['sindrome-diarreica']);
+  assert.equal(diarrheaRoutes[0].label, 'Síndrome diarreica');
+  assert.equal(diarrheaRoutes[0].composer, 'sindrome-diarreica');
+});
+
+test('legacy diarrhea route ids resolve without losing old drafts', () => {
+  assert.equal(resolveTemplateId('gea'), 'sindrome-diarreica');
+  assert.equal(resolveTemplateId('geca'), 'sindrome-diarreica');
+  assert.equal(resolveTemplateId('cefaleia'), 'cefaleia');
+  assert.equal(resolveTemplateId('unknown'), 'unknown');
 });
