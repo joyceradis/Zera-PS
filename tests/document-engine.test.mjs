@@ -59,3 +59,28 @@ test('confirmed normal template authorizes physical exam rendering', () => {
   assert.equal(text.includes('# EXAME FÍSICO:'), true);
   assert.equal(text.includes('ACV: RCR, 2T, BNF, SEM SOPROS'), true);
 });
+
+test('complementary exams are transcribed one item per line, not glued into a single bullet', () => {
+  const text = renderEvolution({
+    qp: 'DOR',
+    hda: 'DOR HÁ 1 DIA',
+    laboratoriais: 'HEMOGRAMA: NORMAL\nPCR: 12 MG/L',
+    imagem: 'TC DE ABDOME: SEM ALTERAÇÕES AGUDAS'
+  }, baseClinicalState());
+  assert.match(text, /# EXAMES COMPLEMENTARES:\nLABORATORIAIS:\n- HEMOGRAMA: NORMAL\n- PCR: 12 MG\/L\nIMAGEM:\n- TC DE ABDOME: SEM ALTERAÇÕES AGUDAS/);
+});
+
+test('a category with no complementary exam content is omitted entirely, not fabricated as empty', () => {
+  const text = renderEvolution({
+    qp: 'DOR',
+    hda: 'DOR HÁ 1 DIA',
+    imagem: 'TC DE ABDOME: NORMAL'
+  }, baseClinicalState());
+  assert.doesNotMatch(text, /LABORATORIAIS:/);
+  assert.match(text, /IMAGEM:\n- TC DE ABDOME: NORMAL/);
+});
+
+test('no complementary exam content omits the whole section, same as before', () => {
+  const text = renderEvolution({ qp: 'DOR', hda: 'DOR HÁ 1 DIA' }, baseClinicalState());
+  assert.doesNotMatch(text, /# EXAMES COMPLEMENTARES:/);
+});

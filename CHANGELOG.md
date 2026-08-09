@@ -4,6 +4,12 @@ Registro de marcos relevantes do Zera PS. Commits e pull requests permanecem com
 
 ## 2026-08-09
 
+### feat: transcrição estruturada de exames complementares
+
+- `# EXAMES COMPLEMENTARES:` passa a transcrever cada exame como item próprio, agrupado em LABORATORIAIS/IMAGEM — antes, várias linhas digitadas em "Laboratoriais" ou "Imagem" ficavam grudadas num único item, quebrando o padrão institucional já usado em hipóteses/conduta (um item por linha);
+- categoria sem conteúdo continua omitida por completo — nenhuma fabricação de "sem exames";
+- nenhum campo novo de formulário; só a transcrição na saída mudou.
+
 ### fix: roteiro Cefaleia anunciava ferramenta clínica inexistente
 
 - o roteiro Cefaleia declarava `clinicalTools: ['snnoop10']`, exibindo "Ferramenta clínica vinculada: SNNOOP10" ao ser selecionado — mas nenhum checklist SNNOOP10 existe em nenhum lugar do aplicativo; o próprio ROADMAP já registrava SNNOOP10 como item futuro, não implementado;

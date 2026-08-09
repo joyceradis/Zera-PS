@@ -10,13 +10,29 @@ function renderField(label, field) {
   return `- ${label}: ${value}`;
 }
 
-function renderListSection(title, value) {
-  const lines = normalize(value)
+function parseLines(value) {
+  return normalize(value)
     .split(/\n+/)
     .map((line) => line.replace(/^[-•]\s*/, '').trim())
     .filter(Boolean);
+}
+
+function renderListSection(title, value) {
+  const lines = parseLines(value);
   if (!lines.length) return [];
   return [title, ...lines.map((line) => `- ${line}`)];
+}
+
+function renderExamComplementSection(laboratoriais, imagem) {
+  const groups = [
+    ['LABORATORIAIS:', laboratoriais],
+    ['IMAGEM:', imagem]
+  ];
+  const body = groups.flatMap(([label, value]) => {
+    const items = parseLines(value);
+    return items.length ? [label, ...items.map((item) => `- ${item}`)] : [];
+  });
+  return body.length ? ['# EXAMES COMPLEMENTARES:', ...body] : [];
 }
 
 function renderEvolution(raw = {}, clinicalState = {}) {
@@ -51,10 +67,7 @@ function renderEvolution(raw = {}, clinicalState = {}) {
   ].filter(Boolean);
   if (examLines.length) pushSection('# EXAME FÍSICO:', ...examLines);
 
-  const examComplementLines = [];
-  if (normalize(raw.laboratoriais)) examComplementLines.push(`- LABORATORIAIS: ${normalize(raw.laboratoriais)}`);
-  if (normalize(raw.imagem)) examComplementLines.push(`- IMAGEM: ${normalize(raw.imagem)}`);
-  if (examComplementLines.length) pushSection('# EXAMES COMPLEMENTARES:', ...examComplementLines);
+  pushSection(...renderExamComplementSection(raw.laboratoriais, raw.imagem));
 
   const hypotheses = renderListSection('# HIPÓTESES DIAGNÓSTICAS:', raw.hipoteses);
   if (hypotheses.length) pushSection(...hypotheses);
