@@ -116,6 +116,7 @@ Microfunções dependentes de navegador — autosave, rascunhos, clipboard e fal
 3. A duplicação estrutural entre `assets/` e `src/` foi mapeada e conscientemente preservada; sua consolidação exige rodada arquitetural com auditoria própria.
 4. O inventário de módulos do `APP_SHELL` continua manual e ainda pode divergir sem sinal automático.
 5. A avaliação do conteúdo da branch `develop` não faz parte desta rodada.
+6. O script `check` passou a depender de shell POSIX (`for`/glob). O CI roda em `ubuntu-latest` e o desenvolvimento local já é orientado a POSIX, mas o comando não é executável em `cmd.exe`. Se um `protocolo` ou diretório de módulos ficar vazio, o glob não expandido causa falha explícita — comportamento seguro, porém com mensagem pouco descritiva.
 
 ## Coerência da finalidade
 
