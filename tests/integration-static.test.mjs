@@ -56,5 +56,6 @@ test('evolution screen contains the guided diarrhea HDA controls and an explicit
 
 test('selecting a roteiro inserts its complete HDA draft into the editable HDA field', () => {
   assert.match(legacyApp, /\$\('hda'\)\.value = template\.hdaDraft/);
+  assert.match(legacyApp, /function readDiarrheaComposer[\s\S]*?draft:\s*true/);
   assert.match(appHtml, /HDA · RASCUNHO CLÍNICO PRONTO PARA EDITAR/);
 });

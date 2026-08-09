@@ -56,7 +56,7 @@ A interface é parte da segurança e da finalidade assistencial. Deve ser previs
 - solicitação de internação e alta já existentes;
 - HPP com negativa apenas por ação explícita;
 - modelo de exame físico normal confirmado por ação médica;
-- roteiros documentais gerais e primeiro compositor sindrômico de HDA integral para síndrome diarreica, sem fatos clínicos pré-confirmados;
+- roteiros documentais com HDA integral editável e primeiro compositor sindrômico para refinar a síndrome diarreica;
 - CRB-65, CURB-65, qSOFA e Glasgow sem resultado inicial implícito;
 - cenário de referência para dor torácica / suspeita de SCA;
 - HEART com disponibilidade, aplicabilidade e calculabilidade independentes;

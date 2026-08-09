@@ -140,6 +140,7 @@ function readDiarrheaComposer() {
     findings[select.dataset.hdaFinding] = select.value;
   });
   return {
+    draft: true,
     onsetValue: $('hda-diarrhea-onset-value')?.value || '',
     onsetUnit: $('hda-diarrhea-onset-unit')?.value || 'dias',
     episodes: $('hda-diarrhea-episodes')?.value || '',
