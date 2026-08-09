@@ -17,3 +17,4 @@ Estas regras são contratos de sistema. Alterações clínicas, documentais ou d
 13. Nenhuma alteração visual pode mudar silenciosamente o significado clínico do registro.
 14. Microfunções existentes somente podem ser removidas ou redefinidas mediante decisão explícita e teste de regressão.
 15. Justificativa de exame ou internação reorganiza dado já confirmado; nunca fabrica risco, achado ou urgência para viabilizar autorização de convênio/ANS — o que faltar aparece marcado como `[COMPLETAR: ...]`, nunca é inventado nem omitido em silêncio.
+16. Texto clínico editado pela médica não pode ser sobrescrito silenciosamente por atualização de roteiro ou compositor.

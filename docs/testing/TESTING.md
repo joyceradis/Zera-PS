@@ -32,6 +32,9 @@ O gate executa verificação de sintaxe e toda a suíte `node:test`.
 - intenção de aplicação persistida só é restaurada para ferramenta calculável;
 - exames complementares transcritos mantêm um item por linha, sem colar múltiplas linhas num único bullet;
 - justificativa de exame/internação nunca inclui achado, risco ou urgência ausente do formulário/estado clínico confirmado — dado faltante vira `[COMPLETAR: ...]` visível.
+- compositor sindrômico omite fatos não informados e só produz negativas explicitamente selecionadas;
+- atualização do compositor preserva qualquer HDA editada pela médica até ação explícita de substituição;
+- ids legados de roteiro são resolvidos sem perder rascunhos anteriores.
 
 ## Contrato de protocolos
 

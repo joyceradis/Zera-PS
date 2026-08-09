@@ -8,7 +8,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
   <link rel="stylesheet" href="assets/styles.css">
-  <title>Zera PS — Aplicativo</title>
+  <title>Zera PS — Plataforma</title>
 </head>
 <body class="app-body">
   <div class="app-shell">
@@ -59,7 +59,49 @@
               <div class="form-section">
                 <div class="section-heading compact"><div><p class="section-kicker">HISTÓRIA</p><h2>Queixa e contexto clínico</h2></div></div>
                 <label class="field"><span>QP</span><input id="qp" name="qp" placeholder="QUEIXA PRINCIPAL DO PACIENTE"><small>Registre a queixa principal de forma curta.</small></label>
-                <label class="field"><span>HDA</span><textarea id="hda" name="hda" rows="7" placeholder="HISTÓRIA CRONOLÓGICA DO QUADRO E DADOS EFETIVAMENTE INVESTIGADOS"></textarea></label>
+                <label class="field"><span>HDA · RASCUNHO CLÍNICO PRONTO PARA EDITAR</span><textarea id="hda" name="hda" rows="9" placeholder="ESCOLHA UM ROTEIRO PARA ABRIR A HDA COMPLETA"></textarea><small>O texto abre inteiro. Ajuste tempo, características e qualquer negativa que não corresponda ao atendimento antes de gerar.</small></label>
+
+                <section class="hda-guide" id="hda-diarrhea-guide" aria-labelledby="hda-diarrhea-title" hidden>
+                  <div class="hda-guide-heading">
+                    <div><p class="section-kicker">SÍNDROME DIARREICA</p><h3 id="hda-diarrhea-title">Confirme o que foi investigado</h3></div>
+                    <span class="hda-sync-status" id="hda-sync-status">HDA SINCRONIZADA</span>
+                  </div>
+                  <p class="hda-guide-help">A HDA acima já está pronta. Use estes controles apenas para corrigir ou refinar o texto sem redigitar.</p>
+
+                  <div class="hda-course-grid">
+                    <label class="field"><span>Início</span><input id="hda-diarrhea-onset-value" type="number" min="0" step="1" inputmode="numeric" placeholder="VALOR"></label>
+                    <label class="field"><span>Unidade</span><select id="hda-diarrhea-onset-unit"><option value="dias">Dias</option><option value="horas">Horas</option><option value="semanas">Semanas</option></select></label>
+                    <label class="field"><span>Episódios / 24h</span><select id="hda-diarrhea-episodes"><option value="">Não informado</option><option value="1-3">1–3</option><option value="4-6">4–6</option><option value=">6">Mais de 6</option><option value="0">Sem novos episódios</option></select></label>
+                    <label class="field"><span>Consistência</span><select id="hda-diarrhea-consistency"><option value="">Não informada</option><option value="líquidas">Líquidas</option><option value="pastosas">Pastosas</option><option value="amolecidas">Amolecidas</option></select></label>
+                  </div>
+
+                  <fieldset class="hda-finding-group">
+                    <legend>Sintomas e características das fezes</legend>
+                    <div class="hda-finding-grid">
+                      <label><span>Dor abdominal</span><select data-hda-finding="abdominalPain"><option value="unknown">Não informado</option><option value="present">Presente</option><option value="denied">Negado</option></select></label>
+                      <label><span>Náuseas</span><select data-hda-finding="nausea"><option value="unknown">Não informado</option><option value="present">Presente</option><option value="denied">Negado</option></select></label>
+                      <label><span>Vômitos</span><select data-hda-finding="vomiting"><option value="unknown">Não informado</option><option value="present">Presente</option><option value="denied">Negado</option></select></label>
+                      <label><span>Febre</span><select data-hda-finding="fever"><option value="unknown">Não informado</option><option value="present">Presente</option><option value="denied">Negado</option></select></label>
+                      <label><span>Sangue nas fezes</span><select data-hda-finding="blood"><option value="unknown">Não informado</option><option value="present">Presente</option><option value="denied">Negado</option></select></label>
+                      <label><span>Muco nas fezes</span><select data-hda-finding="mucus"><option value="unknown">Não informado</option><option value="present">Presente</option><option value="denied">Negado</option></select></label>
+                      <label><span>Pus nas fezes</span><select data-hda-finding="pus"><option value="unknown">Não informado</option><option value="present">Presente</option><option value="denied">Negado</option></select></label>
+                    </div>
+                  </fieldset>
+
+                  <details class="hda-alarm-details">
+                    <summary>Sinais de alarme e contexto</summary>
+                    <div class="hda-finding-grid">
+                      <label><span>Dor abdominal intensa</span><select data-hda-finding="intensePain"><option value="unknown">Não informado</option><option value="present">Presente</option><option value="denied">Negado</option></select></label>
+                      <label><span>Intolerância à via oral</span><select data-hda-finding="oralIntolerance"><option value="unknown">Não informado</option><option value="present">Presente</option><option value="denied">Negado</option></select></label>
+                      <label><span>Redução da diurese</span><select data-hda-finding="oliguria"><option value="unknown">Não informado</option><option value="present">Presente</option><option value="denied">Negado</option></select></label>
+                      <label><span>Síncope ou hipotensão</span><select data-hda-finding="syncopeHypotension"><option value="unknown">Não informado</option><option value="present">Presente</option><option value="denied">Negado</option></select></label>
+                      <label><span>Imunossupressão</span><select data-hda-finding="immunosuppression"><option value="unknown">Não informado</option><option value="present">Presente</option><option value="denied">Negado</option></select></label>
+                    </div>
+                  </details>
+
+                  <label class="field hda-details"><span>Contexto adicional</span><textarea id="hda-diarrhea-details" rows="3" placeholder="ANTIBIÓTICOS, VIAGEM, ALIMENTOS, CONTATOS, MEDIDAS JÁ REALIZADAS E RESPOSTA"></textarea></label>
+                  <button class="button button-secondary" id="apply-generated-hda" type="button" hidden>Atualizar HDA com dados confirmados</button>
+                </section>
               </div>
 
               <div class="form-section">
@@ -117,9 +159,9 @@
 
           <aside class="preview-panel">
             <div class="preview-sticky">
-              <div class="section-heading compact"><div><p class="section-kicker">SAÍDA FINAL</p><h2>Revisar antes de copiar</h2></div><span class="save-status" id="save-status">NÃO SALVO</span></div>
+              <div class="section-heading compact"><div><p class="section-kicker">TEXTO COMPLETO · MARKDOWN</p><h2>Revisar antes de copiar</h2></div><span class="save-status" id="save-status">NÃO SALVO</span></div>
               <textarea id="evolution-output" class="output-area" spellcheck="false" aria-label="Texto final da evolução"></textarea>
-              <div class="action-row"><button class="button button-primary" id="generate-evolution" type="button">Gerar evolução</button><button class="button button-dark" id="copy-evolution" type="button">Copiar</button><button class="button button-secondary" id="save-draft" type="button">Salvar rascunho</button><button class="button button-danger" id="clear-form" type="button">Limpar</button></div>
+              <div class="action-row"><button class="button button-secondary" id="generate-evolution" type="button">Atualizar evolução</button><button class="button button-primary" id="copy-evolution" type="button">Copiar evolução completa</button><button class="button button-secondary" id="save-draft" type="button">Salvar rascunho</button><button class="button button-danger" id="clear-form" type="button">Limpar</button></div>
               <p class="microcopy" id="action-feedback" aria-live="polite"></p>
             </div>
           </aside>
