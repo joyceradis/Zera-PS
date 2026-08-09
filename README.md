@@ -1,26 +1,38 @@
 # Zera PS
 
-> **Documentação clínica no ritmo do pronto-socorro, orientada por contexto, tempo e confirmação explícita.**
+> **O paciente deve ser ouvido. O médico não deve redigitar a mesma história.**
 
-O **Zera PS** é um MVP offline-first de apoio à documentação clínica no pronto-socorro. Ele organiza o atendimento, revela campos conforme contexto e etapa, acompanha pendências e reavaliações e transforma dados confirmados em registro revisável — sem substituir julgamento médico ou o prontuário institucional.
+O **Zera PS** é uma plataforma de documentação clínica sem fricção, orientada por síndromes e sustentada por rigor metodológico. Nasceu para devolver tempo clínico ao encontro entre médico e paciente em um pronto-socorro que frequentemente exige quatro a cinco atendimentos por hora.
+
+No modelo-alvo, a médica começa por uma síndrome ou apresentação clínica, recebe uma HDA semipronta e editável, registra o dado uma vez e o reutiliza com segurança ao longo da evolução, reavaliação, internação ou alta. *Cores* clínicos, pendências, protocolos e scores aparecem conforme contexto e etapa — sem presumir diagnóstico, fabricar informação ou substituir julgamento médico.
+
+## Finalidade
+
+O problema principal não é a falta de mais um formulário ou protocolo. É o tempo de escuta consumido por digitação repetitiva, navegação e reconstrução da mesma história em documentos sucessivos.
+
+> **Reduzir documentação é o meio. Devolver tempo ao paciente é o fim.**
+
+Apoio à decisão, workflow temporal e ferramentas clínicas são camadas subordinadas a essa finalidade.
 
 ## Como o produto pensa
 
 ```text
-CENÁRIO
+SÍNDROME OU APRESENTAÇÃO
    ↓
-ETAPA DO ATENDIMENTO
+HDA SEMIPRONTA E EDITÁVEL
    ↓
-DADOS + ESTADO + PROVENIÊNCIA
+DADO CONFIRMADO REGISTRADO UMA VEZ
    ↓
-PENDÊNCIAS / RESULTADOS
+CONTEXTO + ETAPA DO ATENDIMENTO
    ↓
-FERRAMENTAS CLÍNICAS
+CORES / PENDÊNCIAS / RESULTADOS / FERRAMENTAS
    ↓
-DOCUMENTO REVISÁVEL
+DOCUMENTOS REVISÁVEIS SEM REDIGITAÇÃO INTEGRAL
 ```
 
 **Princípio central:** nenhuma transformação documental pode aumentar o grau de certeza, alterar a polaridade ou fabricar um fato clínico ausente.
+
+**Princípio de interação:** a interface deve ser previsível, keyboard-first e parcimoniosa em cliques, confirmações e mudanças de tela. Reduzir digitação criando nova fricção mental não é sucesso.
 
 ## Estado atual
 
@@ -29,6 +41,7 @@ O projeto já possui fundação de segurança clínico-documental, testes automa
 Principais capacidades atuais:
 
 - evolução estruturada;
+- roteiros documentais e HDAs semiprontas editáveis, ainda pendentes de reorganização sindrômica;
 - reavaliação vinculada ao mesmo Atendimento;
 - HPP com negativas apenas por ação explícita;
 - modelo de exame físico normal confirmado pela médica;
@@ -82,7 +95,9 @@ A migração arquitetural é incremental: a fundação estável em `assets/` per
 - reavaliação não sobrescreve admissão;
 - resultado novo não reescreve retrospectivamente dado anterior;
 - migração técnica não fabrica confirmação clínica;
-- saída permanece editável e revisável.
+- saída permanece editável e revisável;
+- síndrome/apresentação ≠ diagnóstico presumido;
+- reutilizar dado ≠ retirar contexto, proveniência ou temporalidade;
 
 ## Verificação
 
