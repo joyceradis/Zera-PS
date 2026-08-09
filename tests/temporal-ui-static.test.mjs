@@ -31,3 +31,9 @@ test('fields owned by the evolution form remain in the application shell', () =>
     assert.match(html, new RegExp(`id="${field.domId}"`), `campo documental ${field.domId} deve permanecer no formulário`);
   }
 });
+
+test('template cards are identified as documentation scripts rather than protocol scenarios', () => {
+  assert.match(html, /ROTEIROS DE DOCUMENTAÇÃO/);
+  assert.match(html, /Comece por um roteiro/);
+  assert.doesNotMatch(html, /<h2>Comece por um cenário<\/h2>/);
+});

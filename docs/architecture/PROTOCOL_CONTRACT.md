@@ -51,7 +51,7 @@ Campos `evolution_form` são **referências** a campos já pertencentes ao formu
 | --- | --- | --- |
 | `id` | sim | único no protocolo |
 | `fields` | sim | lista de ids de campos (pode ser vazia) |
-| `stage` / `stages` | não | etapas em que a seção é pertinente; declare uma das duas chaves, nunca ambas; ausência = todas |
+| `stage` / `stages` | não | `stage` recebe uma etapa textual; `stages` exige array de etapas; declare uma das duas chaves, nunca ambas; ausência = todas |
 | `visibleWhen` | não | regra `{ field, equals }` sobre o contexto |
 | `layout` | não | `stack` (padrão) ou `two-columns` |
 | `kicker`, `title` | não | cabeçalho da subseção |
@@ -71,7 +71,7 @@ Uma seção cujos campos sejam todos `evolution_form` e que não apresente ferra
   variables: { <nomeDaVariável>: { field, availableWhen? } },
   requiredVariables: [...],
   missingMessages: { <variável>: '...' },
-  messages: { notApplicable, incomplete },
+  messages: { unavailable, notApplicable, incomplete },
   calculate(variables), interpret(score)
 }
 ```
@@ -79,6 +79,14 @@ Uma seção cujos campos sejam todos `evolution_form` e que não apresente ferra
 `variables` liga o nome usado pelo cálculo ao campo do protocolo. `availableWhen` expressa dependência de estado — por exemplo, a relação da troponina só é considerada quando o resultado está `available`; caso contrário a variável é `null` e a ferramenta permanece **não calculável**.
 
 O contrato `available ≠ applicable ≠ calculable ≠ applied` é do motor. Nenhuma ferramenta entra no documento sem aplicação explícita da médica.
+
+Disponibilidade é avaliada antes de aplicabilidade. Uma ferramenta `unavailable` nunca é descrita como disponível e nunca expõe ação de aplicação, ainda que possua regras de aplicabilidade declaradas.
+
+## Roteiro documental não é protocolo
+
+Os cards da evolução são roteiros de documentação: podem sugerir QP e orientar a coleta da HDA, mas não ativam protocolo clínico por inferência. A associação entre roteiro e protocolo, quando existir, deve ser declarada por `protocolId`. Ausência dessa chave significa “sem protocolo correspondente”.
+
+O coordenador de contexto impede que um roteiro sem protocolo permaneça simultaneamente ativo com workflow específico. Trocas preservam o texto clínico; estado temporal significativo só é desvinculado após confirmação explícita. QP, HDA, hipóteses ou conduta nunca são usados para inferir diagnóstico ou compatibilidade.
 
 ### Resultados temporais (`temporalResults[]`)
 
@@ -97,7 +105,7 @@ O motor converte a declaração em `pendingItems[]` e `results[]` do Atendimento
 
 `validateProtocol(protocol)` retorna `{ valid, errors[] }` com `{ code, path, message }`. `assertValidProtocol` lança `ProtocolValidationError`. O registry valida no registro, então erro de configuração quebra o carregamento em desenvolvimento e testes.
 
-Detecções atuais: id/versão/label inválidos, ids duplicados, identificadores de DOM colidentes (inclusive entre campo e ferramenta), etapa inexistente ou não declarada, `stage` e `stages` declarados ao mesmo tempo, seção referenciando etapa inválida, campo referenciado inexistente, campo órfão ou declarado em duas seções, valor inicial incompatível com tipo ou opções, coerção numérica sobre opções não numéricas, `visibleWhen`/`applicableWhen`/`availableWhen` apontando para campo inexistente ou externo, variável obrigatória sem origem declarada, variável apontando para campo inexistente, ferramenta inexistente ou sem seção, resultado temporal sem regra ou com payload quebrado, e estrutura incompatível com o contrato.
+Detecções atuais: id/versão/label inválidos, ids duplicados, identificadores de DOM colidentes (inclusive entre campo e ferramenta), etapa inexistente ou não declarada, `stage` e `stages` declarados ao mesmo tempo, `stages` que não seja array, seção referenciando etapa inválida, campo referenciado inexistente, campo órfão ou declarado em duas seções, valor inicial incompatível com tipo ou opções, coerção numérica sobre opções não numéricas, `visibleWhen`/`applicableWhen`/`availableWhen` apontando para campo inexistente ou externo, variável obrigatória sem origem declarada, variável apontando para campo inexistente, ferramenta inexistente ou sem seção, resultado temporal sem regra ou com payload quebrado, e estrutura incompatível com o contrato.
 
 Em tempo de execução a proteção é complementar: um controle numérico com conteúdo não numérico é lido como **ausente**, e uma ferramenta cujo cálculo não produza número finito permanece **não calculável**. Valor inválido nunca vira score.
 

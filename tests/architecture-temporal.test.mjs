@@ -11,6 +11,8 @@ const requiredFiles = [
   'src/protocol-engine.js',
   'src/protocol-registry.js',
   'src/protocol-renderer.js',
+  'src/context-coordination.js',
+  'src/tool-presentation.js',
   'src/document-engine.js',
   'src/storage.js',
   'src/ui.js',
@@ -25,7 +27,9 @@ const GENERIC_MODULES = [
   'src/protocol-schema.js',
   'src/protocol-engine.js',
   'src/protocol-renderer.js',
-  'src/temporal-ui.js'
+  'src/temporal-ui.js',
+  'src/context-coordination.js',
+  'src/tool-presentation.js'
 ];
 
 const CLINICAL_TERMS = [/\bheart\b/i, /tropon/i, /angin/i, /suspectedAcs/, /\becg\b/i, /\bsca\b/i];
@@ -67,9 +71,9 @@ test('only the registry resolves concrete protocol configurations', async () => 
   assert.match(temporalUi, /protocol-registry\.js/);
 });
 
-test('service worker caches every protocol infrastructure module', async () => {
+test('service worker caches every protocol and context infrastructure module', async () => {
   const serviceWorker = await readFile('service-worker.js', 'utf8');
-  for (const path of ['src/protocol-schema.js', 'src/protocol-engine.js', 'src/protocol-registry.js', 'src/protocol-renderer.js', 'protocols/sca.js']) {
+  for (const path of ['src/protocol-schema.js', 'src/protocol-engine.js', 'src/protocol-registry.js', 'src/protocol-renderer.js', 'src/context-coordination.js', 'src/tool-presentation.js', 'protocols/sca.js']) {
     assert.match(serviceWorker, new RegExp(`'\\./${path.replace('/', '\\/')}'`));
   }
 });

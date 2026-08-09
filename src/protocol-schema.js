@@ -309,21 +309,22 @@ function validateSections(protocol, fieldIndex, declaredStages, add) {
     if (section.stage !== undefined && section.stages !== undefined) {
       add(PROTOCOL_ERRORS.AMBIGUOUS_SECTION_STAGES, `${path}.stage`, 'Seção deve declarar stage ou stages, nunca ambos.');
     }
-    const stages = section.stage !== undefined ? [section.stage] : section.stages;
+    if (section.stages !== undefined && !Array.isArray(section.stages)) {
+      add(PROTOCOL_ERRORS.INVALID_SECTION, `${path}.stages`, 'Etapas da seção devem ser declaradas em lista.');
+    }
+    const stages = section.stage !== undefined
+      ? [section.stage]
+      : (Array.isArray(section.stages) ? section.stages : undefined);
     if (stages !== undefined) {
-      if (!Array.isArray(stages) && typeof stages !== 'string') {
-        add(PROTOCOL_ERRORS.INVALID_SECTION, `${path}.stages`, 'Etapas da seção devem ser declaradas em lista.');
-      } else {
-        [].concat(stages).forEach((stage, index) => {
-          if (!KNOWN_STAGES.has(stage)) {
-            add(PROTOCOL_ERRORS.SECTION_UNKNOWN_STAGE, `${path}.stages[${index}]`, `Seção referencia etapa inexistente: ${String(stage)}.`);
-            return;
-          }
-          if (declaredStages.size && !declaredStages.has(stage)) {
-            add(PROTOCOL_ERRORS.SECTION_UNKNOWN_STAGE, `${path}.stages[${index}]`, `Seção referencia etapa não declarada pelo protocolo: ${stage}.`);
-          }
-        });
-      }
+      stages.forEach((stage, index) => {
+        if (!KNOWN_STAGES.has(stage)) {
+          add(PROTOCOL_ERRORS.SECTION_UNKNOWN_STAGE, `${path}.${section.stage !== undefined ? 'stage' : `stages[${index}]`}`, `Seção referencia etapa inexistente: ${String(stage)}.`);
+          return;
+        }
+        if (declaredStages.size && !declaredStages.has(stage)) {
+          add(PROTOCOL_ERRORS.SECTION_UNKNOWN_STAGE, `${path}.${section.stage !== undefined ? 'stage' : `stages[${index}]`}`, `Seção referencia etapa não declarada pelo protocolo: ${stage}.`);
+        }
+      });
     }
 
     if (section.layout !== undefined && !KNOWN_LAYOUTS.has(section.layout)) {
