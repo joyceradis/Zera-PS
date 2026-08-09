@@ -72,14 +72,17 @@ A reavaliação pertence ao mesmo Atendimento e preserva a admissão. O contrato
 Zera-PS/
 ├── index.html
 ├── app.html
-├── app.js
+├── app.js               # entrypoint do módulo ES
+├── manifest.json        # PWA
+├── service-worker.js    # app shell offline-first
 ├── src/                 # workflow temporal, contrato de protocolos e coordenação atual
 ├── protocols/           # configurações clínicas declarativas
 ├── assets/              # fundação documental estabilizada
 ├── tests/               # regressão automatizada
 ├── docs/                # documentação técnica organizada por domínio
 ├── README.md
-└── ROADMAP.md
+├── ROADMAP.md
+└── CHANGELOG.md
 ```
 
 A migração arquitetural é incremental: a fundação estável em `assets/` permanece enquanto a camada temporal em `src/` amadurece, evitando perda de microfunções já estabilizadas.

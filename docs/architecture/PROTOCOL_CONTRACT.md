@@ -113,7 +113,7 @@ Em tempo de execução a proteção é complementar: um controle numérico com c
 
 1. Criar `protocols/<cenario>.js` exportando a definição declarativa.
 2. Registrar em `src/protocol-registry.js` (`createProtocolRegistry([...])`).
-3. Adicionar o arquivo ao `APP_SHELL` do `service-worker.js` e ao script `check` do `package.json`.
+3. Adicionar o arquivo ao `APP_SHELL` do `service-worker.js`. O script `check` do `package.json` varre `*.js`, `assets/*.js`, `src/*.js` e `protocols/*.js`, então não exige manutenção manual.
 4. Adicionar teste do protocolo: `validateProtocol` sem erros e comportamento clínico esperado das ferramentas.
 5. Rodar `npm run verify` e revalidar manualmente desktop/mobile e PWA.
 

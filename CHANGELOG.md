@@ -2,6 +2,31 @@
 
 Registro de marcos relevantes do Zera PS. Commits e pull requests permanecem como fonte detalhada de implementação.
 
+## 2026-08-09
+
+### Doutrina de produto
+
+- finalidade normativa explicitada: o paciente deve ser ouvido e o médico poupado de redigitar a mesma informação;
+- entrada por síndrome ou apresentação clínica, nunca por diagnóstico presumido;
+- HDA semipronta e editável definida como mecanismo central de redução de fricção;
+- interface previsível, keyboard-first e parcimoniosa em cliques declarada como requisito de produto;
+- protocolos, scores e apoio à decisão posicionados como camadas subordinadas a essa finalidade;
+- roadmap reordenado por prioridade, com experiência sem fricção antes da expansão de *cores* sindrômicos.
+
+### Coerência de contexto clínico
+
+- roteiro documental e workflow clínico deixam de coexistir em combinação incompatível;
+- coordenação por decisões puras em `src/context-coordination.js`, sem acesso a DOM ou armazenamento;
+- troca de contexto exige confirmação quando descartaria vínculo temporal significativo;
+- documentação anterior preservada em Rascunhos e superfície do novo contexto iniciada limpa;
+- compatibilidade declarada por `protocolId`; texto clínico nunca é usado para inferir protocolo ou diagnóstico.
+
+### Organização do repositório
+
+- auditorias históricas consolidadas em `docs/audits/`;
+- planos de implementação e specs de desenho separados em `docs/history/`, com caráter não normativo declarado;
+- verificação de sintaxe convertida em varredura determinística dos diretórios de módulos.
+
 ## 2026-08-08
 
 ### Infraestrutura de protocolos clínicos
