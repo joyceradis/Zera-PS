@@ -96,6 +96,22 @@
                 <label class="toggle-row"><input type="checkbox" id="include-em-tempo"><span>Incluir # EM TEMPO:</span></label>
                 <label class="field" id="em-tempo-field" hidden><span>Em tempo</span><textarea id="em-tempo" rows="4" placeholder="ATUALIZAÇÃO CLÍNICA OU RESULTADO POSTERIOR"></textarea></label>
               </div>
+
+              <div class="form-section">
+                <div class="section-heading compact"><div><p class="section-kicker">JUSTIFICATIVA</p><h2>Exame de alto custo</h2></div></div>
+                <div class="field-grid two-columns">
+                  <label class="field"><span>Tipo de documento</span>
+                    <select id="justification-profile">
+                      <option value="">SELECIONE</option>
+                    </select>
+                  </label>
+                  <label class="field" id="justification-variant-field" hidden><span>Variante</span>
+                    <select id="justification-variant"></select>
+                  </label>
+                </div>
+                <small class="microcopy">Monta a justificativa a partir do que já foi digitado nesta evolução — QP, HDA, exame físico confirmado, exames complementares e hipóteses. Nada é inventado: o que faltar aparece marcado como [COMPLETAR: ...].</small>
+                <div class="action-row"><button class="button button-secondary" id="generate-justification" type="button">Gerar justificativa</button></div>
+              </div>
             </form>
           </section>
 
@@ -108,6 +124,13 @@
             </div>
           </aside>
         </div>
+
+        <dialog id="justification-dialog" class="justification-dialog">
+          <div class="section-heading compact"><div><p class="section-kicker">JUSTIFICATIVA GERADA</p><h2>Revisar antes de copiar</h2></div><button class="icon-button" id="close-justification" type="button" aria-label="Fechar">Fechar</button></div>
+          <textarea id="justification-output" class="output-area" spellcheck="false" aria-label="Texto da justificativa gerada"></textarea>
+          <div class="action-row"><button class="button button-dark" id="copy-justification" type="button">Copiar</button></div>
+          <p class="microcopy" id="justification-feedback" aria-live="polite">Revise e complete os trechos marcados com [COMPLETAR: ...] antes de usar este texto.</p>
+        </dialog>
       </section>
 
       <section class="view" id="view-reavaliacao" data-title="Reavaliação">
@@ -115,7 +138,7 @@
       </section>
 
       <section class="view" id="view-internacao" data-title="Internação">
-        <div class="simple-layout"><section class="form-panel"><div class="section-heading"><div><p class="section-kicker">INTERNAÇÃO</p><h2>Justificativa e plano inicial</h2></div></div><label class="field"><span>Diagnóstico / hipótese principal</span><input id="int-diagnostico"></label><label class="field"><span>Justificativa clínica</span><textarea id="int-justificativa" rows="6"></textarea></label><label class="field"><span>Destino</span><select id="int-destino"><option>ENFERMARIA</option><option>SEMI-INTENSIVA</option><option>UTI</option></select></label><label class="field"><span>Prescrição / cuidados iniciais</span><textarea id="int-prescricao" rows="6"></textarea></label><div class="action-row"><button class="button button-primary" id="generate-admission" type="button">Gerar solicitação</button><button class="button button-dark" data-copy-target="admission-output" type="button">Copiar</button></div></section><section class="preview-panel"><textarea id="admission-output" class="output-area tall" spellcheck="false"></textarea></section></div>
+        <div class="simple-layout"><section class="form-panel"><div class="section-heading"><div><p class="section-kicker">INTERNAÇÃO</p><h2>Justificativa e plano inicial</h2></div></div><label class="field"><span>Diagnóstico / hipótese principal</span><input id="int-diagnostico"></label><div class="field-heading"><span>Justificativa clínica</span><button type="button" class="text-button" id="pull-admission-justification">Puxar dados da Evolução</button></div><label class="field"><textarea id="int-justificativa" rows="6"></textarea></label><label class="field"><span>Destino</span><select id="int-destino"><option>ENFERMARIA</option><option>SEMI-INTENSIVA</option><option>UTI</option></select></label><label class="field"><span>Prescrição / cuidados iniciais</span><textarea id="int-prescricao" rows="6"></textarea></label><div class="action-row"><button class="button button-primary" id="generate-admission" type="button">Gerar solicitação</button><button class="button button-dark" data-copy-target="admission-output" type="button">Copiar</button></div></section><section class="preview-panel"><textarea id="admission-output" class="output-area tall" spellcheck="false"></textarea></section></div>
       </section>
 
       <section class="view" id="view-alta" data-title="Alta">

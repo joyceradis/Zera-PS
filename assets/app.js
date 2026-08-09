@@ -45,6 +45,11 @@ import {
   decideWorkflowSelection,
   decideTemplateReplacement
 } from '../src/context-coordination.js';
+import {
+  JUSTIFICATION_PROFILES,
+  getJustificationProfile,
+  assembleJustification
+} from '../src/justification-engine.js';
 
 const storage = createStorage();
 const HPP_KEYS = ['comorbidades', 'muc', 'alergias', 'habitos', 'cirurgias'];
@@ -349,19 +354,23 @@ function generateEvolution() {
     : 'Evolução gerada a partir dos dados confirmados. Revise antes de copiar.');
 }
 
-async function copyTextFrom(targetId) {
-  const target = $(targetId);
-  if (!target || !target.value.trim()) {
-    showFeedback('Não há texto para copiar.');
-    return;
-  }
+async function copyTextValue(target) {
   try {
     await navigator.clipboard.writeText(target.value);
   } catch {
     target.select();
     document.execCommand('copy');
   }
-  showFeedback('Texto copiado.');
+}
+
+async function copyTextFrom(targetId, onFeedback = showFeedback) {
+  const target = $(targetId);
+  if (!target || !target.value.trim()) {
+    onFeedback('Não há texto para copiar.');
+    return;
+  }
+  await copyTextValue(target);
+  onFeedback('Texto copiado.');
 }
 
 function getDrafts() {
@@ -467,6 +476,60 @@ function generateAdmission() {
   });
 }
 
+function populateJustificationProfiles() {
+  const select = $('justification-profile');
+  if (!select) return;
+  const options = JUSTIFICATION_PROFILES
+    .filter((profile) => profile.section === 'exame')
+    .map((profile) => `<option value="${escapeHtml(profile.id)}">${escapeHtml(profile.label)}</option>`)
+    .join('');
+  select.innerHTML = `<option value="">SELECIONE</option>${options}`;
+}
+
+function syncJustificationVariants() {
+  const field = $('justification-variant-field');
+  const select = $('justification-variant');
+  if (!field || !select) return;
+  const profile = getJustificationProfile($('justification-profile')?.value || '');
+  const variants = profile?.variants || [];
+  field.hidden = variants.length === 0;
+  select.innerHTML = variants.map((variant) => `<option value="${escapeHtml(variant.id)}">${escapeHtml(variant.label)}</option>`).join('');
+}
+
+const JUSTIFICATION_HINT = 'Revise e complete os trechos marcados com [COMPLETAR: ...] antes de usar este texto.';
+
+function showJustificationFeedback(message) {
+  if ($('justification-feedback')) $('justification-feedback').textContent = message;
+}
+
+function generateJustification() {
+  const profile = getJustificationProfile($('justification-profile')?.value || '');
+  if (!profile) {
+    showFeedback('Selecione um tipo de documento antes de gerar a justificativa.');
+    return;
+  }
+  const variantId = $('justification-variant')?.value || profile.variants[0]?.id || '';
+  const body = assembleJustification(profile, variantId, { form: readForm(), clinicalState });
+  const text = ['## JUSTIFICATIVA DE EXAME - HOSPITAL MERIDIONAL SERRA ##', '', body].join('\n');
+  if ($('justification-output')) $('justification-output').value = text;
+  showJustificationFeedback(JUSTIFICATION_HINT);
+  $('justification-dialog')?.showModal();
+}
+
+function pullAdmissionJustification() {
+  const field = $('int-justificativa');
+  if (!field) return;
+  const profile = getJustificationProfile('internacao');
+  const generate = () => assembleJustification(profile, '', { form: readForm(), clinicalState });
+  const hasExistingContent = normalize(field.value).length > 0;
+  if (hasExistingContent) {
+    const accepted = confirm('O campo Justificativa clínica já tem conteúdo digitado. Substituir pelos dados puxados da Evolução?');
+    if (!accepted) return;
+  }
+  field.value = generate();
+  showFeedback('Justificativa preenchida a partir dos dados da Evolução. Revise e complete o que estiver marcado com [COMPLETAR: ...].');
+}
+
 function generateDischarge() {
   $('discharge-output').value = renderDischarge({
     diagnostico: $('alta-diagnostico').value,
@@ -524,6 +587,12 @@ function bindEvents() {
   $('generate-discharge').addEventListener('click', generateDischarge);
   $$('[data-copy-target]').forEach((button) => button.addEventListener('click', () => copyTextFrom(button.dataset.copyTarget)));
 
+  $('justification-profile')?.addEventListener('change', syncJustificationVariants);
+  $('generate-justification')?.addEventListener('click', generateJustification);
+  $('close-justification')?.addEventListener('click', () => $('justification-dialog')?.close());
+  $('copy-justification')?.addEventListener('click', () => copyTextFrom('justification-output', showJustificationFeedback));
+  $('pull-admission-justification')?.addEventListener('click', pullAdmissionJustification);
+
   $$('.nav-button').forEach((button) => button.addEventListener('click', () => { activateView(button.dataset.view); if (button.dataset.view === 'rascunhos') renderDrafts(); }));
   $('menu-button').addEventListener('click', () => { $('sidebar').classList.add('open'); $('sidebar-overlay').classList.add('open'); });
   $('sidebar-overlay').addEventListener('click', () => { $('sidebar').classList.remove('open'); $('sidebar-overlay').classList.remove('open'); });
@@ -537,6 +606,8 @@ function init() {
   renderTemplates(TEMPLATES, applyTemplate);
   renderScores(SCORE_LIST, handleScoreAnswer, handleGlasgowChange);
   buildQuickChoices(QUICK_CHOICES, FIELD_MAP, onQuickInput);
+  populateJustificationProfiles();
+  syncJustificationVariants();
   loadAutosave();
   syncAllQuickChoices(QUICK_CHOICES, FIELD_MAP);
   renderDrafts();

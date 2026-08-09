@@ -55,6 +55,9 @@ assets/clinical-state.js
 src/document-engine.js
 → documento temporal e bloco de scores autorizados
 
+src/justification-engine.js
+→ montagem de justificativas (exame de alto custo, internação) a partir de dado já confirmado
+
 src/storage.js
 → persistência do Atendimento v3
 
@@ -99,6 +102,14 @@ available
 ```
 
 O motor pode calcular deterministicamente quando todos os dados estão presentes, mas o document engine só renderiza a ferramenta quando ela foi explicitamente aplicada/documentada.
+
+## Justificativas
+
+`src/justification-engine.js` monta justificativa de exame de alto custo ou de internação a partir do formulário e do estado clínico já confirmados — mesma fonte de dado que `renderEvolution`, reaproveitando `renderField`/`renderListSection`/`renderExamComplementSection` de `assets/document-engine.js` em vez de reler o DOM ou duplicar a lógica de confirmação.
+
+O motor não sabe qual exame é "mais grave" nem aplica critério de convênio/ANS — apenas reorganiza o que já foi digitado na estrutura declarada em `JUSTIFICATION_PROFILES`. Um bloco que dependeria de dado ausente (tipicamente a hipótese/risco que justifica o pedido) vira um marcador `[COMPLETAR: ...]` visível, nunca um texto fabricado nem uma omissão silenciosa — mesmo princípio de `canRenderClinicalField`, aplicado a um documento com peso de autorização, onde fabricar é mais grave do que numa evolução comum.
+
+A saída nunca é inserida automaticamente na Conduta ou na Evolução: para exame, abre um documento avulso (`<dialog>`) que a médica revisa e copia; para internação, preenche o campo "Justificativa clínica" da Internação somente após confirmação explícita se o campo já tiver conteúdo digitado.
 
 ## Persistência
 

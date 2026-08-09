@@ -4,6 +4,15 @@ Registro de marcos relevantes do Zera PS. Commits e pull requests permanecem com
 
 ## 2026-08-09
 
+### feat: justificativa de exame de alto custo e de internação (piloto)
+
+- motor novo `src/justification-engine.js` monta justificativa a partir do que já foi digitado na Evolução — QP, HDA, exame físico confirmado, exames complementares e hipóteses — reorganizando na estrutura QUADRO CLÍNICO → ANTECEDENTES → EXAME FÍSICO → EXAMES COMPLEMENTARES → HIPÓTESE/RISCO → SOLICITAÇÃO; nunca fabrica achado, risco ou urgência: o que faltar aparece como `[COMPLETAR: ...]` visível, nunca inventado nem omitido;
+- piloto com 3 perfis: TC de abdome e pelve (com/sem contraste), USG de abdome total / rins e vias urinárias, internação hospitalar — os demais exames citados (TC crânio/face/cervical/coluna, Angio-TC) entram depois de validar este piloto com um caso real, a estrutura declarativa já suporta;
+- Evolução ganha seletor de tipo de documento + variante e botão "Gerar justificativa", que abre um documento avulso revisável e copiável — nada é inserido automaticamente na Conduta ou na Evolução;
+- Internação ganha "Puxar dados da Evolução" ao lado de "Justificativa clínica", pedindo confirmação antes de substituir conteúdo já digitado;
+- corrigido de passagem: `renderAdmission` colava a justificativa inteira numa única linha após o cabeçalho — mesma classe de bug já corrigida em exames complementares; agora renderiza como bloco próprio;
+- 13 testes novos (`tests/justification-engine.test.mjs` + regressão de `renderAdmission`).
+
 ### feat: transcrição estruturada de exames complementares
 
 - `# EXAMES COMPLEMENTARES:` passa a transcrever cada exame como item próprio, agrupado em LABORATORIAIS/IMAGEM — antes, várias linhas digitadas em "Laboratoriais" ou "Imagem" ficavam grudadas num único item, quebrando o padrão institucional já usado em hipóteses/conduta (um item por linha);

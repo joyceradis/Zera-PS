@@ -19,6 +19,7 @@ const APP_SHELL = [
   './src/app.js',
   './src/temporal-ui.js',
   './src/context-coordination.js',
+  './src/justification-engine.js',
   './src/tool-presentation.js',
   './src/clinical-state.js',
   './src/data.js',
