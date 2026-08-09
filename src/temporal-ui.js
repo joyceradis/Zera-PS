@@ -22,6 +22,7 @@ import { createEncounterStorage } from './storage.js';
 import {
   CONTEXT_DECISIONS,
   CONTEXT_EVENTS,
+  decideEncounterReplacement,
   decideTemplateSelection
 } from './context-coordination.js';
 import { deriveToolPresentation } from './tool-presentation.js';
@@ -219,12 +220,15 @@ function handleTemplateSelectionRequest(event) {
   const input = {
     templateSelection: event.detail?.templateSelection || null,
     workflowId: encounter?.workflowId || '',
-    encounter
+    encounter,
+    hasDocumentContent: Boolean(event.detail?.hasDocumentContent)
   };
   let decision = decideTemplateSelection(input);
   if (decision.status === CONTEXT_DECISIONS.CONFIRM) {
     const accepted = window.confirm(
-      'O workflow atual contém estado clínico ou temporal. Desativar esse workflow para aplicar o roteiro? Os campos da evolução serão preservados.'
+      input.hasDocumentContent
+        ? 'O roteiro não corresponde ao workflow atual. Continuar? A documentação será salva em Rascunhos, o estado temporal será desativado e o roteiro abrirá em um contexto limpo.'
+        : 'O workflow atual contém estado clínico ou temporal. Desativar esse estado para aplicar o roteiro?'
     );
     decision = decideTemplateSelection({ ...input, confirmed: accepted });
   }
@@ -232,6 +236,7 @@ function handleTemplateSelectionRequest(event) {
     event.preventDefault();
     return;
   }
+  event.detail.resetDocument = Boolean(decision.resetDocument);
   if (decision.clearWorkflow) clearActiveWorkflow();
 }
 
@@ -259,13 +264,33 @@ function captureAdmissionSnapshot() {
 
 function handleScenarioChange() {
   const scenario = $('workflow-scenario')?.value || '';
+  const previousScenario = encounter?.workflowId || '';
+  let replacement = decideEncounterReplacement({
+    currentWorkflowId: previousScenario,
+    nextWorkflowId: scenario,
+    encounter
+  });
+  if (replacement.status === CONTEXT_DECISIONS.CONFIRM) {
+    const accepted = window.confirm(
+      'Este workflow contém estado clínico ou temporal. Desativar esse estado e trocar de workflow?'
+    );
+    replacement = decideEncounterReplacement({
+      currentWorkflowId: previousScenario,
+      nextWorkflowId: scenario,
+      encounter,
+      confirmed: accepted
+    });
+  }
+  if (replacement.status === CONTEXT_DECISIONS.CANCEL) {
+    if ($('workflow-scenario')) $('workflow-scenario').value = previousScenario;
+    return;
+  }
   if (!scenario) {
     clearActiveWorkflow();
     return;
   }
 
   if (!encounter || encounter.workflowId !== scenario) {
-    const previousScenario = encounter?.workflowId || '';
     if (!requestWorkflowSelection(scenario)) {
       if ($('workflow-scenario')) $('workflow-scenario').value = previousScenario;
       return;

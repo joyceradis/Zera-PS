@@ -24,15 +24,18 @@ Um novo módulo puro, `src/context-coordination.js`, define:
 - decisões de troca (`allow`, `confirm`, `cancel`) sem acessar DOM ou armazenamento;
 - nomes dos eventos síncronos usados pelos dois controladores.
 
-`assets/app.js` passa a persistir somente a identidade explícita do roteiro escolhido, sem inferi-la pela QP. Antes de aplicar um roteiro, solicita ao workflow a liberação da troca. `src/temporal-ui.js` pode cancelar a solicitação ou remover apenas o encounter incompatível. O caminho inverso funciona da mesma forma ao selecionar um workflow.
+`assets/app.js` passa a persistir somente a identidade explícita do roteiro escolhido, sem inferi-la pela QP. Antes de aplicar um roteiro, solicita ao workflow a liberação da troca. `src/temporal-ui.js` pode cancelar a solicitação ou, após confirmação, desativar o encounter incompatível. O caminho inverso funciona da mesma forma ao selecionar um workflow.
 
-Na restauração, uma combinação incompatível é reconciliada antes de ficar visível. Se há estado temporal significativo, o usuário escolhe qual contexto manter; nenhum texto clínico é apagado. Na ausência de estado significativo, prevalece a seleção explícita mais recente; formatos antigos sem metadado usam a opção mais conservadora: sem workflow específico.
+Uma troca confirmada nunca reutiliza os campos do contexto anterior no novo contexto. A documentação atual é salva automaticamente em Rascunhos, a superfície ativa é reiniciada e só então o novo roteiro ou workflow é aberto. Assim o texto permanece recuperável, mas Rinossinusite e SCA não continuam visualmente misturados.
+
+Na restauração, uma combinação incompatível é reconciliada antes de ficar visível. Se há estado temporal significativo, o usuário escolhe qual contexto manter; nenhum texto clínico é apagado. Formatos antigos sem metadado também passam pela reconciliação conservadora e, quando o workflow é mantido, a documentação anterior é arquivada antes de abrir o contexto limpo.
 
 ## Regras de segurança
 
 - Roteiro não é protocolo e a interface deve nomeá-lo corretamente.
 - Ausência de `protocolId` no roteiro significa que ele não autoriza workflow específico.
-- Troca não apaga QP, HDA, resultados, hipóteses ou conduta.
+- Troca confirmada arquiva QP, HDA, resultados, hipóteses e conduta em Rascunhos antes de limpar a superfície ativa.
+- Estado temporal significativo só é removido após confirmação explícita.
 - Cancelamento não altera roteiro, encounter, select ou persistência.
 - Compatibilidade nunca é inferida de conteúdo textual.
 - Registry permanece somente com SCA.
