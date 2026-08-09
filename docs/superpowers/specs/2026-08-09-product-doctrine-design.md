@@ -46,4 +46,3 @@ O objeto central continua sendo o Atendimento longitudinal. A entrada sindrômic
 ## Consequências documentais
 
 O `README.md` deve começar pela finalidade humana e operacional. `docs/product/PRODUCT_SCOPE.md` será a fonte normativa da hierarquia do produto. O `ROADMAP.md` deve priorizar interface sem fricção, HDA semipronta, reutilização de dados e *cores* sindrômicos antes da expansão indiscriminada de protocolos.
-

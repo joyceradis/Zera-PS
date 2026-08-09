@@ -70,4 +70,3 @@
 - [ ] Executar `npm run verify` e `git diff --check`.
 - [ ] Revisar o diff, commitar, publicar e abrir PR.
 - [ ] Mesclar após CI verde e verificar a `main` publicada.
-
