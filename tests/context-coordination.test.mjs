@@ -4,8 +4,11 @@ import {
   CONTEXT_DECISIONS,
   isTemplateWorkflowCompatible,
   hasSignificantEncounter,
+  isTemplateBoilerplateQp,
+  hasFormContentBeyondTemplate,
   decideEncounterReplacement,
   decideTemplateSelection,
+  decideTemplateReplacement,
   decideWorkflowSelection
 } from '../src/context-coordination.js';
 
@@ -130,6 +133,77 @@ test('workflow selection clears an incompatible template only after document-saf
     clearTemplate: true,
     resetDocument: true
   });
+});
+
+const RINOSSINUSITE = { id: 'rinossinusite', qp: 'CONGESTÃO NASAL E DOR FACIAL' };
+const GECA = { id: 'geca', qp: 'DIARREIA E DOR ABDOMINAL' };
+
+test('a QP left over from the previous roteiro is recognized as boilerplate, not doctor content', () => {
+  assert.equal(isTemplateBoilerplateQp('', GECA), true);
+  assert.equal(isTemplateBoilerplateQp('DIARREIA E DOR ABDOMINAL', GECA), true);
+  assert.equal(isTemplateBoilerplateQp('diarreia e dor abdominal', GECA), true);
+  assert.equal(isTemplateBoilerplateQp('DIARREIA HÁ 3 DIAS COM MUCO', GECA), false);
+  assert.equal(isTemplateBoilerplateQp('QUALQUER TEXTO', null), false);
+});
+
+test('form content beyond the active template counts only what the roteiro did not itself suggest', () => {
+  assert.equal(hasFormContentBeyondTemplate({ qp: 'DIARREIA E DOR ABDOMINAL', hda: '' }, GECA), false);
+  assert.equal(hasFormContentBeyondTemplate({ qp: 'DIARREIA E DOR ABDOMINAL', hda: 'INÍCIO HÁ 2 DIAS' }, GECA), true);
+  assert.equal(hasFormContentBeyondTemplate({ qp: 'DIARREIA E DOR ABDOMINAL', comorbidades: 'HAS' }, GECA), true);
+  assert.equal(hasFormContentBeyondTemplate({ qp: '', includeEmTempo: true }, GECA), true);
+});
+
+test('switching between two document roteiros replaces an untouched QP without confirmation', () => {
+  const decision = decideTemplateReplacement({
+    previousSelection: { templateId: 'geca', protocolId: null },
+    previousTemplate: GECA,
+    nextSelection: { templateId: 'rinossinusite', protocolId: null },
+    form: { qp: 'DIARREIA E DOR ABDOMINAL', hda: '' }
+  });
+  assert.deepEqual(decision, { status: CONTEXT_DECISIONS.ALLOW, resetDocument: false });
+});
+
+test('re-selecting the same roteiro is a no-op regardless of edited content', () => {
+  const decision = decideTemplateReplacement({
+    previousSelection: { templateId: 'geca', protocolId: null },
+    previousTemplate: GECA,
+    nextSelection: { templateId: 'geca', protocolId: null },
+    form: { qp: 'DIARREIA HÁ 3 DIAS, SEM FEBRE' }
+  });
+  assert.deepEqual(decision, { status: CONTEXT_DECISIONS.ALLOW, resetDocument: false });
+});
+
+test('a first roteiro pick over a manually typed QP never overwrites or asks for confirmation', () => {
+  const decision = decideTemplateReplacement({
+    previousSelection: null,
+    previousTemplate: null,
+    nextSelection: { templateId: 'rinossinusite', protocolId: null },
+    form: { qp: 'QUEIXA DIGITADA PELA MÉDICA ANTES DE QUALQUER ROTEIRO' }
+  });
+  assert.deepEqual(decision, { status: CONTEXT_DECISIONS.ALLOW, resetDocument: false });
+});
+
+test('switching roteiro with real typed content requires confirmation and resets only when accepted', () => {
+  const input = {
+    previousSelection: { templateId: 'geca', protocolId: null },
+    previousTemplate: GECA,
+    nextSelection: { templateId: 'rinossinusite', protocolId: null },
+    form: { qp: 'DIARREIA E DOR ABDOMINAL', hda: 'HÁ 3 DIAS, SEM MUCO OU SANGUE.' }
+  };
+  assert.deepEqual(decideTemplateReplacement(input), { status: CONTEXT_DECISIONS.CONFIRM, resetDocument: false });
+  assert.deepEqual(decideTemplateReplacement({ ...input, confirmed: false }), { status: CONTEXT_DECISIONS.CANCEL, resetDocument: false });
+  assert.deepEqual(decideTemplateReplacement({ ...input, confirmed: true }), { status: CONTEXT_DECISIONS.ALLOW, resetDocument: true });
+});
+
+test('a generated evolution output is protected even if the form itself only holds boilerplate', () => {
+  const input = {
+    previousSelection: { templateId: 'geca', protocolId: null },
+    previousTemplate: GECA,
+    nextSelection: { templateId: 'rinossinusite', protocolId: null },
+    form: { qp: 'DIARREIA E DOR ABDOMINAL' },
+    hasGeneratedOutput: true
+  };
+  assert.deepEqual(decideTemplateReplacement(input), { status: CONTEXT_DECISIONS.CONFIRM, resetDocument: false });
 });
 
 test('legacy reload with document content and unknown template relation requires reconciliation', () => {

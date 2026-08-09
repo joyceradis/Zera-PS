@@ -41,7 +41,9 @@ import {
 import {
   CONTEXT_DECISIONS,
   CONTEXT_EVENTS,
-  decideWorkflowSelection
+  isTemplateBoilerplateQp,
+  decideWorkflowSelection,
+  decideTemplateReplacement
 } from '../src/context-coordination.js';
 
 const storage = createStorage();
@@ -277,6 +279,17 @@ function requestTemplateActivation(selection) {
   return { allowed: document.dispatchEvent(request), resetDocument: detail.resetDocument };
 }
 
+function decideTemplateSwitch(previousSelection, previousTemplate, nextSelection, confirmed) {
+  return decideTemplateReplacement({
+    previousSelection,
+    previousTemplate,
+    nextSelection,
+    form: readForm(),
+    hasGeneratedOutput: normalize($('evolution-output')?.value).length > 0,
+    confirmed
+  });
+}
+
 function applyTemplate(id) {
   const template = TEMPLATES.find((item) => item.id === id);
   if (!template) return;
@@ -285,17 +298,33 @@ function applyTemplate(id) {
     protocolId: template.protocolId || null,
     selectedAt: new Date().toISOString()
   };
+
+  const previousSelection = activeTemplateSelection;
+  const previousTemplate = TEMPLATES.find((item) => item.id === previousSelection?.templateId);
+  let switchDecision = decideTemplateSwitch(previousSelection, previousTemplate, selection);
+  if (switchDecision.status === CONTEXT_DECISIONS.CONFIRM) {
+    const accepted = window.confirm(
+      'Este roteiro é diferente do atual e há dados digitados além do sugerido pelo roteiro anterior. Continuar? A documentação atual será salva em Rascunhos e o roteiro abrirá em um contexto limpo.'
+    );
+    switchDecision = decideTemplateSwitch(previousSelection, previousTemplate, selection, accepted);
+  }
+  if (switchDecision.status === CONTEXT_DECISIONS.CANCEL) return;
+
   const activation = requestTemplateActivation(selection);
   if (!activation.allowed) return;
-  if (activation.resetDocument) prepareFreshDocumentation();
-  if ($('qp') && !normalize($('qp').value)) $('qp').value = template.qp || '';
+
+  const resetDocument = activation.resetDocument || switchDecision.resetDocument;
+  if (resetDocument) prepareFreshDocumentation();
+  if ($('qp') && (resetDocument || isTemplateBoilerplateQp($('qp').value, previousTemplate))) {
+    $('qp').value = template.qp || '';
+  }
   if ($('hda')) $('hda').placeholder = template.hdaPrompt || DEFAULT_HDA_PLACEHOLDER;
   activeTemplateSelection = selection;
   templateSelectionKnown = true;
   setActiveTemplate(id);
   autosave();
   const toolNote = template.clinicalTools?.length ? ` Ferramenta clínica vinculada: ${template.clinicalTools.join(', ').toUpperCase()}.` : '';
-  const archiveNote = activation.resetDocument ? ' A documentação anterior foi preservada em Rascunhos.' : '';
+  const archiveNote = resetDocument ? ' A documentação anterior foi preservada em Rascunhos.' : '';
   showFeedback(`Roteiro ${template.label} aplicado sem misturar contextos.${archiveNote}${toolNote}`);
 }
 

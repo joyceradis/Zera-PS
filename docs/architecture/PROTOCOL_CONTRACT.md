@@ -88,6 +88,8 @@ Os cards da evolução são roteiros de documentação: podem sugerir QP e orien
 
 O coordenador de contexto impede que um roteiro sem protocolo permaneça simultaneamente ativo com workflow específico. Em uma troca confirmada, a documentação anterior é preservada em Rascunhos e a superfície do novo contexto começa limpa; estado temporal significativo só é desvinculado após confirmação explícita. QP, HDA, hipóteses ou conduta nunca são usados para inferir diagnóstico ou compatibilidade.
 
+O mesmo coordenador também trata a troca entre dois roteiros documentais. A QP sugerida por um roteiro é reconhecida como texto de sugestão, não como dado da médica: trocar de roteiro sem que nenhum campo tenha recebido conteúdo além dessa sugestão substitui a QP silenciosamente, sem diálogo — é o caso comum de navegar entre roteiros até encontrar o correto. Qualquer conteúdo além da sugestão (QP editada, HDA, HPP, exame ou evolução já gerada) exige confirmação explícita antes de a troca substituir os campos; a documentação anterior é preservada em Rascunhos, exatamente como na troca de workflow.
+
 ### Resultados temporais (`temporalResults[]`)
 
 ```js
