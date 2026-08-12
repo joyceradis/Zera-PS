@@ -1,5 +1,5 @@
 import { createClinicalField } from './clinical-state.js';
-import { readStorageItem, writeStorageItem, removeStorageItem, parseStoredJson } from './storage-io.js';
+import { getDefaultStorageAdapter, readStorageItem, writeStorageItem, removeStorageItem, parseStoredJson } from './storage-io.js';
 
 const STORAGE_KEYS = Object.freeze({
   autosave: 'zera-ps:autosave:v2',
@@ -60,7 +60,7 @@ function migrateLegacyDrafts(legacyDrafts = []) {
   }));
 }
 
-function createStorage(adapter = globalThis.localStorage) {
+function createStorage(adapter = getDefaultStorageAdapter()) {
   const api = {
     loadAutosave() {
       const current = parseStoredJson(readStorageItem(adapter, STORAGE_KEYS.autosave), STORAGE_KEYS.autosave, null);
