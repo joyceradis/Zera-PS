@@ -49,8 +49,9 @@ Auditorias são fotografias de um marco, não especificação vigente.
 - [`audits/CAPABILITY_INVENTORY_2026-08-12.md`](audits/CAPABILITY_INVENTORY_2026-08-12.md) — inventário real de superfícies, macrofunções, scores, persistência, PWA e patrimônio, com matriz de classificação.
 - [`audits/UI_SURFACE_INVENTORY_2026-08-12.md`](audits/UI_SURFACE_INVENTORY_2026-08-12.md) — telas, campos, botões, ações e views transitórias da superfície clínica atual.
 - [`audits/MICROFUNCTION_RECOVERY_LEDGER_2026-08-12.md`](audits/MICROFUNCTION_RECOVERY_LEDGER_2026-08-12.md) — microfunções atuais, recuperadas, candidatas, inseguras e ainda não localizadas.
-- [`audits/BRANCH_ARCHAEOLOGY_2026-08-12.md`](audits/BRANCH_ARCHAEOLOGY_2026-08-12.md) — branches ativas, patrimônio `develop` e refs antigas candidatas a pruning.
-- [`audits/LEGACY_MINING_2026-08-12.md`](audits/LEGACY_MINING_2026-08-12.md) — mineração da v0.2/`attendance.js`, capacidades reconciliadas, conflitantes e candidatas a recuperação por adaptação.
+- [`audits/BRANCH_ARCHAEOLOGY_2026-08-12.md`](audits/BRANCH_ARCHAEOLOGY_2026-08-12.md) — arqueologia e classificação original das branches.
+- [`audits/BRANCH_PRUNE_2026-08-12.md`](audits/BRANCH_PRUNE_2026-08-12.md) — fechamento da branch hygiene: 26 → 3 refs, critérios de equivalência e guards de exclusão.
+- [`audits/LEGACY_MINING_2026-08-12.md`](audits/LEGACY_MINING_2026-08-12.md) — mineração consolidada de `develop`/v0.2: multi-Encounter, retomada, autosave, destino, microfunções recuperadas e comportamentos bloqueados.
 - [`audits/DOCUMENT_CLASSIFICATION_2026-08-12.md`](audits/DOCUMENT_CLASSIFICATION_2026-08-12.md) — classificação canonical/audit/legacy/obsolete/duplicate e regras de preservação.
 - [`audits/METRICS_ARCHAEOLOGY_2026-08-12.md`](audits/METRICS_ARCHAEOLOGY_2026-08-12.md) — separa placeholders históricos, feedback do atendimento corrente e o gráfico longitudinal ainda não localizado.
 - [`audits/baseline/AUDIT_BASELINE.md`](audits/baseline/AUDIT_BASELINE.md) — baseline anterior à fundação de segurança.
