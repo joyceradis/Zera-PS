@@ -10,7 +10,7 @@ function normalizeEncounterRecord(value) {
   if (startedAtMs === null) return null;
   const finishedAtMs = parseInstant(value.finishedAt);
   return {
-    id: String(value.id || ''),
+    id: String(value.id || value.encounterId || ''),
     startedAt: new Date(startedAtMs).toISOString(),
     startedAtMs,
     finishedAt: finishedAtMs === null ? null : new Date(finishedAtMs).toISOString(),
@@ -23,7 +23,11 @@ function extractEncounterRecords(value) {
     ? value
     : Array.isArray(value?.encounters)
       ? value.encounters
-      : [];
+      : value?.startedAt
+        ? [value]
+        : value?.activeEncounter?.startedAt
+          ? [value.activeEncounter]
+          : [];
   return candidates.map(normalizeEncounterRecord).filter(Boolean);
 }
 
@@ -31,6 +35,7 @@ function summarizeProductivity(records = [], options = {}) {
   const normalized = records.map(normalizeEncounterRecord).filter(Boolean);
   const rangeStartMs = parseInstant(options.rangeStart);
   const rangeEndMs = parseInstant(options.rangeEnd);
+  const nowMs = parseInstant(options.now) ?? Date.now();
   const hasExplicitRange = rangeStartMs !== null && rangeEndMs !== null;
 
   const inRange = normalized.filter((record) => {
@@ -46,9 +51,11 @@ function summarizeProductivity(records = [], options = {}) {
     durationMs = rangeEndMs - rangeStartMs;
     rangeStart = new Date(rangeStartMs).toISOString();
     rangeEnd = new Date(rangeEndMs).toISOString();
-  } else if (inRange.length && inRange.every((record) => record.finishedAtMs !== null)) {
+  } else if (inRange.length) {
     const earliest = Math.min(...inRange.map((record) => record.startedAtMs));
-    const latest = Math.max(...inRange.map((record) => record.finishedAtMs));
+    const hasActive = inRange.some((record) => record.finishedAtMs === null);
+    const latestFinished = Math.max(...inRange.map((record) => record.finishedAtMs ?? Number.NEGATIVE_INFINITY));
+    const latest = hasActive ? Math.max(nowMs, Number.isFinite(latestFinished) ? latestFinished : earliest) : latestFinished;
     if (latest > earliest) {
       durationMs = latest - earliest;
       rangeStart = new Date(earliest).toISOString();
