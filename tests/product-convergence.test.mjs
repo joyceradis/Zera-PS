@@ -40,6 +40,12 @@ test('productivity reader does not hide localStorage access failures', () => {
   );
 });
 
+test('product convergence never owns the browser localStorage API directly', async () => {
+  const source = await read('src/product-convergence.js');
+  assert.doesNotMatch(source, /\b(?:globalThis\.)?localStorage\b/);
+  assert.match(source, /createEncounterStorage/);
+});
+
 test('product convergence is loaded after the existing application engines', async () => {
   const entry = await read('src/app.js');
   assert.match(entry, /import '\.\/product-convergence\.js';/);
