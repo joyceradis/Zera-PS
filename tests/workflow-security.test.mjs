@@ -16,9 +16,10 @@ test('checks workflow has a bounded execution time', () => {
   assert.match(checks, /timeout-minutes:\s*\d+/);
 });
 
-test('preview workflow grants only the write scope needed for PR conversation comments', () => {
-  assert.match(preview, /permissions:\s*\n\s+contents:\s*read\s*\n\s+issues:\s*write/);
-  assert.doesNotMatch(preview, /pull-requests:\s*write/);
+test('preview workflow is read-only and does not require PR mutation permissions', () => {
+  assert.match(preview, /permissions:\s*\n\s+contents:\s*read/);
+  assert.doesNotMatch(preview, /issues:\s*write|pull-requests:\s*write|contents:\s*write/);
+  assert.doesNotMatch(preview, /gh\s+(?:pr|api)|GH_TOKEN/);
 });
 
 test('preview checkout does not persist GitHub credentials into the worktree', () => {
