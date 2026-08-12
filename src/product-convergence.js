@@ -69,6 +69,7 @@ function convergeWorkflowSurface() {
   const workflowCard = document.querySelector('.workflow-card');
   const workflowContext = document.getElementById('workflow-context');
   const templateGrid = document.getElementById('template-grid');
+  const legacyReassess = document.getElementById('reassess-encounter');
   if (!workflowCard || !workflowContext || !templateGrid) return;
 
   let workspace = document.getElementById('contextual-workspace');
@@ -80,6 +81,7 @@ function convergeWorkflowSurface() {
   }
 
   workspace.appendChild(workflowContext);
+  if (legacyReassess) legacyReassess.hidden = true;
   workflowCard.hidden = true;
 }
 
