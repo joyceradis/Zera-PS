@@ -70,11 +70,11 @@ test('accepts the compact aliases already used in PS documentation', () => {
   });
   assert.equal(
     renderCompactLabLine(parsed),
-    '- LAB: HB: 11,5 / HT: 34 / LEUCO: 9.000 (NEUT: 82%) / PLAQ: 200.000 / PCR: 14 / UR: 35 / CR: 1,2 / NA: 140 / K: 4,0'
+    '- LAB: HB: 11,5 / HT: 34 / LEUCO: 9.000 (S 82%) / PLAQ: 200.000 / PCR: 14 / UR: 35 / CR: 1,2 / NA: 140 / K: 4,0'
   );
 });
 
-test('preserves additional explicit analytes recovered from the predecessor without forcing them into the compact renderer', () => {
+test('preserves additional explicit analytes recovered from the predecessor and renders only elevated leukocyte fractions', () => {
   const parsed = parseLaboratoryText(LEGACY_HERITAGE);
   assert.deepEqual(parsed, {
     hb: '12,8',
@@ -96,14 +96,41 @@ test('preserves additional explicit analytes recovered from the predecessor with
   });
 
   const line = renderCompactLabLine(parsed);
-  assert.equal(line, '- LAB: HB: 12,8 / HT: 38,1 / LEUCO: 11.800 (NEUT: 78%) / PLAQ: 321.000');
-  assert.doesNotMatch(line, /BAST|EOS|BASO|LINF|MONO|BUN|RFG|TGO|TGP|AMILASE|LIPASE/);
+  assert.equal(line, '- LAB: HB: 12,8 / HT: 38,1 / LEUCO: 11.800 (S 78%) / PLAQ: 321.000');
+  assert.doesNotMatch(line, /B 2%|L 14%|M 5%|E 1%|BAS 0%|BUN|RFG|TGO|TGP|AMILASE|LIPASE/);
+});
+
+test('renders all explicitly elevated differential fractions with clinical abbreviations', () => {
+  const parsed = parseLaboratoryText(
+    'LEUCO 23400 / SEG 74 / BAST 8 / LINF 48 / MONO 12 / EOS 7 / BAS 2 / PLAQ 210000'
+  );
+  assert.deepEqual(parsed, {
+    leuco: '23400',
+    neut: '74',
+    bast: '8',
+    eos: '7',
+    baso: '2',
+    linf: '48',
+    mono: '12',
+    plaq: '210000'
+  });
+  assert.equal(
+    renderCompactLabLine(parsed),
+    '- LAB: LEUCO: 23.400 (S 74% B 8% L 48% M 12% E 7% Bas 2%) / PLAQ: 210.000'
+  );
+});
+
+test('does not render differential fractions at or below their upper reference limits', () => {
+  const parsed = parseLaboratoryText(
+    'LEUCO 10000 / SEG 70 / BAST 5 / LINF 45 / MONO 10 / EOS 5 / BAS 1'
+  );
+  assert.equal(renderCompactLabLine(parsed), '- LAB: LEUCO: 10.000');
 });
 
 test('renders the Founder compact PS format in one LAB line', () => {
   assert.equal(
     renderCompactLabLine(parseLaboratoryText(RAW)),
-    '- LAB: HB: 13,2 / HT: 39,8 / LEUCO: 14.320 (NEUT: 86%) / PLAQ: 245.000 / PCR: 72 / UR: 38 / CR: 0,9 / NA: 138 / K: 4,1'
+    '- LAB: HB: 13,2 / HT: 39,8 / LEUCO: 14.320 (S 86%) / PLAQ: 245.000 / PCR: 72 / UR: 38 / CR: 0,9 / NA: 138 / K: 4,1'
   );
 });
 
@@ -111,7 +138,7 @@ test('never invents differential or missing analytes', () => {
   const parsed = parseLaboratoryText('Hemoglobina 12,1\nLeucócitos 8700\nCREATININA RESULTADO 1,0');
   const line = renderCompactLabLine(parsed);
   assert.equal(line, '- LAB: HB: 12,1 / LEUCO: 8.700 / CR: 1,0');
-  assert.doesNotMatch(line, /NEUT|PCR|PLAQ|NA:|K:/);
+  assert.doesNotMatch(line, /\([SBLME]|PCR|PLAQ|NA:|K:/);
 });
 
 test('empty or unrecognized input does not fabricate a LAB line', () => {
