@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'zera-ps-';
-const CACHE_NAME = 'zera-ps-v13';
+const CACHE_NAME = 'zera-ps-v14';
 
 const APP_SHELL = [
   './',
@@ -13,6 +13,7 @@ const APP_SHELL = [
   './assets/scores.js',
   './assets/clinical-state.js',
   './assets/document-engine.js',
+  './assets/storage-io.js',
   './assets/storage.js',
   './assets/ui.js',
   './assets/app.js',
