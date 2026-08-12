@@ -34,6 +34,17 @@ test('one encounter without a measurable shift duration never fabricates a patie
   assert.equal(formatPatientsPerHour(summary), '--');
 });
 
+test('mixed completed and unfinished encounters do not fabricate an implicit shift end', () => {
+  const summary = summarizeProductivity([
+    { id: 'a', startedAt: '2026-08-11T18:00:00-03:00', finishedAt: '2026-08-11T18:30:00-03:00' },
+    { id: 'b', startedAt: '2026-08-11T19:00:00-03:00' }
+  ]);
+  assert.equal(summary.totalPatients, 2);
+  assert.equal(summary.durationHours, null);
+  assert.equal(summary.rate, null);
+  assert.equal(formatPatientsPerHour(summary), '--');
+});
+
 test('completed encounters define a deterministic productivity window', () => {
   const summary = summarizeProductivity([
     { id: 'a', startedAt: '2026-08-11T18:00:00-03:00', finishedAt: '2026-08-11T18:30:00-03:00' },
