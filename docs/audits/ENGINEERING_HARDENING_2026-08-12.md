@@ -135,9 +135,36 @@ O dado corrompido não é apagado, sobrescrito ou reinterpretado automaticamente
 
 Classificação: **FIX / DATA INTEGRITY**.
 
+## Achado de ownership: Resumo do Plantão contornava o storage canônico
+
+Durante a auditoria das chamadas de persistência, `src/product-convergence.js` ainda lia diretamente:
+
+```js
+adapter.getItem('zera-ps:encounter:v3')
+```
+
+com `try/catch` que convertia qualquer erro ou JSON inválido em `[]`.
+
+Isso criava uma inconsistência importante: o storage canônico distinguia ausência, falha e corrupção, mas o painel de produtividade poderia exibir **0 pacientes** nos três casos.
+
+### Ciclo TDD
+
+RED intencional:
+
+- commit `4a81e73c...` adicionou testes exigindo que corrupção e falha de acesso não fossem convertidas em zero;
+- workflow `checks` run `31566038072` falhou como esperado com a implementação antiga.
+
+GREEN:
+
+`readProductivityRecords()` agora passa por `createEncounterStorage(adapter).loadActiveEncounter()`, reutilizando o owner `src/storage.js` e o contrato `assets/storage-io.js`.
+
+No comportamento normal nada muda. Somente no caso de falha real/corrupção o painel deixa de mentir com `0` e mostra estado operacional indisponível (`--` / `DADOS LOCAIS INDISPONÍVEIS`), preservando os dados e registrando o erro técnico no console.
+
+Classificação: **FIX / OWNERSHIP + DATA INTEGRITY**.
+
 ## PWA após storage hardening
 
-O novo módulo compartilhado `assets/storage-io.js` passou a fazer parte do APP_SHELL e a geração de cache foi elevada para:
+O módulo compartilhado `assets/storage-io.js` faz parte do APP_SHELL e a geração atual é:
 
 ```js
 const CACHE_NAME = 'zera-ps-v14';
@@ -147,12 +174,12 @@ O teste de fechamento do shell garante que essa dependência não desapareça da
 
 ## Gate automatizado mais recente
 
-GitHub Actions `checks`, run `31565906754`, head de código `95a274f9...`:
+GitHub Actions `checks`, run `31566187457`, head de código `1fe84508...`:
 
 ```text
 npm run verify
-209 tests
-209 pass
+211 tests
+211 pass
 0 fail
 ```
 
@@ -167,7 +194,9 @@ O gate cobre, entre outros:
 - falhas explícitas de read/write/remove do localStorage;
 - corrupção JSON distinta de ausência de dado;
 - migrações legadas existentes;
-- Encounter v3 independente.
+- Encounter v3 independente;
+- produtividade sem bypass direto do storage canônico;
+- produtividade sem converter corrupção/erro em zero atendimentos.
 
 ## Dívida técnica mantida conscientemente
 
@@ -197,11 +226,9 @@ Estado: **MINE BY BEHAVIOR AFTER CURRENT UI GATE**.
 
 ### 5. Feedback visual unificado de erro de persistência
 
-O contrato técnico agora existe e erros não são silenciosamente convertidos em sucesso. O autosave legado já apresenta `NÃO SALVO`, mas outras operações ainda precisam de um contrato visual coerente antes de qualquer captura na UI.
+O contrato técnico agora existe e erros não são silenciosamente convertidos em sucesso. O autosave legado já apresenta `NÃO SALVO`; o Resumo do Plantão agora distingue indisponibilidade de `0 pacientes`. Outras operações ainda podem precisar de apresentação visual coerente.
 
-Não adicionar modal/toast novo durante a homologação clínica atual sem necessidade: primeiro preservar a exceção e os dados; depois definir uma superfície operacional consistente.
-
-Estado: **TECHNICAL CONTRACT DONE / UX PRESENTATION DEFERRED**.
+Estado: **TECHNICAL CONTRACT DONE / UX CONSOLIDATION DEFERRED**.
 
 ### 6. Teste real de PWA
 
@@ -227,7 +254,7 @@ Nenhuma mudança deste bloco:
 - altera justificativas;
 - altera scores;
 - altera reavaliação;
-- altera produtividade;
+- altera cálculo normal de produtividade;
 - cria informação clínica;
 - faz merge na `main`.
 
@@ -236,7 +263,7 @@ Nenhuma mudança deste bloco:
 ```text
 1. continuar caracterização de adapters transitórios sem removê-los
 2. auditar lifecycle/registro do service worker e observabilidade técnica sem mudar UX clínica
-3. auditar chamadas de storage fora dos adapters canônicos
+3. continuar procurando acessos diretos a APIs persistentes fora dos owners canônicos
 4. manter documentação/PR sincronizadas com o head real
 5. manter CI verde
 6. não mudar interação clínica sem feedback da Founder
