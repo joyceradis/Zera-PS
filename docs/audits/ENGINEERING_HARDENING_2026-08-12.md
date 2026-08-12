@@ -10,6 +10,7 @@ Trilhas cobertas:
 
 - dívida técnica;
 - PWA/cache;
+- persistência local;
 - testes de integração estática;
 - documentação/ownership;
 - segurança operacional do shell offline.
@@ -40,10 +41,9 @@ O cache passou a ter namespace explícito:
 
 ```js
 const CACHE_PREFIX = 'zera-ps-';
-const CACHE_NAME = 'zera-ps-v13';
 ```
 
-A ativação agora remove somente gerações antigas do próprio Zera PS:
+A ativação remove somente gerações antigas do próprio Zera PS:
 
 ```js
 key.startsWith(CACHE_PREFIX) && key !== CACHE_NAME
@@ -57,11 +57,7 @@ Classificação: **FIX / PWA SAFETY**.
 
 O teste anterior assegurava que cada caminho listado no APP_SHELL existia, mas não garantia o inverso: um módulo já cacheado poderia ganhar um novo `import './foo.js'` sem que `foo.js` fosse adicionado ao APP_SHELL.
 
-Isso criava risco de:
-
-- aplicação funcionar online;
-- CI permanecer verde;
-- um fluxo quebrar somente offline após instalação/atualização.
+Isso criava risco de aplicação funcionar online e quebrar apenas offline.
 
 ### Correção
 
@@ -73,29 +69,105 @@ Para cada `.js` listado no shell:
 2. resolve o caminho relativo ao módulo importador;
 3. exige que o módulo resolvido também esteja no APP_SHELL.
 
-Assim o shell explícito continua simples, mas deixa de depender apenas de disciplina manual.
-
 Classificação: **TEST / PWA REGRESSION**.
 
-## Gate pós-hardening
+## Achado de persistência: falhas de localStorage sem contexto técnico
 
-GitHub Actions `checks`, run `31565133486`:
+`getItem`, `setItem` e `removeItem` podem falhar por quota, permissão, modo de navegação, política do navegador ou storage indisponível. Antes, a camada de storage dependia diretamente da exceção nativa; no autosave uma falha já produzia `NÃO SALVO`, porém outras rotas de persistência não tinham contrato comum de diagnóstico.
+
+### Ciclo TDD
+
+RED intencional:
+
+- commit de teste `5fbc3187...` introduziu o contrato esperado antes da implementação;
+- workflow `checks` run `31565550805` falhou como esperado porque `assets/storage-io.js` ainda não existia.
+
+GREEN:
+
+Foi criado `assets/storage-io.js` com:
+
+- `StoragePersistenceError`;
+- operação (`read`, `write`, `remove`);
+- chave afetada;
+- `cause` original do navegador;
+- helpers únicos de I/O para storage documental e Encounter v3.
+
+`assets/storage.js` e `src/storage.js` agora usam esse contrato. A falha não é silenciosamente transformada em sucesso.
+
+Classificação: **FIX / STORAGE OBSERVABILITY**.
+
+## Achado de persistência: JSON corrompido era tratado como ausência de dado
+
+As funções anteriores faziam essencialmente:
+
+```js
+try { return JSON.parse(raw); }
+catch { return fallback; }
+```
+
+Assim, uma chave existente mas corrompida podia se tornar indistinguível de uma chave inexistente. Para um produto que guarda rascunho clínico localmente, essa equivalência é inadequada.
+
+### Ciclo TDD
+
+RED intencional:
+
+- commit `2224ac1b...` adicionou primeiro os testes de corrupção;
+- workflow `checks` run `31565837839` falhou como esperado porque o contrato ainda não existia.
+
+GREEN:
+
+Foi introduzido `StorageCorruptionError` + `parseStoredJson(raw, key, fallback)`:
+
+```text
+chave ausente
+→ fallback explícito
+
+chave presente + JSON válido
+→ dado parseado
+
+chave presente + JSON inválido
+→ StorageCorruptionError
+```
+
+O dado corrompido não é apagado, sobrescrito ou reinterpretado automaticamente. A exceção preserva chave, conteúdo bruto e `cause` para futura recuperação/diagnóstico.
+
+`assets/storage.js` e `src/storage.js` usam o mesmo parser, portanto o contrato vale para autosave v2, drafts v2/legados e Encounter v3.
+
+Classificação: **FIX / DATA INTEGRITY**.
+
+## PWA após storage hardening
+
+O novo módulo compartilhado `assets/storage-io.js` passou a fazer parte do APP_SHELL e a geração de cache foi elevada para:
+
+```js
+const CACHE_NAME = 'zera-ps-v14';
+```
+
+O teste de fechamento do shell garante que essa dependência não desapareça da instalação offline por esquecimento manual.
+
+## Gate automatizado mais recente
+
+GitHub Actions `checks`, run `31565906754`, head de código `95a274f9...`:
 
 ```text
 npm run verify
-203 tests
-203 pass
+209 tests
+209 pass
 0 fail
 ```
 
-O gate inclui:
+O gate cobre, entre outros:
 
-- sintaxe de JS da raiz, `assets/`, `src/` e `protocols/`;
-- regressão clínica/documental existente;
+- sintaxe JS da raiz, `assets/`, `src/` e `protocols/`;
+- invariantes clínico-documentais existentes;
 - existência de todos os arquivos do APP_SHELL;
-- fechamento do APP_SHELL sobre imports locais;
+- fechamento do APP_SHELL sobre imports ES locais;
 - namespace seguro de cache;
-- fallback offline limitado a navegações.
+- fallback offline limitado a navegações;
+- falhas explícitas de read/write/remove do localStorage;
+- corrupção JSON distinta de ausência de dado;
+- migrações legadas existentes;
+- Encounter v3 independente.
 
 ## Dívida técnica mantida conscientemente
 
@@ -123,15 +195,13 @@ Estado: **DEFER UNTIL UI ACCEPTANCE**.
 
 Estado: **MINE BY BEHAVIOR AFTER CURRENT UI GATE**.
 
-### 5. Falha de escrita no storage
+### 5. Feedback visual unificado de erro de persistência
 
-`assets/storage.js` e `src/storage.js` fazem `setItem()` diretamente. Erros como quota excedida, storage indisponível ou bloqueio de permissão podem propagar até a UI.
+O contrato técnico agora existe e erros não são silenciosamente convertidos em sucesso. O autosave legado já apresenta `NÃO SALVO`, mas outras operações ainda precisam de um contrato visual coerente antes de qualquer captura na UI.
 
-Não foi aplicado `try/catch` silencioso, porque isso criaria um risco pior: a médica acreditar que o rascunho/autosave foi persistido quando não foi.
+Não adicionar modal/toast novo durante a homologação clínica atual sem necessidade: primeiro preservar a exceção e os dados; depois definir uma superfície operacional consistente.
 
-A correção futura deve criar um contrato explícito de erro de persistência e feedback operacional observável na interface antes de capturar essas exceções.
-
-Estado: **REQUIRES UX ERROR CONTRACT; DO NOT SILENCE**.
+Estado: **TECHNICAL CONTRACT DONE / UX PRESENTATION DEFERRED**.
 
 ### 6. Teste real de PWA
 
@@ -165,13 +235,9 @@ Nenhuma mudança deste bloco:
 
 ```text
 1. continuar caracterização de adapters transitórios sem removê-los
-2. desenhar contrato observável para erros de persistência, sem aplicar durante homologação
-3. auditar atualização real do service worker no preview/PWA
-4. reconciliar documentação canônica com estado da PR
+2. auditar lifecycle/registro do service worker e observabilidade técnica sem mudar UX clínica
+3. auditar chamadas de storage fora dos adapters canônicos
+4. manter documentação/PR sincronizadas com o head real
 5. manter CI verde
 6. não mudar interação clínica sem feedback da Founder
 ```
-
-## Evidência de head documental posterior
-
-Após indexação documental e atualização de ownership, o workflow `checks` também concluiu com sucesso no run `31565255942`. Essas mudanças posteriores são apenas documentação; o último gate que altera código continua sendo o de `203/203` acima.
