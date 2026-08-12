@@ -99,7 +99,8 @@ test('complementary exams already typed in the Evolução are reused, not retype
     },
     clinicalState: baseClinicalState()
   });
-  assert.match(text, /# EXAMES COMPLEMENTARES:\nLABORATORIAIS:\n- PCR: 40 MG\/L/);
+  assert.match(text, /# EXAMES COMPLEMENTARES:\n- PCR: 40 MG\/L/);
+  assert.doesNotMatch(text, /LABORATORIAIS:/);
 });
 
 test('the request line reflects the chosen variant and only the chosen variant', () => {
