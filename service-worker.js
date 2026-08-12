@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'zera-ps-';
-const CACHE_NAME = 'zera-ps-v14';
+const CACHE_NAME = 'zera-ps-v15';
 
 const APP_SHELL = [
   './',
@@ -68,6 +68,7 @@ self.addEventListener('fetch', (event) => {
   const sameOrigin = requestUrl.origin === self.location.origin;
 
   if (event.request.mode === 'navigate') {
+    if (!sameOrigin) return;
     event.respondWith(fetch(event.request).catch(() => caches.match('./app.html')));
     return;
   }
