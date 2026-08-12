@@ -37,6 +37,12 @@ test('continuation actions are housed inside Atendimento instead of routing thro
   assert.doesNotMatch(source, /nav\.click\(\)/);
 });
 
+test('starting temporal reassessment no longer navigates to a legacy top-level view', async () => {
+  const source = await read('src/temporal-ui.js');
+  assert.doesNotMatch(source, /nav-button\[data-view=["']reavaliacao["']\]/);
+  assert.match(source, /zera:reassessment-started/);
+});
+
 test('convergence layer preserves continuation controls while presenting them as encounter actions', async () => {
   const source = await read('src/product-convergence.js');
   for (const view of ['reavaliacao', 'internacao', 'alta', 'scores']) {
