@@ -35,7 +35,7 @@ function summarizeProductivity(records = [], options = {}) {
   const normalized = records.map(normalizeEncounterRecord).filter(Boolean);
   const rangeStartMs = parseInstant(options.rangeStart);
   const rangeEndMs = parseInstant(options.rangeEnd);
-  const nowMs = parseInstant(options.now) ?? Date.now();
+  const nowMs = parseInstant(options.now);
   const hasExplicitRange = rangeStartMs !== null && rangeEndMs !== null;
 
   const inRange = normalized.filter((record) => {
@@ -55,8 +55,15 @@ function summarizeProductivity(records = [], options = {}) {
     const earliest = Math.min(...inRange.map((record) => record.startedAtMs));
     const hasActive = inRange.some((record) => record.finishedAtMs === null);
     const latestFinished = Math.max(...inRange.map((record) => record.finishedAtMs ?? Number.NEGATIVE_INFINITY));
-    const latest = hasActive ? Math.max(nowMs, Number.isFinite(latestFinished) ? latestFinished : earliest) : latestFinished;
-    if (latest > earliest) {
+
+    let latest = latestFinished;
+    if (hasActive) {
+      latest = nowMs === null
+        ? null
+        : Math.max(nowMs, Number.isFinite(latestFinished) ? latestFinished : earliest);
+    }
+
+    if (latest !== null && Number.isFinite(latest) && latest > earliest) {
       durationMs = latest - earliest;
       rangeStart = new Date(earliest).toISOString();
       rangeEnd = new Date(latest).toISOString();
