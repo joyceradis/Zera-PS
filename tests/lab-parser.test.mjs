@@ -127,6 +127,29 @@ test('does not render differential fractions at or below their upper reference l
   assert.equal(renderCompactLabLine(parsed), '- LAB: LEUCO: 10.000');
 });
 
+test('prefers explicit relative percentages when the laboratory also prints absolute differential counts', () => {
+  const parsed = parseLaboratoryText(`
+    LEUCOCITOS 23400 /mm3
+    SEGMENTADOS 17316 /mm3 74 %
+    BASTONETES 1872 /mm3 8 %
+    LINFOCITOS TIPICOS 2808 /mm3 12 %
+    PLAQUETAS 210000 /mm3
+  `);
+  assert.equal(parsed.neut, '74');
+  assert.equal(parsed.bast, '8');
+  assert.equal(parsed.linf, '12');
+  assert.equal(
+    renderCompactLabLine(parsed),
+    '- LAB: LEUCO: 23.400 (S 74% B 8%) / PLAQ: 210.000'
+  );
+});
+
+test('never treats a differential absolute count as a percentage', () => {
+  const parsed = parseLaboratoryText('LEUCO 10000 / SEG 8200 / PLAQ 200000');
+  assert.equal(parsed.neut, undefined);
+  assert.equal(renderCompactLabLine(parsed), '- LAB: LEUCO: 10.000 / PLAQ: 200.000');
+});
+
 test('renders the Founder compact PS format in one LAB line', () => {
   assert.equal(
     renderCompactLabLine(parseLaboratoryText(RAW)),
