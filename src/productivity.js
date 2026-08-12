@@ -46,16 +46,13 @@ function summarizeProductivity(records = [], options = {}) {
     durationMs = rangeEndMs - rangeStartMs;
     rangeStart = new Date(rangeStartMs).toISOString();
     rangeEnd = new Date(rangeEndMs).toISOString();
-  } else if (inRange.length) {
-    const completed = inRange.filter((record) => record.finishedAtMs !== null);
-    if (completed.length) {
-      const earliest = Math.min(...inRange.map((record) => record.startedAtMs));
-      const latest = Math.max(...completed.map((record) => record.finishedAtMs));
-      if (latest > earliest) {
-        durationMs = latest - earliest;
-        rangeStart = new Date(earliest).toISOString();
-        rangeEnd = new Date(latest).toISOString();
-      }
+  } else if (inRange.length && inRange.every((record) => record.finishedAtMs !== null)) {
+    const earliest = Math.min(...inRange.map((record) => record.startedAtMs));
+    const latest = Math.max(...inRange.map((record) => record.finishedAtMs));
+    if (latest > earliest) {
+      durationMs = latest - earliest;
+      rangeStart = new Date(earliest).toISOString();
+      rangeEnd = new Date(latest).toISOString();
     }
   }
 
