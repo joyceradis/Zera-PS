@@ -26,19 +26,21 @@ function withStorageContext(operation, key, callback) {
   }
 }
 
+function requireStorageAdapter(adapter) {
+  if (!adapter) throw new TypeError('Storage adapter indisponível.');
+  return adapter;
+}
+
 function readStorageItem(adapter, key) {
-  if (!adapter) return null;
-  return withStorageContext('read', key, () => adapter.getItem(key));
+  return withStorageContext('read', key, () => requireStorageAdapter(adapter).getItem(key));
 }
 
 function writeStorageItem(adapter, key, value) {
-  if (!adapter) return;
-  return withStorageContext('write', key, () => adapter.setItem(key, value));
+  return withStorageContext('write', key, () => requireStorageAdapter(adapter).setItem(key, value));
 }
 
 function removeStorageItem(adapter, key) {
-  if (!adapter) return;
-  return withStorageContext('remove', key, () => adapter.removeItem(key));
+  return withStorageContext('remove', key, () => requireStorageAdapter(adapter).removeItem(key));
 }
 
 function parseStoredJson(raw, key, fallback = null) {
