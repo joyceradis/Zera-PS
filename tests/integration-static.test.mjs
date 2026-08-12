@@ -38,6 +38,11 @@ test('PWA app shell contains only existing local files', async () => {
   assert.deepEqual(missing, []);
 });
 
+test('PWA caches the definitive productivity module under a new cache generation', () => {
+  assert.match(serviceWorker, /\.\/src\/productivity\.js/);
+  assert.match(serviceWorker, /const CACHE_NAME = 'zera-ps-v11'/);
+});
+
 test('offline fallback is limited to navigation requests', () => {
   assert.match(serviceWorker, /event\.request\.mode === 'navigate'/);
   assert.doesNotMatch(serviceWorker, /cached \|\|\s*caches\.match\('\.\/app\.html'\)/);
