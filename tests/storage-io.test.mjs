@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   StoragePersistenceError,
   StorageCorruptionError,
+  getDefaultStorageAdapter,
   readStorageItem,
   writeStorageItem,
   removeStorageItem,
@@ -42,6 +43,20 @@ test('missing storage adapter is an explicit persistence failure, never missing 
     (error) => error instanceof StoragePersistenceError
       && error.operation === 'remove'
       && error.key === 'zera-ps:test'
+  );
+});
+
+test('blocked browser localStorage accessor is wrapped with persistence context', () => {
+  const root = {};
+  Object.defineProperty(root, 'localStorage', {
+    get() { throw Object.assign(new Error('blocked getter'), { name: 'SecurityError' }); }
+  });
+  assert.throws(
+    () => getDefaultStorageAdapter(root),
+    (error) => error instanceof StoragePersistenceError
+      && error.operation === 'access'
+      && error.key === 'localStorage'
+      && error.cause?.name === 'SecurityError'
   );
 });
 
