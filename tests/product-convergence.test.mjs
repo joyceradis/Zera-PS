@@ -1,8 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { ENCOUNTER_ACTION_VIEWS } from '../src/product-convergence.js';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
+
+test('product convergence module remains importable without a browser DOM', () => {
+  assert.deepEqual(
+    ENCOUNTER_ACTION_VIEWS.map(({ id }) => id),
+    ['reavaliacao', 'internacao', 'alta', 'scores']
+  );
+});
 
 test('product convergence is loaded after the existing application engines', async () => {
   const entry = await read('src/app.js');
@@ -25,6 +33,19 @@ test('workflow/protocol infrastructure remains internal and the duplicate workfl
   assert.match(source, /workflow-context/);
   assert.match(source, /workflow-scenario/);
   assert.match(source, /hidden\s*=\s*true|setAttribute\(['"]hidden/);
+});
+
+test('convergence DOM is built with text nodes instead of injecting protocol or action labels as HTML', async () => {
+  const source = await read('src/product-convergence.js');
+  assert.doesNotMatch(source, /innerHTML\s*=/);
+  assert.match(source, /textContent\s*=/);
+});
+
+test('laboratory restore state is isolated from DOM attributes and invalidated after a manual edit', async () => {
+  const source = await read('src/product-convergence.js');
+  assert.match(source, /new WeakMap\(\)/);
+  assert.match(source, /labSnapshots\.delete\(input\)/);
+  assert.doesNotMatch(source, /dataset\.rawLaboratory/);
 });
 
 test('current clinical document fields and safety microfunctions remain present in app html', async () => {
