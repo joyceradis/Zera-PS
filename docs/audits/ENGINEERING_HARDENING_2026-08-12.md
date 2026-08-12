@@ -123,7 +123,17 @@ Estado: **DEFER UNTIL UI ACCEPTANCE**.
 
 Estado: **MINE BY BEHAVIOR AFTER CURRENT UI GATE**.
 
-### 5. Teste real de PWA
+### 5. Falha de escrita no storage
+
+`assets/storage.js` e `src/storage.js` fazem `setItem()` diretamente. Erros como quota excedida, storage indisponível ou bloqueio de permissão podem propagar até a UI.
+
+Não foi aplicado `try/catch` silencioso, porque isso criaria um risco pior: a médica acreditar que o rascunho/autosave foi persistido quando não foi.
+
+A correção futura deve criar um contrato explícito de erro de persistência e feedback operacional observável na interface antes de capturar essas exceções.
+
+Estado: **REQUIRES UX ERROR CONTRACT; DO NOT SILENCE**.
+
+### 6. Teste real de PWA
 
 CI estático não substitui:
 
@@ -155,7 +165,7 @@ Nenhuma mudança deste bloco:
 
 ```text
 1. continuar caracterização de adapters transitórios sem removê-los
-2. auditar persistência contra corrupção/erro de storage
+2. desenhar contrato observável para erros de persistência, sem aplicar durante homologação
 3. auditar atualização real do service worker no preview/PWA
 4. reconciliar documentação canônica com estado da PR
 5. manter CI verde
