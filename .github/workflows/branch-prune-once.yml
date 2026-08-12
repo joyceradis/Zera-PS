@@ -1,14 +1,48 @@
-name: Completed branch prune (disabled)
+name: One-off content-equivalent branch prune
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - chore/housekeeping-product-convergence
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  archived:
-    if: ${{ false }}
+  prune:
+    if: contains(github.event.head_commit.message, '[branch-prune]')
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - run: echo 'One-off branch prune completed; retained temporarily only because workflow file deletion is connector-restricted.'
+      - name: Checkout without persisted credentials
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Delete only audited tips with exact SHA guards
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+
+          delete_exact() {
+            branch="$1"
+            expected="$2"
+            actual=$(git ls-remote --heads "$remote" "refs/heads/${branch}" | awk '{print $1}')
+            if [ -z "$actual" ]; then
+              echo "Already absent: ${branch}"
+              return 0
+            fi
+            if [ "$actual" != "$expected" ]; then
+              echo "REFUSING DELETE: ${branch} moved; expected ${expected}, got ${actual}"
+              exit 1
+            fi
+            echo "Deleting audited content-equivalent branch: ${branch} @ ${actual}"
+            git push "$remote" --delete "$branch"
+          }
+
+          delete_exact 'docs/readme-verification-status' '1fbb69ba2e892d7bcf833a8cd4f1e759a058d275'
+          delete_exact 'fix/temporal-workflow-completion' '35431f1c700125abd1f68d77766487e9e41235c9'
