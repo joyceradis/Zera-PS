@@ -85,6 +85,10 @@ test('offline fallback is limited to navigation requests', () => {
   assert.doesNotMatch(serviceWorker, /cached \|\|\s*caches\.match\('\.\/app\.html'\)/);
 });
 
+test('offline navigation fallback is restricted to same-origin requests', () => {
+  assert.match(serviceWorker, /if \(event\.request\.mode === 'navigate'\)[\s\S]*?if \(!sameOrigin\) return;[\s\S]*?caches\.match\('\.\/app\.html'\)/);
+});
+
 test('legacy guided diarrhea controls remain in source as recoverable heritage, not the primary cycle 2 surface', () => {
   assert.match(appHtml, /id="hda-diarrhea-guide"/);
   assert.match(appHtml, /id="hda-diarrhea-onset-value"/);
