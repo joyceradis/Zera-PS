@@ -1,42 +1,14 @@
-name: One-off superseded branch prune
+name: Completed branch prune (disabled)
 
 on:
-  push:
-    branches:
-      - chore/housekeeping-product-convergence
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  prune:
-    if: contains(github.event.head_commit.message, '[branch-prune]')
+  archived:
+    if: ${{ false }}
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     steps:
-      - name: Checkout without persisted credentials
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
-        with:
-          fetch-depth: 1
-          persist-credentials: false
-
-      - name: Delete audited superseded branch with exact SHA guard
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          branch='docs/clinical-safety-closeout'
-          expected='2ab01791abbefeb4120f50b97eebbdf2c973e8de'
-          remote="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          actual=$(git ls-remote --heads "$remote" "refs/heads/${branch}" | awk '{print $1}')
-          if [ -z "$actual" ]; then
-            echo "Already absent: ${branch}"
-            exit 0
-          fi
-          if [ "$actual" != "$expected" ]; then
-            echo "REFUSING DELETE: ${branch} moved; expected ${expected}, got ${actual}"
-            exit 1
-          fi
-          echo "Deleting audited superseded branch: ${branch} @ ${actual}"
-          git push "$remote" --delete "$branch"
+      - run: echo 'One-off superseded branch prune completed; workflow retained disabled because connector deletion is restricted.'
