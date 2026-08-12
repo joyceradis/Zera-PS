@@ -1,18 +1,17 @@
 # Zera PS — Housekeeping & Product Convergence — Auditoria pós
 
 Data: 2026-08-12
-Implementação auditada: `216b1fe4966a272630bf478422a7f807bcad7a6a`, com regra clínica incremental do diferencial leucocitário adicionada posteriormente na mesma PR
-PR: #30 — `chore: housekeeping and product convergence`
-Status: **AUTOMATED GATES GREEN NO MARCO AUDITADO / REGRESSÃO MANUAL DE UI E PWA PENDENTE**
+Implementação auditada: PR #30 — `chore/housekeeping-product-convergence`
+Status: **AUTOMATED GATES GREEN NO HEAD FUNCIONAL MAIS RECENTE / REGRESSÃO MANUAL DE UI E PWA PENDENTE**
 
 ## 1. Escopo verificado
 
 A PR modifica produto, documentação, PWA e testes. Não há deleção de engine clínico, schema temporal, storage ou template nesta convergência.
 
-## 2. Evidência automatizada do marco anterior
+## 2. Evidência automatizada atual
 
 Workflow canônico: `.github/workflows/checks.yml`
-Run PR: `31553910631`
+Run PR mais recente após correção de superfície: `31556209385`
 Job: `verify`
 Resultado: `success`
 
@@ -26,25 +25,20 @@ npm run verify
 → node --test tests/*.test.mjs
 ```
 
-Resultado dos testes no head auditado:
+Resultado atual:
 
 ```text
-tests 174
-pass 174
+tests 177
+pass 177
 fail 0
 cancelled 0
 skipped 0
 todo 0
 ```
 
-Code scanning default do GitHub:
+O ciclo TDD da correção de superfície foi observado no CI: o commit de teste `4f74a8b...` falhou como esperado porque o launcher legado de reavaliação ainda permanecia visível; a implementação `08c79eaf...` ocultou esse launcher na camada convergida e restaurou o gate para verde com 177/177 testes.
 
-```text
-workflow: dynamic/github-code-scanning/codeql
-run: 31553908472
-head: 216b1fe4966a272630bf478422a7f807bcad7a6a
-conclusion: success
-```
+Code scanning default do GitHub havia concluído com sucesso no marco funcional anterior desta mesma PR. A regressão canônica `checks` permanece o gate obrigatório a cada alteração.
 
 ### Nota sobre “Code scanning AI findings”
 
@@ -148,6 +142,8 @@ ATENDIMENTO
 
 Reavaliação, internação, alta e scores deixam de competir como destinos primários da sidebar. As views existentes permanecem acessíveis internamente como camada transitória para preservar comportamento enquanto a equivalência de UX não for validada manualmente.
 
+A auditoria de superfície identificou ainda uma duplicidade residual: o botão legado `Reavaliar atendimento` dentro do antigo card de workflow continuaria visível depois de o produto já expor Reavaliação em `AÇÕES DO ATENDIMENTO`. A correção foi feita sem apagar o handler/DOM legado: o launcher antigo passa a ser ocultado pela camada de convergência. Assim, existe uma única ação visível de reavaliação na superfície convergida, enquanto o comportamento interno permanece preservado para a migração estrutural posterior.
+
 ## 7. PWA / offline
 
 O service worker foi versionado para `zera-ps-v10` e o APP_SHELL inclui `src/product-convergence.js` e `src/lab-parser.js`.
@@ -159,6 +155,8 @@ A validação automatizada não substitui teste manual de instalação, atualiza
 A documentação foi classificada em `CANONICAL`, `AUDIT`, `LEGACY-REFERENCE`, `OBSOLETE` e `DUPLICATE`.
 
 Nenhum documento foi apagado apenas por parecer antigo. A limpeza de CI foi executada separadamente na PR #31 e já integrada à `main`.
+
+O ROADMAP canônico foi reconciliado com a decisão já implementada do diferencial leucocitário; a antiga pendência de “definir quando outros componentes entram” foi encerrada para a regra atual.
 
 ## 9. Métricas — arqueologia pós
 
@@ -182,6 +180,7 @@ Ainda necessária:
 - troca de contexto;
 - HDA editada manualmente;
 - organizar/restaurar laboratório;
+- confirmar uma única ação visível de reavaliação;
 - reavaliação;
 - alta/internação;
 - PWA instalada/offline;
@@ -194,13 +193,14 @@ A origem da implementação longitudinal/mensal continua não resolvida. Ausênc
 ## 11. Gate desta auditoria
 
 ```text
-AUTOMATED CODE/TEST GATE     = PASS no marco auditado; revalidar no head final
-DEFAULT CODEQL               = PASS no marco auditado; revalidar no head final
+AUTOMATED CODE/TEST GATE     = PASS — 177/177 no run 31556209385
+DEFAULT CODEQL               = PASS no marco funcional anterior; revalidar no head final se houver nova execução
 CLINICAL FABRICATION GATE    = regressões automatizadas preservadas
 WBC DISPLAY RULE             = DOMAIN DECISION RESOLVED / IMPLEMENTED
-PWA STATIC APP-SHELL GATE    = PASS automatizado no marco auditado
+REASSESSMENT SURFACE DEDUPE  = PASS automatizado / manual visual pendente
+PWA STATIC APP-SHELL GATE    = PASS automatizado
 MANUAL CLINICAL UX GATE      = PENDING
 MONTHLY METRICS ARCHAEOLOGY  = UNRESOLVED
 ```
 
-Conclusão técnica: a decisão do diferencial leucocitário deixou de ser pendência de domínio e passou a contrato explícito de renderer. A homologação clínica da UX e a arqueologia do gráfico longitudinal continuam abertas.
+Conclusão técnica: o núcleo automatizado permanece verde após a convergência adicional da superfície. A homologação clínica da UX e a arqueologia do gráfico longitudinal continuam abertas.
