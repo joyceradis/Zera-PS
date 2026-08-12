@@ -24,15 +24,11 @@ function renderListSection(title, value) {
 }
 
 function renderExamComplementSection(laboratoriais, imagem) {
-  const groups = [
-    ['LABORATORIAIS:', laboratoriais],
-    ['IMAGEM:', imagem]
+  const items = [
+    ...parseLines(laboratoriais),
+    ...parseLines(imagem)
   ];
-  const body = groups.flatMap(([label, value]) => {
-    const items = parseLines(value);
-    return items.length ? [label, ...items.map((item) => `- ${item}`)] : [];
-  });
-  return body.length ? ['# EXAMES COMPLEMENTARES:', ...body] : [];
+  return items.length ? ['# EXAMES COMPLEMENTARES:', ...items.map((item) => `- ${item}`)] : [];
 }
 
 function renderEvolution(raw = {}, clinicalState = {}) {
