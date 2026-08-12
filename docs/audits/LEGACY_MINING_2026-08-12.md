@@ -95,6 +95,35 @@ template disponível
 
 Portanto, qualquer parte do legado que trate exame normal como fato pré-confirmado está `OBSOLETE / DO NOT RECOVER`.
 
+## Templates legados com hipótese e conduta automáticas — não recuperar
+
+`develop/assets/templates.js` continha roteiros que, além da QP/HDA, já carregavam `hipoteses` e `conduta` prontas. Exemplos históricos incluíam diagnóstico presumido de rinossinusite/PAC e frases como analgesia, hidratação, exames, antibioticoterapia ou observação.
+
+Esse comportamento conflita com a arquitetura vigente:
+
+```text
+contexto disponível
+≠ hipótese confirmada
+≠ conduta escolhida
+```
+
+Decisão:
+
+- **HDA pronta/editável:** patrimônio útil, já reconciliado;
+- **hipótese automática:** `OBSOLETE / DO NOT RECOVER`;
+- **conduta automática por template:** `OBSOLETE / DO NOT RECOVER`;
+- frases históricas podem servir, no máximo, como referência de linguagem após decisão explícita da Founder — nunca como defaults clínicos.
+
+A remoção dessas automações não é perda funcional a recuperar; é correção de segurança e de responsabilidade clínica.
+
+## Scores legados — nenhuma calculadora escondida adicional encontrada em `develop`
+
+`develop/assets/scores.js` contém apenas CRB-65, qSOFA, CURB-65 e Glasgow simplificado — todos já possuem equivalentes vigentes. Não foram encontrados Wells, PERC, SNNOOP10 ou outro catálogo oculto nessa branch.
+
+Classificação: `HERITAGE ALREADY ABSORBED`.
+
+Isso não impede novos scores futuramente; apenas evita atribuir ao histórico uma implementação que não existia.
+
 ## HPP quick choices
 
 A v0.2 propunha opções rápidas para comorbidades, MUC, alergias, hábitos e cirurgias.
