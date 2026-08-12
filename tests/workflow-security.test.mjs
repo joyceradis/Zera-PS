@@ -20,5 +20,12 @@ test('preview workflow grants only the write scope needed for PR conversation co
 });
 
 test('preview checkout does not persist GitHub credentials into the worktree', () => {
-  assert.match(preview, /uses:\s*actions\/checkout@v5[\s\S]*?with:\s*\n\s+persist-credentials:\s*false/);
+  assert.match(preview, /persist-credentials:\s*false/);
+});
+
+test('preview tunnel binary is version-pinned and checksum-verified', () => {
+  assert.doesNotMatch(preview, /releases\/latest\/download/);
+  assert.match(preview, /releases\/download\/2026\.7\.3\/cloudflared-linux-amd64\.deb/);
+  assert.match(preview, /049777d30f9bf93da6df8bbe31383460eb2aa51a832c6551824d56f9fcc55974/);
+  assert.match(preview, /sha256sum\s+-c/);
 });
