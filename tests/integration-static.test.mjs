@@ -66,7 +66,7 @@ test('PWA caches cycle 2 interaction modules and persistence IO under a new cach
   assert.match(serviceWorker, /\.\/src\/clinical-intake\.js/);
   assert.match(serviceWorker, /\.\/src\/text-formatters\.js/);
   assert.match(serviceWorker, /\.\/assets\/storage-io\.js/);
-  assert.match(serviceWorker, /const CACHE_NAME = 'zera-ps-v14'/);
+  assert.match(serviceWorker, /const CACHE_NAME = 'zera-ps-v15'/);
 });
 
 test('PWA activation only prunes Zera PS caches and never foreign origin caches', () => {
