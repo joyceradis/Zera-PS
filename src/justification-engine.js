@@ -68,6 +68,14 @@ function renderPhysicalExamBlock(physicalExam = {}) {
   return lines.length ? ['# EXAME FÍSICO:', ...lines] : [];
 }
 
+function summarizePhysicalExam(physicalExam = {}) {
+  return renderPhysicalExamBlock(physicalExam)
+    .slice(1)
+    .map((line) => line.replace(/^[-•]\s*/, '').trim())
+    .filter(Boolean)
+    .join(' / ');
+}
+
 function renderRiskBlock(hipoteses) {
   const rendered = renderListSection('# HIPÓTESE / RISCO QUE JUSTIFICA A SOLICITAÇÃO:', hipoteses);
   if (rendered.length) return rendered;
@@ -84,15 +92,6 @@ function renderRequestBlock(profile, variantId) {
   return [title, `- ${line}`];
 }
 
-/**
- * Monta o corpo de uma justificativa a partir de dados já confirmados na Evolução.
- * Nunca fabrica achado, risco ou urgência: todo bloco vem de texto já digitado ou de
- * estado clínico já confirmado (mesma regra de renderEvolution). Um bloco que dependeria
- * de dado ausente vira um marcador [COMPLETAR: ...] visível — nunca some, nunca é inventado.
- * Retorna corpo sem cabeçalho de documento; quem chama decide se envolve com
- * "## JUSTIFICATIVA DE EXAME - HOSPITAL MERIDIONAL SERRA ##" (documento avulso) ou insere
- * como conteúdo de um campo já existente (ex.: Justificativa clínica da Internação).
- */
 function assembleJustification(profile, variantId, { form = {}, clinicalState = {} } = {}) {
   if (!profile) return '';
   const blocks = [
@@ -106,4 +105,21 @@ function assembleJustification(profile, variantId, { form = {}, clinicalState = 
   return blocks.map((block) => block.join('\n')).join('\n\n');
 }
 
-export { JUSTIFICATION_PROFILES, getJustificationProfile, assembleJustification };
+function assembleFreeExamJustification(examName, { form = {}, clinicalState = {} } = {}) {
+  const exam = normalize(examName) || '[COMPLETAR: NOME DO EXAME]';
+  const clinicalPicture = normalize(form.hda || form.qp) || '[COMPLETAR: QUADRO CLÍNICO]';
+  const physicalExam = summarizePhysicalExam(clinicalState.physicalExam) || '[COMPLETAR: ACHADOS RELEVANTES DO EXAME FÍSICO]';
+  const hypotheses = normalize(form.hipoteses)
+    .split(/\n+/)
+    .map((line) => line.replace(/^[-•]\s*/, '').trim())
+    .filter(Boolean)
+    .join(' / ') || '[COMPLETAR: HIPÓTESE DIAGNÓSTICA]';
+
+  return normalize(
+    `SOLICITO ${exam} PARA PACIENTE EM QUESTÃO QUE DÁ ENTRADA NESTE PRONTO-SOCORRO COM QUADRO DE ${clinicalPicture}. ` +
+    `AO EXAME FÍSICO, DESTACA-SE: ${physicalExam}. ` +
+    `DIANTE DO QUADRO CLÍNICO APRESENTADO E DA HIPÓTESE DIAGNÓSTICA DE ${hypotheses}, FAZ-SE NECESSÁRIA A REALIZAÇÃO DO EXAME SOLICITADO EM CARÁTER DE URGÊNCIA PARA DEFINIÇÃO DE CONDUTA IMEDIATA E EXCLUSÃO DE COMPLICAÇÕES POTENCIALMENTE GRAVES.`
+  );
+}
+
+export { JUSTIFICATION_PROFILES, getJustificationProfile, assembleJustification, assembleFreeExamJustification };
