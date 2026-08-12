@@ -45,6 +45,7 @@ Auditorias são fotografias de um marco, não especificação vigente.
 
 - [`audits/HOUSEKEEPING_AND_RECOVERY_2026-08-11.md`](audits/HOUSEKEEPING_AND_RECOVERY_2026-08-11.md) — auditoria ativa de housekeeping, arqueologia e convergência do produto.
 - [`audits/HOUSEKEEPING_AND_RECOVERY_POST_2026-08-12.md`](audits/HOUSEKEEPING_AND_RECOVERY_POST_2026-08-12.md) — auditoria pós do marco automatizado, limites transitórios e gates ainda pendentes de validação manual.
+- [`audits/ENGINEERING_HARDENING_2026-08-12.md`](audits/ENGINEERING_HARDENING_2026-08-12.md) — hardening não clínico: namespace de cache PWA, fechamento do APP_SHELL sobre imports, dívida técnica e gates restantes.
 - [`audits/CAPABILITY_INVENTORY_2026-08-12.md`](audits/CAPABILITY_INVENTORY_2026-08-12.md) — inventário real de superfícies, macrofunções, scores, persistência, PWA e patrimônio, com matriz de classificação.
 - [`audits/UI_SURFACE_INVENTORY_2026-08-12.md`](audits/UI_SURFACE_INVENTORY_2026-08-12.md) — telas, campos, botões, ações e views transitórias da superfície clínica atual.
 - [`audits/MICROFUNCTION_RECOVERY_LEDGER_2026-08-12.md`](audits/MICROFUNCTION_RECOVERY_LEDGER_2026-08-12.md) — microfunções atuais, recuperadas, candidatas, inseguras e ainda não localizadas.
