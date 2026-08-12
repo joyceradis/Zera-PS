@@ -28,7 +28,9 @@ uma responsabilidade clínica/técnica
 | Parser laboratorial | `src/lab-parser.js` | KEEP | parsing e apresentação compacta separados; sem regra clínica escondida na UI |
 | Justificativas | `src/justification-engine.js` | KEEP/ISOLATE | reutiliza estado confirmado; não relê DOM nem cria fatos |
 | Workflow temporal | `src/workflow-engine.js` | KEEP | único dono de etapas, pendências, resultados, reavaliações e snapshots |
-| Persistência Encounter v3 | `src/storage.js` | KEEP | não misturar silenciosamente com schema documental v2 |
+| I/O e integridade do storage local | `assets/storage-io.js` | KEEP | único contrato de `getItem`/`setItem`/`removeItem` e parse JSON; falha/corrupção nunca vira ausência ou sucesso silencioso |
+| Persistência documental v2 | `assets/storage.js` | KEEP/LEGACY OWNER | usa exclusivamente o contrato de `storage-io`; mantém migração v1→v2 |
+| Persistência Encounter v3 | `src/storage.js` | KEEP | usa `storage-io`; não misturar silenciosamente com schema documental v2 |
 | Scores/ferramentas | `src/score-engine.js` | KEEP | único dono de available/applicable/calculable/applied |
 | Apresentação de ferramentas | `src/tool-presentation.js` | KEEP | sem cálculo clínico próprio |
 | Contrato declarativo | `src/protocol-schema.js` | KEEP INTERNAL | valida configuração; não aparece como conceito concorrente para a médica |
@@ -38,7 +40,7 @@ uma responsabilidade clínica/técnica
 | Configuração clínica concreta | `protocols/*.js` | KEEP INTERNAL | regras/contexto específicos vivem aqui, nunca nos engines genéricos |
 | Coordenação de troca de contexto | `src/context-coordination.js` | KEEP | protege conteúdo e reconcilia roteiro/contexto sem usar texto da QP como verdade semântica |
 | Integração temporal com UI | `src/temporal-ui.js` | TRANSITIONAL/REFINE | coordena engines atuais; reduzir responsabilidades após convergência da superfície |
-| Convergência da superfície | `src/product-convergence.js` | TRANSITIONAL | camada de migração; não deve virar novo monólito permanente |
+| Convergência da superfície | `src/product-convergence.js` | TRANSITIONAL | camada de migração; não deve virar novo monólito permanente nem acessar localStorage diretamente |
 | Estilos | `assets/styles.css` | KEEP FOR NOW | mover/fragmentar só após estabilização da UI canônica |
 | PWA/cache | `service-worker.js` + `manifest.json` | KEEP/AUDIT | cache explícito e versionado; pruning restrito ao namespace `zera-ps-*`; APP_SHELL deve permanecer fechado sobre imports locais; nenhuma regra clínica |
 
@@ -66,13 +68,38 @@ src/document-engine.js
 
 Consolidar só quando houver teste de caracterização para todas as microfunções do renderer base.
 
+## Persistência: regra de ownership
+
+Nenhuma superfície, painel ou engine deve chamar `localStorage` diretamente.
+
+```text
+UI / painel / engine
+→ storage owner correspondente
+→ assets/storage-io.js
+→ Web Storage API
+```
+
+Isso vale também para superfícies não clínicas como `Resumo do Plantão`. A produtividade pode transformar snapshots do Encounter, mas não cria uma segunda implementação de leitura do storage.
+
+O contrato distingue explicitamente:
+
+```text
+chave ausente
+≠
+JSON presente porém corrompido
+≠
+falha de permissão/quota/acesso
+```
+
+Dados corrompidos não são apagados automaticamente e falha de escrita não pode ser reportada como salvamento bem-sucedido.
+
 ## Dívida arquitetural consciente
 
 `assets/app.js` ainda concentra muita coordenação de UI e comportamento documental legado. Ele não deve receber novas capacidades estruturais. O caminho de redução será por extração incremental, sempre com teste antes e depois.
 
 `src/product-convergence.js` e `src/temporal-ui.js` são adapters de transição. A arquitetura final não deve depender de duas camadas de coordenação para sempre.
 
-A persistência local ainda não possui uma política explícita de sinalização de erro de escrita (`QuotaExceededError`, storage indisponível ou falha de permissões). O código atual não deve ser silenciado com `try/catch` que faça a médica acreditar que um rascunho foi salvo quando não foi. A correção futura precisa introduzir feedback operacional observável antes de capturar esses erros.
+O contrato técnico de falha/corrupção do storage já existe. A dívida restante é uniformizar a apresentação visual desses erros nas superfícies que ainda não possuem feedback próprio, sem introduzir ruído durante a homologação clínica.
 
 ## Política para novas mudanças
 
