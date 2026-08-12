@@ -5,6 +5,7 @@ import path from 'node:path';
 
 const appHtml = await readFile('app.html', 'utf8');
 const legacyApp = await readFile('assets/app.js', 'utf8');
+const legacyUi = await readFile('assets/ui.js', 'utf8');
 const temporalUi = await readFile('src/temporal-ui.js', 'utf8');
 const rootApp = await readFile('app.js', 'utf8');
 const serviceWorker = await readFile('service-worker.js', 'utf8');
@@ -72,6 +73,11 @@ test('PWA activation only prunes Zera PS caches and never foreign origin caches'
   assert.match(serviceWorker, /const CACHE_PREFIX = 'zera-ps-'/);
   assert.match(serviceWorker, /key\.startsWith\(CACHE_PREFIX\)\s*&&\s*key !== CACHE_NAME/);
   assert.doesNotMatch(serviceWorker, /filter\(\(key\) => key !== CACHE_NAME\)/);
+});
+
+test('service worker registration failures remain technically observable', () => {
+  assert.doesNotMatch(legacyUi, /serviceWorker\.register\([^)]*\)\.catch\(\(\)\s*=>\s*\{\}\)/);
+  assert.match(legacyUi, /zera:pwa-registration-error|console\.error/);
 });
 
 test('offline fallback is limited to navigation requests', () => {
