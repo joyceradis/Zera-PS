@@ -48,6 +48,7 @@ Cada item é avaliado por:
 | TD-12 | branch `develop` permanece como referência arqueológica | baixo | repositório | **HOLD** | apagar somente após requisitos exclusivos estarem integralmente canonizados |
 | TD-13 | fallback offline de navegação podia responder `app.html` fora do origin do Zera | médio | `service-worker.js` | **CLOSED** | fallback agora exige `navigate` + `sameOrigin`; teste RED→GREEN protege contrato |
 | TD-14 | PWA podia regredir para caminhos absolutos e quebrar sob subpath do GitHub Pages | médio | manifest + registro SW | **CLOSED / CHARACTERIZED** | testes exigem `./app.html`, scope relativo, ícones relativos e registro `./service-worker.js` |
+| TD-15 | `getDrafts()` legado converte falha/corrupção em `[]`, podendo mascarar rascunhos existentes | alto | `assets/app.js` + storage | **HOLD / FIX BEFORE MERGE** | corrigir com teste RED quando a alteração puder ser feita sem perturbar a superfície clínica em homologação; jamais sobrescrever dados após leitura falha |
 
 ## Hardening concluído neste ciclo
 
@@ -109,7 +110,22 @@ Foi adicionada caracterização automática de instalação em subpath, necessá
 
 Isso impede uma futura refatoração de caminhos de funcionar na raiz e quebrar em `/Zera-PS/`.
 
-## Gate automatizado mais recente
+### Achado preservado: rascunhos legados
+
+A auditoria encontrou em `assets/app.js`:
+
+```js
+function getDrafts() {
+  try { return storage.loadDrafts(); }
+  catch { return []; }
+}
+```
+
+Isso conflita com o contrato de integridade já adotado: corrupção ou falha de acesso não pode significar "nenhum rascunho". O risco é especialmente relevante porque uma operação posterior poderia salvar uma lista vazia ou nova e sobrescrever uma chave cuja leitura falhou.
+
+Foi criado um teste RED para provar o defeito, mas a correção exige alteração do fluxo legado de `assets/app.js` e do estado visual de Rascunhos. Como essa superfície está dentro da PR em homologação, o teste experimental foi retirado do head para não deixar CI vermelho nem modificar silenciosamente a UX. O achado permanece registrado como **FIX BEFORE MERGE**, não como dívida esquecida.
+
+## Gate automatizado verde mais recente de código
 
 GitHub Actions `checks`, run `31580294487`:
 
