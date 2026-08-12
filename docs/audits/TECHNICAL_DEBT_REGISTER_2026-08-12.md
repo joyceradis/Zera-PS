@@ -46,6 +46,8 @@ Cada item é avaliado por:
 | TD-10 | autosave possui estados operacionais parcialmente visíveis | médio | UI + storage | **RECOVER LATER** | `SALVANDO/AUTOSSALVO/NÃO SALVO` com erro explícito e testável |
 | TD-11 | workflow temporário de preview Cloudflare é infraestrutura efêmera | baixo | CI/CD | **ACCEPTED** | manter isolado/read-only até existir preview permanente adequado |
 | TD-12 | branch `develop` permanece como referência arqueológica | baixo | repositório | **HOLD** | apagar somente após requisitos exclusivos estarem integralmente canonizados |
+| TD-13 | fallback offline de navegação podia responder `app.html` fora do origin do Zera | médio | `service-worker.js` | **CLOSED** | fallback agora exige `navigate` + `sameOrigin`; teste RED→GREEN protege contrato |
+| TD-14 | PWA podia regredir para caminhos absolutos e quebrar sob subpath do GitHub Pages | médio | manifest + registro SW | **CLOSED / CHARACTERIZED** | testes exigem `./app.html`, scope relativo, ícones relativos e registro `./service-worker.js` |
 
 ## Hardening concluído neste ciclo
 
@@ -79,6 +81,44 @@ O acesso ao getter `globalThis.localStorage` também passa pelo contrato context
 Um teste varre JavaScript de `assets/` e `src/` e bloqueia qualquer referência direta a `localStorage` fora de `assets/storage-io.js`.
 
 Isso transforma uma orientação documental em gate executável.
+
+### PWA: limite de origin do fallback offline
+
+Foi introduzido teste RED exigindo que a navegação offline só faça fallback para `./app.html` quando a requisição também pertence ao mesmo origin do Zera PS. A implementação anterior verificava `navigate` antes de `sameOrigin`, deixando o contrato mais amplo do que o necessário.
+
+Contrato atual:
+
+```text
+GET
+→ navigate?
+→ same origin?
+→ tentar rede
+→ somente então fallback para app.html
+```
+
+A geração do cache foi avançada para `zera-ps-v15` para que a alteração de comportamento do service worker seja distribuída como nova geração.
+
+### PWA: portabilidade em subpath
+
+Foi adicionada caracterização automática de instalação em subpath, necessária para GitHub Pages e previews isolados:
+
+- `manifest.start_url === './app.html'`;
+- `manifest.scope === './'`;
+- ícones usam caminhos relativos e existem;
+- registro do service worker usa `./service-worker.js`, nunca `/service-worker.js`.
+
+Isso impede uma futura refatoração de caminhos de funcionar na raiz e quebrar em `/Zera-PS/`.
+
+## Gate automatizado mais recente
+
+GitHub Actions `checks`, run `31580294487`:
+
+```text
+npm run verify
+227 tests
+227 pass
+0 fail
+```
 
 ## Itens deliberadamente não atacados durante a homologação
 
