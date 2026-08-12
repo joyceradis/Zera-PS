@@ -319,8 +319,9 @@ function formatProductivityRange(summary) {
   return `${formatter.format(new Date(summary.rangeStart))}–${formatter.format(new Date(summary.rangeEnd))}`;
 }
 
-function readProductivityRecords(adapter = globalThis.localStorage) {
-  const snapshot = createEncounterStorage(adapter).loadActiveEncounter();
+function readProductivityRecords(adapter) {
+  const storage = adapter === undefined ? createEncounterStorage() : createEncounterStorage(adapter);
+  const snapshot = storage.loadActiveEncounter();
   return snapshot ? extractEncounterRecords(snapshot) : [];
 }
 
