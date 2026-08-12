@@ -1,4 +1,5 @@
 import { listProtocolOptions } from './protocol-registry.js';
+import { transformLaboratoryText } from './lab-parser.js';
 
 const PRIMARY_VIEW = 'evolucao';
 const ENCOUNTER_ACTION_VIEWS = Object.freeze([
@@ -99,6 +100,56 @@ function createEncounterActions() {
   form.insertAdjacentElement('afterend', section);
 }
 
+function createLabOrganizer() {
+  const input = document.getElementById('laboratoriais');
+  const field = input?.closest('.field');
+  if (!input || !field || document.getElementById('organize-laboratory')) return;
+
+  const row = document.createElement('div');
+  row.className = 'lab-organizer-row';
+
+  const organize = document.createElement('button');
+  organize.type = 'button';
+  organize.id = 'organize-laboratory';
+  organize.className = 'text-button';
+  organize.textContent = 'Organizar laboratório';
+
+  const restore = document.createElement('button');
+  restore.type = 'button';
+  restore.id = 'restore-raw-laboratory';
+  restore.className = 'text-button';
+  restore.textContent = 'Restaurar texto colado';
+  restore.hidden = true;
+
+  organize.addEventListener('click', () => {
+    const raw = input.value;
+    const transformed = transformLaboratoryText(raw);
+    if (!transformed) {
+      organize.textContent = 'Nenhum analito reconhecido';
+      window.setTimeout(() => { organize.textContent = 'Organizar laboratório'; }, 1600);
+      return;
+    }
+
+    if (!input.dataset.rawLaboratory) input.dataset.rawLaboratory = raw;
+    input.value = transformed;
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    restore.hidden = false;
+    organize.textContent = 'Laboratório organizado';
+    window.setTimeout(() => { organize.textContent = 'Organizar laboratório'; }, 1200);
+  });
+
+  restore.addEventListener('click', () => {
+    if (!input.dataset.rawLaboratory) return;
+    input.value = input.dataset.rawLaboratory;
+    delete input.dataset.rawLaboratory;
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    restore.hidden = true;
+  });
+
+  row.append(organize, restore);
+  input.insertAdjacentElement('afterend', row);
+}
+
 function injectConvergenceStyles() {
   if (document.getElementById('zera-product-convergence-styles')) return;
   const style = document.createElement('style');
@@ -110,7 +161,8 @@ function injectConvergenceStyles() {
     .contextual-workspace:empty{display:none}
     .contextual-workspace #workflow-context{margin:18px 0 0}
     .encounter-actions{margin-top:20px;padding-top:18px;border-top:1px solid rgba(11,31,51,.12)}
-    .encounter-action-row{display:flex;flex-wrap:wrap;gap:10px}
+    .encounter-action-row,.lab-organizer-row{display:flex;flex-wrap:wrap;gap:10px}
+    .lab-organizer-row{margin-top:8px}
     @media(max-width:760px){.encounter-action-row .button{flex:1 1 calc(50% - 10px)}}
   `;
   document.head.appendChild(style);
@@ -122,6 +174,7 @@ function initProductConvergence() {
   createProtocolLauncher();
   convergeWorkflowSurface();
   createEncounterActions();
+  createLabOrganizer();
   injectConvergenceStyles();
 }
 
@@ -130,5 +183,6 @@ initProductConvergence();
 export {
   ENCOUNTER_ACTION_VIEWS,
   initProductConvergence,
-  selectView
+  selectView,
+  createLabOrganizer
 };
