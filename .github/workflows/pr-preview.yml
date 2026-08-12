@@ -38,9 +38,14 @@ jobs:
           exit 1
 
       - name: Install Cloudflare tunnel client
+        env:
+          CLOUDFLARED_VERSION: '2026.7.3'
+          CLOUDFLARED_SHA256: '049777d30f9bf93da6df8bbe31383460eb2aa51a832c6551824d56f9fcc55974'
         run: |
+          set -euo pipefail
           curl -fsSL -o /tmp/cloudflared.deb \
-            https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+            "https://github.com/cloudflare/cloudflared/releases/download/${CLOUDFLARED_VERSION}/cloudflared-linux-amd64.deb"
+          echo "${CLOUDFLARED_SHA256}  /tmp/cloudflared.deb" | sha256sum -c -
           sudo dpkg -i /tmp/cloudflared.deb
           cloudflared --version
 
