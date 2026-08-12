@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { ENCOUNTER_ACTION_VIEWS, PRIMARY_DESTINATIONS } from '../src/product-convergence.js';
+import { StorageCorruptionError, StoragePersistenceError } from '../assets/storage-io.js';
+import { ENCOUNTER_ACTION_VIEWS, PRIMARY_DESTINATIONS, readProductivityRecords } from '../src/product-convergence.js';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
@@ -19,6 +20,24 @@ test('definitive primary navigation exposes only Atendimento, Rascunhos and Resu
   assert.deepEqual(PRIMARY_DESTINATIONS.map(({ id, label }) => [id, label]), [
     ['evolucao', 'Atendimento'], ['rascunhos', 'Rascunhos'], ['plantao', 'Resumo do Plantão']
   ]);
+});
+
+test('productivity reader does not report corrupted encounter state as zero patients', () => {
+  const adapter = { getItem: () => '{broken' };
+  assert.throws(
+    () => readProductivityRecords(adapter),
+    (error) => error instanceof StorageCorruptionError && error.key === 'zera-ps:encounter:v3'
+  );
+});
+
+test('productivity reader does not hide localStorage access failures', () => {
+  const adapter = { getItem: () => { throw Object.assign(new Error('blocked'), { name: 'SecurityError' }); } };
+  assert.throws(
+    () => readProductivityRecords(adapter),
+    (error) => error instanceof StoragePersistenceError
+      && error.operation === 'read'
+      && error.key === 'zera-ps:encounter:v3'
+  );
 });
 
 test('product convergence is loaded after the existing application engines', async () => {
