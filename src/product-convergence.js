@@ -43,6 +43,8 @@ function setPrimaryDestination(viewId) {
   const destination = PRIMARY_DESTINATIONS.find((item) => item.id === viewId);
   const title = document.getElementById('view-title');
   if (title && destination) title.textContent = destination.label;
+  document.getElementById('sidebar')?.classList.remove('open');
+  document.getElementById('sidebar-overlay')?.classList.remove('open');
 }
 
 function relabelPrimarySurface() {
@@ -476,7 +478,9 @@ function initProductConvergence() {
   setPrimaryDestination(PRIMARY_VIEW);
 }
 
-if (typeof document !== 'undefined') initProductConvergence();
+if (typeof document !== 'undefined') {
+  document.addEventListener('DOMContentLoaded', initProductConvergence, { once: true });
+}
 
 export {
   PRIMARY_DESTINATIONS,
