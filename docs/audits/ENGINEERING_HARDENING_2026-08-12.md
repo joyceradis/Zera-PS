@@ -171,3 +171,7 @@ Nenhuma mudança deste bloco:
 5. manter CI verde
 6. não mudar interação clínica sem feedback da Founder
 ```
+
+## Evidência de head documental posterior
+
+Após indexação documental e atualização de ownership, o workflow `checks` também concluiu com sucesso no run `31565255942`. Essas mudanças posteriores são apenas documentação; o último gate que altera código continua sendo o de `203/203` acima.
