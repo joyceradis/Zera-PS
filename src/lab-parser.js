@@ -34,7 +34,7 @@ function parseLaboratoryText(raw = '') {
     neut: pick(source, [numericResult('(?:NEUTR[ÓO]FILOS|NEUTROFILOS|SEGMENTADOS|\\bSEG\\b)')]),
     bast: pick(source, [numericResult('(?:BASTONETES|\\bBAST\\b)')]),
     eos: pick(source, [numericResult('(?:EOSIN[ÓO]FILOS|EOSINOFILOS|\\bEOS\\b)')]),
-    baso: pick(source, [numericResult('(?:BAS[ÓO]FILOS|BASOFILOS|\\bBASO\\b)')]),
+    baso: pick(source, [numericResult('(?:BAS[ÓO]FILOS|BASOFILOS|\\bBASO\\b|\\bBAS\\b)')]),
     linf: pick(source, [numericResult('(?:LINF[ÓO]CITOS(?:\\s+T[IÍ]PICOS)?|LINFOCITOS(?:\\s+TIPICOS)?|\\bLINF\\b)')]),
     mono: pick(source, [numericResult('(?:MON[ÓO]CITOS|MONOCITOS|\\bMONO\\b)')]),
     plaq: pick(source, [numericResult('(?:CONTAGEM DE PLAQUETAS|PLAQUETAS|\\bPLAQ\\b)')]),
@@ -62,14 +62,39 @@ function formatCellCount(value) {
   return text;
 }
 
+function parsePercent(value) {
+  const normalized = String(value || '').trim().replace(',', '.');
+  if (!/^\d+(?:\.\d+)?$/.test(normalized)) return null;
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+const DIFFERENTIAL_OUTPUT_RULES = Object.freeze([
+  { key: 'neut', label: 'S', upperReference: 70 },
+  { key: 'bast', label: 'B', upperReference: 5 },
+  { key: 'linf', label: 'L', upperReference: 45 },
+  { key: 'mono', label: 'M', upperReference: 10 },
+  { key: 'eos', label: 'E', upperReference: 5 },
+  { key: 'baso', label: 'Bas', upperReference: 1 }
+]);
+
+function renderElevatedDifferential(values = {}) {
+  return DIFFERENTIAL_OUTPUT_RULES.flatMap(({ key, label, upperReference }) => {
+    const percent = parsePercent(values[key]);
+    if (percent === null || percent <= upperReference) return [];
+    return [`${label} ${values[key]}%`];
+  });
+}
+
 function renderCompactLabLine(values = {}) {
   const parts = [];
 
   if (values.hb) parts.push(`HB: ${values.hb}`);
   if (values.ht) parts.push(`HT: ${values.ht}`);
   if (values.leuco) {
-    const differential = values.neut ? ` (NEUT: ${values.neut}%)` : '';
-    parts.push(`LEUCO: ${formatCellCount(values.leuco)}${differential}`);
+    const differential = renderElevatedDifferential(values);
+    const suffix = differential.length ? ` (${differential.join(' ')})` : '';
+    parts.push(`LEUCO: ${formatCellCount(values.leuco)}${suffix}`);
   }
   if (values.plaq) parts.push(`PLAQ: ${formatCellCount(values.plaq)}`);
   if (values.pcr) parts.push(`PCR: ${values.pcr}`);
