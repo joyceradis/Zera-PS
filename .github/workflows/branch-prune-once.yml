@@ -1,46 +1,14 @@
-name: One-off proven branch prune
+name: Completed branch prune (disabled)
 
 on:
-  push:
-    branches:
-      - chore/housekeeping-product-convergence
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  prune:
-    if: contains(github.event.head_commit.message, '[branch-prune]')
+  archived:
+    if: ${{ false }}
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     steps:
-      - name: Checkout without persisted credentials
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-
-      - name: Verify ancestry and delete only proven obsolete refs
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          branches=(
-            'claude/clinical-protocols-infrastructure-njmdmi'
-            'fix/issue-15-clinical-context-coherence'
-            'docs/product-doctrine'
-          )
-
-          git fetch --no-tags origin main
-          remote="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-
-          for branch in "${branches[@]}"; do
-            git fetch --no-tags origin "+refs/heads/${branch}:refs/remotes/origin/${branch}"
-            if ! git merge-base --is-ancestor "refs/remotes/origin/${branch}" refs/remotes/origin/main; then
-              echo "REFUSING DELETE: ${branch} is not an ancestor of main"
-              exit 1
-            fi
-            echo "Deleting proven ancestor branch: ${branch}"
-            git push "$remote" --delete "$branch"
-          done
+      - run: echo 'One-off branch prune completed; retained temporarily only because workflow file deletion is connector-restricted.'
