@@ -8,6 +8,16 @@ class StoragePersistenceError extends Error {
   }
 }
 
+class StorageCorruptionError extends Error {
+  constructor(key, raw, cause) {
+    super(`Estado local inválido em ${key}`, { cause });
+    this.name = 'StorageCorruptionError';
+    this.key = key;
+    this.raw = raw;
+    this.cause = cause;
+  }
+}
+
 function withStorageContext(operation, key, callback) {
   try {
     return callback();
@@ -31,9 +41,20 @@ function removeStorageItem(adapter, key) {
   return withStorageContext('remove', key, () => adapter.removeItem(key));
 }
 
+function parseStoredJson(raw, key, fallback = null) {
+  if (raw == null || raw === '') return fallback;
+  try {
+    return JSON.parse(raw);
+  } catch (cause) {
+    throw new StorageCorruptionError(key, raw, cause);
+  }
+}
+
 export {
   StoragePersistenceError,
+  StorageCorruptionError,
   readStorageItem,
   writeStorageItem,
-  removeStorageItem
+  removeStorageItem,
+  parseStoredJson
 };
