@@ -34,8 +34,8 @@ Nenhuma funcionalidade é avanço se economizar texto, mas aumentar cliques, nav
 | 3. Ferramentas clínicas | v1.1 implementada | `available ≠ applicable ≠ calculable ≠ applied` |
 | 4. Documento temporal | v1.1 implementada | Estado operacional não vaza para prontuário |
 | 5. Persistência/histórico | Parcial | Sem perda ou reinterpretação de estado |
-| 6. Housekeeping + Product Convergence | **Em auditoria pós** | Uma única experiência de Atendimento sem perda de microfunções |
-| 7. Recuperação de microfunções | Parser laboratorial recuperado; arqueologia segue | Recuperar por contrato/teste, não por cópia cega |
+| 6. Housekeeping + Product Convergence | **Inventário/ownership concluídos; gate manual aberto** | Uma única experiência de Atendimento sem perda de microfunções |
+| 7. Recuperação de microfunções | Parser laboratorial recuperado; ledger consolidado | Recuperar por contrato/teste, não por cópia cega |
 | 8. Expansão clínica | Futuro | Novo contexto só após provar o motor atual |
 | 9. Piloto | Futuro | Zero informação fabricada + ganho operacional mensurável |
 | 10. Produção/assinatura | Futuro | Requisitos SaaS, segurança e privacidade |
@@ -108,7 +108,19 @@ Contrato protegido de reavaliação:
 
 Atual: núcleo documental local + Encounter v3 temporal ativo.
 
-A branch histórica `develop` contém um modelo anterior de Atendimento e persistência multi-atendimento. Não será mesclada: seus conceitos úteis são reconciliados com o Encounter v3 atual.
+A branch histórica `develop` contém um modelo anterior de Atendimento e persistência multi-atendimento. Não será mesclada: seus conceitos úteis foram minerados e reconciliados com o Encounter v3 atual.
+
+Patrimônio já identificado para recuperação por adaptação, em ciclo posterior:
+
+```text
+Encounter v3
+→ lista local de Atendimentos
+→ Atendimento atual
+→ retomar Atendimento em andamento
+→ finalizar / registrar desfecho sem apagar história
+```
+
+Não transplantar `develop/assets/attendance.js`: ele usa schema e semântica anteriores ao modelo temporal/proveniência atual.
 
 Próximos itens: múltiplos Atendimentos, histórico de documentos, versionamento de reavaliações, avaliação de IndexedDB, retenção, exportação/importação e testes de corrupção/recuperação.
 
@@ -116,7 +128,7 @@ Próximos itens: múltiplos Atendimentos, histórico de documentos, versionament
 
 Objetivo: reduzir a entropia acumulada sem rewrite e sem perder comportamento.
 
-### 6.1 Arqueologia e inventário
+### 6.1 Arqueologia, inventário e ownership
 
 - [x] mapear branches atuais;
 - [x] identificar `develop` como trabalho único a minerar, não mesclar;
@@ -124,11 +136,39 @@ Objetivo: reduzir a entropia acumulada sem rewrite e sem perder comportamento.
 - [x] localizar parser bruto de exames no commit legado `c3828267...`;
 - [x] confirmar HDA integral e microfunções atuais;
 - [x] auditar baseline do service worker;
-- [~] localizar/classificar métricas e gráficos antigos — placeholders e métricas do atendimento corrente classificados; gráfico longitudinal/mensal ainda não localizado;
+- [x] inventariar superfícies, campos, botões, engines, scores, persistência e macrofunções atuais;
+- [x] consolidar ledger de microfunções presentes, recuperadas, candidatas e inseguras;
+- [x] definir owner semântico para cada responsabilidade em `docs/architecture/OWNERSHIP.md`;
+- [x] minerar `develop/assets/attendance.js`, templates e scores sem merge bruto;
+- [~] localizar/classificar métricas e gráficos antigos — placeholders hardcoded localizados; gráfico longitudinal/mensal ainda não localizado;
 - [x] finalizar classificação documental canonical/audit/legacy-reference/obsolete/duplicate;
 - [x] separar e remover CI irrelevante/conflitante sem tocar o gate canônico.
 
-### 6.2 Convergência da interface
+### 6.2 Limpeza arquitetural
+
+A sobreposição `assets/` ↔ `src/` foi classificada por ownership, não por aparência.
+
+Regras vigentes:
+
+- wrappers simples não são uma segunda implementação;
+- `assets/document-engine.js` mantém renderer documental base enquanto `src/document-engine.js` acrescenta composição temporal;
+- `assets/app.js` é legado estabilizado, mas não recebe nova lógica estrutural;
+- `src/temporal-ui.js` e `src/product-convergence.js` são adapters transitórios;
+- regra clínica concreta vive em configuração clínica (`protocols/`) ou engine apropriado, nunca espalhada pela UI;
+- reorganização física de diretórios só acontece depois de ownership e equivalência comportamental estarem estáveis.
+
+Próximo passo arquitetural após gate manual:
+
+```text
+homologar Atendimento
+→ remover dependência visual das views antigas
+→ caracterizar microfunções restantes de assets/app.js
+→ extrair coordenação por responsabilidade
+→ reduzir adapters transitórios
+→ somente então simplificar a árvore física
+```
+
+### 6.3 Convergência da interface
 
 Estado anterior problemático:
 
@@ -167,7 +207,7 @@ Tarefas:
 - [ ] validar manualmente desktop/mobile/PWA antes de homologar a experiência clínica;
 - [ ] substituir, em ciclo posterior e somente após equivalência comprovada, a navegação transitória por views internas escondidas por integração estrutural definitiva.
 
-### 6.3 HDA
+### 6.4 HDA
 
 A HDA permanece uma única entidade editável. Três formas de entrada podem coexistir:
 
@@ -179,6 +219,8 @@ Gate: nenhuma construção assistida pode tornar a HDA mais lenta que a escrita 
 
 ## 7 — Recuperação de microfunções
 
+Ledger: [`docs/audits/MICROFUNCTION_RECOVERY_LEDGER_2026-08-12.md`](docs/audits/MICROFUNCTION_RECOVERY_LEDGER_2026-08-12.md).
+
 ### 7.1 Organizador de exames — P0
 
 A implementação ancestral foi localizada em `drajoyceradis/HMS-Dra-Joyce-Radis`, commit `c3828267fd393d722af6cc99f137b8d442eac690`.
@@ -188,10 +230,10 @@ O comportamento foi recuperado por adaptação, não por cópia integral. O mód
 Saída clínica compacta atual:
 
 ```text
-- LAB: HB: ... / HT: ... / LEUCO: ... (S ...% / B ...% / L ...% / M ...% / E ...% / Bas ...%) / PLAQ: ... / PCR: ... / UR: ... / CR: ... / NA: ... / K: ...
+- LAB: HB: ... / HT: ... / LEUCO: ... (S ...% B ...% L ...% M ...% E ...% Bas ...%) / PLAQ: ... / PCR: ... / UR: ... / CR: ... / NA: ... / K: ...
 ```
 
-Somente analitos encontrados entram. No diferencial leucocitário, apenas frações explicitamente informadas **e acima do limite superior de referência adotado para a regra de produto** aparecem na linha compacta. O renderer não infere predominância, desvio à esquerda, infecção ou qualquer diagnóstico.
+Somente analitos encontrados entram. No diferencial leucocitário, apenas frações explicitamente informadas **e acima do limite superior adotado para a regra de produto** aparecem na linha compacta. O renderer não infere predominância, desvio à esquerda, infecção ou qualquer diagnóstico.
 
 - [x] caracterizar entradas legadas;
 - [x] escrever regressões para entradas completas, aliases compactos e ausência de dados;
@@ -204,7 +246,24 @@ Somente analitos encontrados entram. No diferencial leucocitário, apenas fraç�
 - [x] aplicar decisão clínica do diferencial leucocitário: exibir somente S/B/L/M/E/Bas explicitamente informados acima do limite superior configurado;
 - [ ] executar regressão manual no navegador/PWA.
 
-### 7.2 Entrada por voz
+### 7.2 Patrimônio de interação ainda não promovido
+
+A arqueologia encontrou capacidades reais no predecessor, agora registradas sem transplante automático:
+
+- chips de sintomas;
+- quick choices de HPP;
+- medicações rápidas;
+- condutas rápidas;
+- status operacionais;
+- toggle móvel formulário/texto;
+- sinais vitais;
+- handoff.
+
+Nenhuma dessas capacidades é requisito atual só por ter existido. Recuperação depende de ganho operacional real, owner compatível, segurança atual e validação da Founder.
+
+Comportamentos históricos que convertiam vazio em `NA`, presumiam estabilidade/alta ou carregavam hipótese/conduta pelo roteiro foram classificados como `DO NOT RECOVER`.
+
+### 7.3 Entrada por voz
 
 A arqueologia até aqui não localizou implementação verificável que justifique transplante. Memória de produto ou referência indireta não será tratada como código existente.
 
@@ -212,17 +271,17 @@ A arqueologia até aqui não localizou implementação verificável que justifiq
 - [ ] avaliar suporte offline/nos navegadores-alvo somente se a implementação ou requisito verificável for localizado;
 - [ ] recuperar apenas se reduzir interação sem criar dependência frágil.
 
-### 7.3 Métricas e feedback operacional
+### 7.4 Métricas e feedback operacional
 
-A arqueologia separou três linhagens:
+A arqueologia separou:
 
 - protótipo de `develop` com valores hardcoded de produtividade/volume;
-- predecessor HMS com feedback calculado do atendimento corrente (`mCrit`, `mAudit`, `mDestino`);
+- referências históricas de feedback operacional do predecessor, ainda sem motor longitudinal reconciliado;
 - gráfico longitudinal/mensal referido pela Founder, ainda sem implementação localizada.
 
 Detalhes: [`docs/audits/METRICS_ARCHAEOLOGY_2026-08-12.md`](docs/audits/METRICS_ARCHAEOLOGY_2026-08-12.md).
 
-`mDestino` não será transplantado: sugestão automática de destino exige metodologia e validação clínica próprias. `mCrit` e `mAudit` permanecem patrimônio a avaliar, não requisito atual.
+Nenhuma sugestão automática de destino será transplantada do legado: destino é decisão clínica e exige estado/semântica explicitamente autorizados.
 
 ## 8 — Expansão clínica
 
