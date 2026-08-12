@@ -13,9 +13,9 @@ test('invalid or missing encounter timestamps are ignored', () => {
   assert.equal(normalizeEncounterRecord({ startedAt: 'not-a-date' }), null);
 });
 
-test('encounter adapter accepts only explicit record collections for shift productivity', () => {
+test('encounter adapter recognizes explicit collections and the current v3 active snapshot', () => {
   assert.deepEqual(extractEncounterRecords(null), []);
-  assert.deepEqual(extractEncounterRecords({ id: 'active', startedAt: '2026-08-11T18:00:00-03:00' }), []);
+  assert.deepEqual(extractEncounterRecords({ id: 'active', startedAt: '2026-08-11T18:00:00-03:00' }).map((item) => item.id), ['active']);
   assert.deepEqual(extractEncounterRecords([
     { id: 'a', startedAt: '2026-08-11T18:00:00-03:00' },
     { id: 'bad' }
@@ -23,9 +23,12 @@ test('encounter adapter accepts only explicit record collections for shift produ
   assert.deepEqual(extractEncounterRecords({ encounters: [
     { id: 'b', startedAt: '2026-08-11T19:00:00-03:00' }
   ] }).map((item) => item.id), ['b']);
+  assert.deepEqual(extractEncounterRecords({ activeEncounter: {
+    encounterId: 'c', startedAt: '2026-08-11T20:00:00-03:00'
+  }}).map((item) => item.id), ['c']);
 });
 
-test('one encounter without a measurable shift duration never fabricates a patients per hour value', () => {
+test('one encounter without an explicit live clock does not fabricate a patients per hour value', () => {
   const summary = summarizeProductivity([
     { id: 'a', startedAt: '2026-08-11T18:00:00-03:00' }
   ]);
@@ -34,15 +37,28 @@ test('one encounter without a measurable shift duration never fabricates a patie
   assert.equal(formatPatientsPerHour(summary), '--');
 });
 
-test('mixed completed and unfinished encounters do not fabricate an implicit shift end', () => {
+test('active encounter contributes to live productivity only when caller supplies now', () => {
   const summary = summarizeProductivity([
+    { id: 'a', startedAt: '2026-08-11T18:00:00-03:00' }
+  ], { now: '2026-08-11T18:30:00-03:00' });
+  assert.equal(summary.totalPatients, 1);
+  assert.equal(summary.durationHours, 0.5);
+  assert.equal(summary.rate, 2);
+  assert.equal(formatPatientsPerHour(summary), '2,0');
+});
+
+test('mixed completed and unfinished encounters require an explicit live clock for an implicit shift end', () => {
+  const records = [
     { id: 'a', startedAt: '2026-08-11T18:00:00-03:00', finishedAt: '2026-08-11T18:30:00-03:00' },
     { id: 'b', startedAt: '2026-08-11T19:00:00-03:00' }
-  ]);
-  assert.equal(summary.totalPatients, 2);
-  assert.equal(summary.durationHours, null);
-  assert.equal(summary.rate, null);
-  assert.equal(formatPatientsPerHour(summary), '--');
+  ];
+  const passive = summarizeProductivity(records);
+  assert.equal(passive.totalPatients, 2);
+  assert.equal(passive.durationHours, null);
+  assert.equal(passive.rate, null);
+  const live = summarizeProductivity(records, { now: '2026-08-11T20:00:00-03:00' });
+  assert.equal(live.durationHours, 2);
+  assert.equal(live.rate, 1);
 });
 
 test('completed encounters define a deterministic productivity window', () => {
