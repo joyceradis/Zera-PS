@@ -60,11 +60,12 @@ test('PWA app shell is closed over local ES module imports', async () => {
   assert.deepEqual(missingImports, []);
 });
 
-test('PWA caches cycle 2 interaction modules under a new cache generation', () => {
+test('PWA caches cycle 2 interaction modules and persistence IO under a new cache generation', () => {
   assert.match(serviceWorker, /\.\/src\/productivity\.js/);
   assert.match(serviceWorker, /\.\/src\/clinical-intake\.js/);
   assert.match(serviceWorker, /\.\/src\/text-formatters\.js/);
-  assert.match(serviceWorker, /const CACHE_NAME = 'zera-ps-v13'/);
+  assert.match(serviceWorker, /\.\/assets\/storage-io\.js/);
+  assert.match(serviceWorker, /const CACHE_NAME = 'zera-ps-v14'/);
 });
 
 test('PWA activation only prunes Zera PS caches and never foreign origin caches', () => {
