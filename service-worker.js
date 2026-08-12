@@ -1,4 +1,4 @@
-const CACHE_NAME = 'zera-ps-v8';
+const CACHE_NAME = 'zera-ps-v9';
 
 const APP_SHELL = [
   './',
@@ -18,6 +18,7 @@ const APP_SHELL = [
   './assets/logo.svg',
   './src/app.js',
   './src/temporal-ui.js',
+  './src/product-convergence.js',
   './src/context-coordination.js',
   './src/justification-engine.js',
   './src/hda-composer.js',
