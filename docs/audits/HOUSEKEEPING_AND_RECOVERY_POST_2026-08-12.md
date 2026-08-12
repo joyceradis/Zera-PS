@@ -1,36 +1,15 @@
 # Zera PS — Housekeeping & Product Convergence — Auditoria pós
 
 Data: 2026-08-12
-Implementação auditada: `216b1fe4966a272630bf478422a7f807bcad7a6a`
+Implementação auditada: `216b1fe4966a272630bf478422a7f807bcad7a6a`, com regra clínica incremental do diferencial leucocitário adicionada posteriormente na mesma PR
 PR: #30 — `chore: housekeeping and product convergence`
-Status: **AUTOMATED GATES GREEN NO HEAD AUDITADO / REGRESSÃO MANUAL DE UI E PWA PENDENTE**
+Status: **AUTOMATED GATES GREEN NO MARCO AUDITADO / REGRESSÃO MANUAL DE UI E PWA PENDENTE**
 
 ## 1. Escopo verificado
 
-A PR modifica 16 arquivos de produto, documentação, PWA e testes. Não há deleção de engine clínico, schema temporal, storage ou template nesta convergência.
+A PR modifica produto, documentação, PWA e testes. Não há deleção de engine clínico, schema temporal, storage ou template nesta convergência.
 
-Arquivos alterados no marco auditado:
-
-```text
-ROADMAP.md
-assets/document-engine.js
-docs/README.md
-docs/audits/DOCUMENT_CLASSIFICATION_2026-08-12.md
-docs/audits/HOUSEKEEPING_AND_RECOVERY_2026-08-11.md
-docs/audits/METRICS_ARCHAEOLOGY_2026-08-12.md
-docs/product/PRODUCT_MAP.md
-service-worker.js
-src/app.js
-src/lab-parser.js
-src/product-convergence.js
-tests/document-engine.test.mjs
-tests/exam-output-convergence.test.mjs
-tests/justification-engine.test.mjs
-tests/lab-parser.test.mjs
-tests/product-convergence.test.mjs
-```
-
-## 2. Evidência automatizada fresca
+## 2. Evidência automatizada do marco anterior
 
 Workflow canônico: `.github/workflows/checks.yml`
 Run PR: `31553910631`
@@ -69,7 +48,7 @@ conclusion: success
 
 ### Nota sobre “Code scanning AI findings”
 
-Em head anterior, o workflow experimental de revisão agentic falhou antes de produzir análise porque o próprio runtime solicitou um modelo não suportado (`CAPIError 400: The requested model is not supported`). Isso é falha de infraestrutura/configuração do agente GitHub, não finding de segurança do código. O CodeQL default, que é o scanner de segurança configurado para o repositório, permaneceu verde.
+Em head anterior, o workflow experimental de revisão agentic falhou antes de produzir análise porque o próprio runtime solicitou um modelo não suportado (`CAPIError 400: The requested model is not supported`). Isso é falha de infraestrutura/configuração do agente GitHub, não finding de segurança do código. O CodeQL default permaneceu verde no marco auditado.
 
 ## 3. Arqueologia e patrimônio recuperado
 
@@ -93,19 +72,41 @@ texto bruto
 → renderer compacto autorizado
 ```
 
-O parser preserva explicitamente patrimônio adicional do predecessor — bastonetes, eosinófilos, basófilos, linfócitos, monócitos, BUN/NU, RFG, TGO, TGP, amilase e lipase — sem obrigar esses dados a aparecerem no documento atual.
+O parser preserva explicitamente bastonetes, eosinófilos, basófilos, linfócitos, monócitos, BUN/NU, RFG, TGO, TGP, amilase e lipase.
 
-Renderer compacto autorizado neste ciclo:
+### 3.3 Regra clínica autorizada do diferencial leucocitário
+
+Decisão de domínio da Founder em 2026-08-11: na linha compacta do hemograma, as frações do diferencial leucocitário só entram quando o percentual explicitamente informado está **acima do limite superior de referência adotado para esta regra de produto**.
+
+Limites e abreviações:
 
 ```text
-- LAB: HB: ... / HT: ... / LEUCO: ... (NEUT: ...%) / PLAQ: ... / PCR: ... / UR: ... / CR: ... / NA: ... / K: ...
+S   segmentados   > 70%
+B   bastões       > 5%
+L   linfócitos    > 45%
+M   monócitos     > 10%
+E   eosinófilos   > 5%
+Bas basófilos     > 1%
 ```
 
-O neutrófilo só aparece quando existe valor explícito. Nenhum predomínio é inferido.
+Exemplo autorizado:
+
+```text
+LEUCO: 23.400 (S 74% B 8%)
+```
+
+Regras de segurança:
+
+- valor ausente não é inferido;
+- valor igual ao limite superior não entra;
+- valor abaixo do limite superior não entra;
+- não inferir “desvio à esquerda”, “infecção aguda” ou qualquer interpretação clínica a partir do diferencial;
+- o renderer apenas seleciona e abrevia valores explicitamente presentes segundo a regra acima;
+- componentes adicionais continuam preservados na estrutura interna mesmo quando não aparecem na linha compacta.
 
 ## 4. Segurança clínico-documental verificada
 
-A suíte fresca contém regressões específicas para:
+A suíte contém regressões específicas para:
 
 - campo HPP vazio não virar `NEGA`;
 - template de exame físico não confirmado ser omitido;
@@ -117,14 +118,12 @@ A suíte fresca contém regressões específicas para:
 - parser laboratorial não fabricar diferencial ou analitos ausentes;
 - input laboratorial não reconhecido não criar linha `LAB`;
 - aliases compactos de prontuário serem reconhecidos;
-- patrimônio laboratorial adicional ser parseado sem ser forçado no renderer;
+- diferencial leucocitário ser apresentado apenas quando explicitamente elevado segundo a regra de domínio;
 - documento de Exames Complementares manter linha clínica compacta sem wrapper técnico redundante.
 
 ## 5. Segurança da interação recuperada
 
 O organizador laboratorial mantém o texto bruto apenas como snapshot transitório em `WeakMap`.
-
-Fluxo protegido:
 
 ```text
 texto colado
@@ -133,31 +132,11 @@ texto colado
 → opção de restaurar bruto
 ```
 
-Se a médica editar manualmente o resultado organizado, o snapshot é invalidado. Assim, uma restauração posterior não pode sobrescrever silenciosamente a edição clínica mais recente.
-
-O texto bruto não é guardado em `data-*` do DOM.
+Se a médica editar manualmente o resultado organizado, o snapshot é invalidado. O texto bruto não é guardado em `data-*` do DOM.
 
 ## 6. Convergência do produto
 
 A camada `src/product-convergence.js` não elimina engines existentes. Ela muda a apresentação da organização interna.
-
-Superfície anterior:
-
-```text
-Roteiros
-+
-Workflow contextual
-+
-Reavaliação
-+
-Internação
-+
-Alta
-+
-Scores
-```
-
-Superfície convergida:
 
 ```text
 ATENDIMENTO
@@ -169,54 +148,27 @@ ATENDIMENTO
 
 Reavaliação, internação, alta e scores deixam de competir como destinos primários da sidebar. As views existentes permanecem acessíveis internamente como camada transitória para preservar comportamento enquanto a equivalência de UX não for validada manualmente.
 
-### Limitação arquitetural consciente
-
-A convergência atual é incremental: algumas ações da superfície nova ainda acionam views antigas escondidas. Isso é dívida transitória deliberada, não arquitetura final.
-
-Remover as views antigas antes da validação manual aumentaria o risco de perder microfunções. A integração estrutural definitiva deve ocorrer em ciclo posterior, depois de equivalência demonstrada.
-
 ## 7. PWA / offline
 
-O service worker foi versionado para `zera-ps-v10` e o APP_SHELL inclui os novos módulos:
-
-```text
-./src/product-convergence.js
-./src/lab-parser.js
-```
-
-A suíte automatizada confirmou que os arquivos do app shell existem e que o fallback offline permanece limitado a navegação.
+O service worker foi versionado para `zera-ps-v10` e o APP_SHELL inclui `src/product-convergence.js` e `src/lab-parser.js`.
 
 A validação automatizada não substitui teste manual de instalação, atualização de cache e uso offline em navegador real.
 
 ## 8. Housekeeping documental e CI
 
-A documentação foi classificada em:
+A documentação foi classificada em `CANONICAL`, `AUDIT`, `LEGACY-REFERENCE`, `OBSOLETE` e `DUPLICATE`.
 
-```text
-CANONICAL
-AUDIT
-LEGACY-REFERENCE
-OBSOLETE
-DUPLICATE
-```
-
-Nenhum documento foi apagado apenas por parecer antigo. A árvore atual já separa norma vigente, evidência de auditoria e histórico de intenção.
-
-A limpeza de CI foi executada separadamente na PR #31 e já integrada à `main`: workflows irrelevantes/conflitantes foram removidos e o gate `checks.yml` foi preservado.
-
-Refs/branches históricas ainda podem permanecer como clutter remoto porque a ferramenta de manutenção usada neste ciclo não expõe exclusão segura de branch. `develop` deve permanecer até a mineração de patrimônio ser encerrada.
+Nenhum documento foi apagado apenas por parecer antigo. A limpeza de CI foi executada separadamente na PR #31 e já integrada à `main`.
 
 ## 9. Métricas — arqueologia pós
 
-Foram separadas três linhagens que não devem ser confundidas:
+Foram separadas três linhagens:
 
 1. `develop/prototype-novo-atendimento.html`: números hardcoded de produtividade/volume;
 2. predecessor HMS PR #1: feedback do atendimento corrente (`mCrit`, `mAudit`, `mDestino`);
 3. gráfico longitudinal/mensal referido pela Founder: implementação ainda não localizada.
 
-O `mDestino` antigo não será transplantado, pois sugestão automática de destino exige metodologia e validação clínica próprias.
-
-`mCrit` e `mAudit` são patrimônio a avaliar, não requisito deste ciclo.
+O `mDestino` antigo não será transplantado sem metodologia e validação clínica próprias. `mCrit` e `mAudit` são patrimônio a avaliar, não requisito deste ciclo.
 
 ## 10. Pendências reais antes de homologação clínica da UX
 
@@ -235,26 +187,20 @@ Ainda necessária:
 - PWA instalada/offline;
 - atualização do cache v9 → v10.
 
-### 10.2 Regra de apresentação do diferencial leucocitário
-
-A estrutura interna já preserva componentes explícitos adicionais. Falta decisão clínica de domínio para definir **quando**, além de neutrófilos, bastonetes/eosinófilos/basófilos/linfócitos/monócitos merecem entrar na linha compacta do prontuário.
-
-Até essa decisão, a política segura é não exibi-los automaticamente.
-
-### 10.3 Gráfico mensal
+### 10.2 Gráfico mensal
 
 A origem da implementação longitudinal/mensal continua não resolvida. Ausência de localização não autoriza recriação por memória nem exclusão conceitual.
 
 ## 11. Gate desta auditoria
 
 ```text
-AUTOMATED CODE/TEST GATE     = PASS no head 216b1fe...
-DEFAULT CODEQL               = PASS no head 216b1fe...
+AUTOMATED CODE/TEST GATE     = PASS no marco auditado; revalidar no head final
+DEFAULT CODEQL               = PASS no marco auditado; revalidar no head final
 CLINICAL FABRICATION GATE    = regressões automatizadas preservadas
-PWA STATIC APP-SHELL GATE    = PASS automatizado
+WBC DISPLAY RULE             = DOMAIN DECISION RESOLVED / IMPLEMENTED
+PWA STATIC APP-SHELL GATE    = PASS automatizado no marco auditado
 MANUAL CLINICAL UX GATE      = PENDING
 MONTHLY METRICS ARCHAEOLOGY  = UNRESOLVED
-EXTRA WBC DISPLAY RULE       = DOMAIN DECISION PENDING
 ```
 
-Conclusão técnica: o ciclo alcançou um ponto seguro para **congelar novas mudanças funcionais e passar à validação manual da experiência**, mas ainda não é correto declarar a UX homologada ou apagar as implementações transitórias preservadas.
+Conclusão técnica: a decisão do diferencial leucocitário deixou de ser pendência de domínio e passou a contrato explícito de renderer. A homologação clínica da UX e a arqueologia do gráfico longitudinal continuam abertas.
