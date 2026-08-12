@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile, access } from 'node:fs/promises';
+import path from 'node:path';
 
 const appHtml = await readFile('app.html', 'utf8');
 const legacyApp = await readFile('assets/app.js', 'utf8');
@@ -8,6 +9,10 @@ const temporalUi = await readFile('src/temporal-ui.js', 'utf8');
 const rootApp = await readFile('app.js', 'utf8');
 const serviceWorker = await readFile('service-worker.js', 'utf8');
 const DYNAMIC_IDS = new Set(['zera-temporal-styles']);
+
+function appShellEntries() {
+  return [...serviceWorker.matchAll(/'\.\/(.*?)'/g)].map((match) => match[1]).filter(Boolean);
+}
 
 test('application loads the root coordinator as an ES module', () => {
   assert.match(appHtml, /<script\s+type="module"\s+src="app\.js"><\/script>/);
@@ -29,13 +34,30 @@ test('declared dynamic ids are actually created by application code', () => {
 });
 
 test('PWA app shell contains only existing local files', async () => {
-  const entries = [...serviceWorker.matchAll(/'\.\/(.*?)'/g)].map((match) => match[1]).filter(Boolean);
-  const uniqueEntries = [...new Set(entries)];
+  const uniqueEntries = [...new Set(appShellEntries())];
   const missing = [];
   for (const entry of uniqueEntries) {
     try { await access(entry); } catch { missing.push(entry); }
   }
   assert.deepEqual(missing, []);
+});
+
+test('PWA app shell is closed over local ES module imports', async () => {
+  const shell = new Set(appShellEntries());
+  const missingImports = [];
+
+  for (const entry of shell) {
+    if (!entry.endsWith('.js')) continue;
+    const source = await readFile(entry, 'utf8');
+    const imports = [...source.matchAll(/(?:from\s+|import\s*\()(['"])(\.\.?\/[^'"]+)\1/g)].map((match) => match[2]);
+
+    for (const specifier of imports) {
+      const resolved = path.posix.normalize(path.posix.join(path.posix.dirname(entry), specifier));
+      if (!shell.has(resolved)) missingImports.push(`${entry} -> ${resolved}`);
+    }
+  }
+
+  assert.deepEqual(missingImports, []);
 });
 
 test('PWA caches cycle 2 interaction modules under a new cache generation', () => {
