@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { ENCOUNTER_ACTION_VIEWS } from '../src/product-convergence.js';
+import { ENCOUNTER_ACTION_VIEWS, PRIMARY_DESTINATIONS } from '../src/product-convergence.js';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
@@ -12,16 +12,35 @@ test('product convergence module remains importable without a browser DOM', () =
   );
 });
 
+test('definitive primary navigation exposes only Atendimento, Rascunhos and Resumo do Plantão', () => {
+  assert.deepEqual(
+    PRIMARY_DESTINATIONS.map(({ id, label }) => [id, label]),
+    [
+      ['evolucao', 'Atendimento'],
+      ['rascunhos', 'Rascunhos'],
+      ['plantao', 'Resumo do Plantão']
+    ]
+  );
+});
+
 test('product convergence is loaded after the existing application engines', async () => {
   const entry = await read('src/app.js');
   assert.match(entry, /import '\.\/product-convergence\.js';/);
   assert.ok(entry.indexOf("./product-convergence.js") > entry.indexOf("./temporal-ui.js"));
 });
 
-test('convergence layer preserves existing views while presenting them as encounter actions', async () => {
+test('continuation actions are housed inside Atendimento instead of routing through hidden legacy navigation', async () => {
+  const source = await read('src/product-convergence.js');
+  assert.match(source, /openEncounterPanel/);
+  assert.match(source, /encounter-continuation-workspace/);
+  assert.doesNotMatch(source, /function selectView\(/);
+  assert.doesNotMatch(source, /nav\.click\(\)/);
+});
+
+test('convergence layer preserves continuation controls while presenting them as encounter actions', async () => {
   const source = await read('src/product-convergence.js');
   for (const view of ['reavaliacao', 'internacao', 'alta', 'scores']) {
-    assert.match(source, new RegExp(`data-view=["']${view}["']|${view}`));
+    assert.match(source, new RegExp(`view-${view}|${view}`));
   }
   assert.match(source, /AÇÕES DO ATENDIMENTO/i);
   assert.match(source, /CONTEXTO CLÍNICO/i);
@@ -52,6 +71,21 @@ test('laboratory restore state is isolated from DOM attributes and invalidated a
   assert.match(source, /new WeakMap\(\)/);
   assert.match(source, /labSnapshots\.delete\(input\)/);
   assert.doesNotMatch(source, /dataset\.rawLaboratory/);
+});
+
+test('definitive shell reserves a Resumo do Plantão productivity component', async () => {
+  const source = await read('src/product-convergence.js');
+  for (const id of ['patients-per-hour', 'total-patients', 'zera-productivity-range', 'end-shift-button']) {
+    assert.match(source, new RegExp(id));
+  }
+  assert.match(source, /createProductivityPanel/);
+});
+
+test('mobile document switch changes presentation only and keeps the same editable output node', async () => {
+  const source = await read('src/product-convergence.js');
+  assert.match(source, /createMobileDocumentSwitcher/);
+  assert.match(source, /evolution-output/);
+  assert.match(source, /data-mobile-surface|mobile-surface/);
 });
 
 test('current clinical document fields and safety microfunctions remain present in app html', async () => {
