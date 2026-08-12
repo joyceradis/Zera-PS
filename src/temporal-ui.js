@@ -332,7 +332,7 @@ function handleStartReassessment() {
   persistEncounter();
   renderStage();
   renderProtocolVisibility();
-  document.querySelector('.nav-button[data-view="reavaliacao"]')?.click();
+  document.dispatchEvent(new CustomEvent('zera:reassessment-started'));
 }
 
 function splitLines(value) {
