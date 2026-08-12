@@ -59,7 +59,8 @@ O badge técnico não deve obrigar a médica a compreender nomes internos de eng
 - transforma o topo em `CONTEXTO CLÍNICO`;
 - adiciona contextos temporais registrados ao mesmo grid de entrada;
 - move `workflow-context` para workspace contextual;
-- oculta o card técnico `WORKFLOW CONTEXTUAL`.
+- oculta o card técnico `WORKFLOW CONTEXTUAL`;
+- oculta o launcher legado `reassess-encounter`, evitando duas ações visíveis de reavaliação para o mesmo Atendimento.
 
 Classificação: `MERGE IN PROGRESS`.
 
@@ -226,7 +227,7 @@ A camada runtime cria:
 - `Alta`;
 - `Scores / calculadoras`.
 
-Hoje os botões ainda abrem as views antigas ocultas.
+Hoje os botões ainda abrem as views antigas ocultas. O botão de reavaliação que existia dentro do card técnico de workflow permanece no HTML apenas como implementação legada e é ocultado pela convergência, para que a médica veja uma única ação de reavaliação.
 
 Classificação: `TRANSITIONAL ADAPTER`.
 
@@ -333,14 +334,15 @@ P0:
 5. colar laboratório → organizar → editar → confirmar que restauração antiga é invalidada;
 6. gerar/copiar evolução;
 7. salvar/reabrir rascunho;
-8. reavaliar mesmo Atendimento;
-9. gerar/copiar reavaliação;
-10. gerar alta/internação sem apagar admissão;
-11. score incompleto não calcular;
-12. score calculável não entrar no documento sem aplicação;
-13. reload/autosave;
-14. PWA offline/cache update;
-15. viewport móvel e navegação lateral.
+8. confirmar que existe apenas uma ação visível `Reavaliar atendimento` na superfície convergida;
+9. reavaliar mesmo Atendimento;
+10. gerar/copiar reavaliação;
+11. gerar alta/internação sem apagar admissão;
+12. score incompleto não calcular;
+13. score calculável não entrar no documento sem aplicação;
+14. reload/autosave;
+15. PWA offline/cache update;
+16. viewport móvel e navegação lateral.
 
 ## 17. Conclusão
 
