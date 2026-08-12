@@ -116,7 +116,7 @@ A interface pode usar cards, atalhos e campos condicionais, mas o médico deve c
 
 A HDA é uma única entidade editável com três formas possíveis de entrada:
 
-1. **modelo rápido** — texto clínico semipronta para editar;
+1. **modelo rápido** — HDA semipronta para editar;
 2. **construção assistida** — poucos controles de alto rendimento modificam o texto;
 3. **texto livre** — a médica escreve diretamente quando isso for mais rápido.
 
@@ -154,10 +154,10 @@ COLAR LABORATÓRIO BRUTO
 Contrato-alvo:
 
 ```text
-- LAB: HB: ... / HT: ... / LEUCO: ... (NEUT: ...%) / PLAQ: ... / PCR: ... / UR: ... / CR: ... / NA: ... / K: ...
+- LAB: HB: ... / HT: ... / LEUCO: ... (S 74% B 8% ...) / PLAQ: ... / PCR: ... / UR: ... / CR: ... / NA: ... / K: ...
 ```
 
-Somente analitos encontrados podem ser emitidos. O parser não interpreta ausência como normalidade e não cria predominância diferencial sem dado de origem.
+Somente analitos encontrados podem ser emitidos. Para o diferencial leucocitário, somente frações explicitamente informadas e acima do limite superior adotado são exibidas, em ordem `S`, `B`, `L`, `M`, `E`, `Bas`. O parser não interpreta ausência como normalidade e não conclui infecção, desvio à esquerda ou diagnóstico.
 
 ### Justificativas
 
