@@ -35,6 +35,12 @@ test('workflow/protocol infrastructure remains internal and the duplicate workfl
   assert.match(source, /hidden\s*=\s*true|setAttribute\(['"]hidden/);
 });
 
+test('legacy reassessment launcher is hidden when reassessment is exposed as an encounter action', async () => {
+  const source = await read('src/product-convergence.js');
+  assert.match(source, /getElementById\(['"]reassess-encounter['"]\)/);
+  assert.match(source, /reassess[^\n]*hidden\s*=\s*true|legacyReassess[^\n]*hidden\s*=\s*true/i);
+});
+
 test('convergence DOM is built with text nodes instead of injecting protocol or action labels as HTML', async () => {
   const source = await read('src/product-convergence.js');
   assert.doesNotMatch(source, /innerHTML\s*=/);
