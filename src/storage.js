@@ -1,11 +1,17 @@
 export * from '../assets/storage.js';
-import { readStorageItem, writeStorageItem, removeStorageItem, parseStoredJson } from '../assets/storage-io.js';
+import {
+  getDefaultStorageAdapter,
+  readStorageItem,
+  writeStorageItem,
+  removeStorageItem,
+  parseStoredJson
+} from '../assets/storage-io.js';
 
 const TEMPORAL_STORAGE_KEYS = Object.freeze({
   activeEncounter: 'zera-ps:encounter:v3'
 });
 
-function createEncounterStorage(adapter = globalThis.localStorage) {
+function createEncounterStorage(adapter = getDefaultStorageAdapter()) {
   return {
     loadActiveEncounter() {
       return parseStoredJson(
