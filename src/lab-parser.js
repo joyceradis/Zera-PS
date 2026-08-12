@@ -19,21 +19,36 @@ function pick(source, patterns) {
   return '';
 }
 
+function numericResult(label) {
+  return new RegExp(`${label}\\s*(?:RESULTADO\\s*)?[:=-]?\\s*([0-9][0-9.,]*)`, 'i');
+}
+
 function parseLaboratoryText(raw = '') {
   const source = normalizeSource(raw);
   if (!source) return {};
 
   const parsed = {
-    hb: pick(source, [/(?:HEMOGLOBINA|\bHB\b)\s*(?:RESULTADO\s*)?[:=-]?\s*([0-9][0-9.,]*)/i]),
-    ht: pick(source, [/(?:HEMAT[ÓO]CRITO|\bHT\b)\s*(?:RESULTADO\s*)?[:=-]?\s*([0-9][0-9.,]*)/i]),
-    leuco: pick(source, [/(?:LEUC[ÓO]CITOS|LEUCOCITOS|\bLEUCO\b)\s*(?:RESULTADO\s*)?[:=-]?\s*([0-9][0-9.,]*)/i]),
-    neut: pick(source, [/(?:NEUTR[ÓO]FILOS|NEUTROFILOS|SEGMENTADOS|\bSEG\b)\s*(?:RESULTADO\s*)?[:=-]?\s*([0-9][0-9.,]*)/i]),
-    plaq: pick(source, [/(?:CONTAGEM DE PLAQUETAS|PLAQUETAS|\bPLAQ\b)\s*(?:RESULTADO\s*)?[:=-]?\s*([0-9][0-9.,]*)/i]),
-    pcr: pick(source, [/(?:PROTE[IÍ]NA\s+["']?C["']?\s+REATIVA|\bPCR\b)\s*(?:RESULTADO\s*)?[:=-]?\s*([0-9][0-9.,]*)/i]),
-    ur: pick(source, [/(?:\bUREIA\b|\bUR\b)\s*(?:RESULTADO\s*)?[:=-]?\s*([0-9][0-9.,]*)/i]),
-    cr: pick(source, [/(?:\bCREATININA\b|\bCR\b)\s*(?:RESULTADO\s*)?[:=-]?\s*([0-9][0-9.,]*)/i]),
-    na: pick(source, [/(?:\bS[ÓO]DIO\b)\s*(?:RESULTADO\s*)?[:=-]?\s*([0-9][0-9.,]*)/i]),
-    k: pick(source, [/(?:\bPOT[ÁA]SSIO\b)\s*(?:RESULTADO\s*)?[:=-]?\s*([0-9][0-9.,]*)/i])
+    hb: pick(source, [numericResult('(?:HEMOGLOBINA|\\bHB\\b)')]),
+    ht: pick(source, [numericResult('(?:HEMAT[ÓO]CRITO|\\bHT\\b)')]),
+    leuco: pick(source, [numericResult('(?:LEUC[ÓO]CITOS|LEUCOCITOS|\\bLEUCO\\b)')]),
+    neut: pick(source, [numericResult('(?:NEUTR[ÓO]FILOS|NEUTROFILOS|SEGMENTADOS|\\bSEG\\b)')]),
+    bast: pick(source, [numericResult('(?:BASTONETES|\\bBAST\\b)')]),
+    eos: pick(source, [numericResult('(?:EOSIN[ÓO]FILOS|EOSINOFILOS|\\bEOS\\b)')]),
+    baso: pick(source, [numericResult('(?:BAS[ÓO]FILOS|BASOFILOS|\\bBASO\\b)')]),
+    linf: pick(source, [numericResult('(?:LINF[ÓO]CITOS(?:\\s+T[IÍ]PICOS)?|LINFOCITOS(?:\\s+TIPICOS)?|\\bLINF\\b)')]),
+    mono: pick(source, [numericResult('(?:MON[ÓO]CITOS|MONOCITOS|\\bMONO\\b)')]),
+    plaq: pick(source, [numericResult('(?:CONTAGEM DE PLAQUETAS|PLAQUETAS|\\bPLAQ\\b)')]),
+    pcr: pick(source, [numericResult('(?:PROTE[IÍ]NA\\s+["\']?C["\']?\\s+REATIVA|\\bPCR\\b)')]),
+    ur: pick(source, [numericResult('(?:\\bUREIA\\b|\\bUR\\b)')]),
+    bun: pick(source, [numericResult('(?:NITROG[EÊ]NIO UREICO|NITROGENIO UREICO|\\bBUN\\b|\\bNU\\b)')]),
+    cr: pick(source, [numericResult('(?:\\bCREATININA\\b|\\bCR\\b)')]),
+    rfg: pick(source, [/(?:TAXA (?:DE )?FILTRA[ÇC][ÃA]O GLOMERULAR|\bRFG\b)\s*(?:RESULTADO\s*)?[:=-]?\s*(SUPERIOR A\s+[0-9][0-9.,]*|[0-9][0-9.,]*)/i]),
+    na: pick(source, [numericResult('(?:\\bS[ÓO]DIO\\b|\\bNA\\b)')]),
+    k: pick(source, [numericResult('(?:\\bPOT[ÁA]SSIO\\b|\\bK\\b)')]),
+    tgo: pick(source, [numericResult('(?:TRANSAMINASE GLUT[AÂ]MICO OXALAC[EÉ]TICA|ASPARTATO AMINOTRANSFERASE|\\bTGO\\b|\\bAST\\b)')]),
+    tgp: pick(source, [numericResult('(?:TRANSAMINASE GLUT[AÂ]MICO PIR[ÚU]VICA|ALANINA AMINOTRANSFERASE|\\bTGP\\b|\\bALT\\b)')]),
+    amilase: pick(source, [numericResult('(?:AMILASE S[ÉE]RICA|\\bAMILASE\\b)')]),
+    lipase: pick(source, [numericResult('(?:\\bLIPASE\\b)')])
   };
 
   return Object.fromEntries(Object.entries(parsed).filter(([, value]) => value));
