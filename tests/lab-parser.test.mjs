@@ -54,6 +54,26 @@ test('recovers laboratory values from noisy pasted output', () => {
   });
 });
 
+test('accepts the compact aliases already used in PS documentation', () => {
+  const parsed = parseLaboratoryText('HB 11,5 / HT 34 / LEUCO 9000 / SEG 82 / PLAQ 200000 / PCR 14 / UR 35 / CR 1,2 / NA 140 / K 4,0');
+  assert.deepEqual(parsed, {
+    hb: '11,5',
+    ht: '34',
+    leuco: '9000',
+    neut: '82',
+    plaq: '200000',
+    pcr: '14',
+    ur: '35',
+    cr: '1,2',
+    na: '140',
+    k: '4,0'
+  });
+  assert.equal(
+    renderCompactLabLine(parsed),
+    '- LAB: HB: 11,5 / HT: 34 / LEUCO: 9.000 (NEUT: 82%) / PLAQ: 200.000 / PCR: 14 / UR: 35 / CR: 1,2 / NA: 140 / K: 4,0'
+  );
+});
+
 test('preserves additional explicit analytes recovered from the predecessor without forcing them into the compact renderer', () => {
   const parsed = parseLaboratoryText(LEGACY_HERITAGE);
   assert.deepEqual(parsed, {
