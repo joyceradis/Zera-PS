@@ -29,9 +29,21 @@ test('product convergence is loaded after the existing application engines', asy
   assert.ok(entry.indexOf("./product-convergence.js") > entry.indexOf("./temporal-ui.js"));
 });
 
+test('DOM composition waits for the base UI render instead of racing template initialization', async () => {
+  const source = await read('src/product-convergence.js');
+  assert.match(source, /document\.addEventListener\(['"]DOMContentLoaded['"],\s*initProductConvergence/);
+  assert.doesNotMatch(source, /typeof document !== ['"]undefined['"]\)\s*initProductConvergence\(\)/);
+});
+
 test('productivity navigation remains compatible with the legacy generic nav listener', async () => {
   const source = await read('src/product-convergence.js');
   assert.match(source, /shiftButton\.dataset\.view\s*=\s*['"]plantao['"]/);
+});
+
+test('primary destination changes close the mobile sidebar just like the base navigation', async () => {
+  const source = await read('src/product-convergence.js');
+  assert.match(source, /getElementById\(['"]sidebar['"]\).*classList\.remove\(['"]open['"]\)/s);
+  assert.match(source, /getElementById\(['"]sidebar-overlay['"]\).*classList\.remove\(['"]open['"]\)/s);
 });
 
 test('continuation actions are housed inside Atendimento instead of routing through hidden legacy navigation', async () => {
