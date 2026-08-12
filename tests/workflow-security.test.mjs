@@ -27,7 +27,8 @@ test('preview checkout does not persist GitHub credentials into the worktree', (
 
 test('preview tunnel binary is version-pinned and checksum-verified', () => {
   assert.doesNotMatch(preview, /releases\/latest\/download/);
-  assert.match(preview, /releases\/download\/2026\.7\.3\/cloudflared-linux-amd64\.deb/);
+  assert.match(preview, /CLOUDFLARED_VERSION:\s*['"]2026\.7\.3['"]/);
+  assert.match(preview, /releases\/download\/\$\{CLOUDFLARED_VERSION\}\/cloudflared-linux-amd64\.deb/);
   assert.match(preview, /049777d30f9bf93da6df8bbe31383460eb2aa51a832c6551824d56f9fcc55974/);
   assert.match(preview, /sha256sum\s+-c/);
 });
