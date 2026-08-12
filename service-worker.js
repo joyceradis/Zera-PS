@@ -1,4 +1,5 @@
-const CACHE_NAME = 'zera-ps-v12';
+const CACHE_PREFIX = 'zera-ps-';
+const CACHE_NAME = 'zera-ps-v13';
 
 const APP_SHELL = [
   './',
@@ -50,7 +51,11 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))))
+      .then((keys) => Promise.all(
+        keys
+          .filter((key) => key.startsWith(CACHE_PREFIX) && key !== CACHE_NAME)
+          .map((key) => caches.delete(key))
+      ))
       .then(() => self.clients.claim())
   );
 });
