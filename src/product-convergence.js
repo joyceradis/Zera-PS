@@ -102,6 +102,7 @@ function createPrimaryNavigation() {
     shiftButton = createTextNodeElement('button', 'nav-button', 'Resumo do Plantão');
     shiftButton.type = 'button';
     shiftButton.dataset.primaryDestination = 'plantao';
+    shiftButton.dataset.view = 'plantao';
     nav.appendChild(shiftButton);
   }
 
