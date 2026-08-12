@@ -1,70 +1,192 @@
-# Mineração de patrimônio legado — v0.2 / predecessores
+# Mineração de patrimônio legado — v0.2 / `develop`
 
 Data: 2026-08-12
 
+Status: **patrimônio catalogado; `develop` preservada apenas como mina temporária; nenhum transplante cego autorizado.**
+
 ## Objetivo
 
-Extrair capacidades úteis de `develop` e predecessores sem reintroduzir premissas clínicas inseguras nem voltar a uma arquitetura antiga.
+Extrair capacidades úteis de `develop` e predecessores sem reintroduzir premissas clínicas inseguras, arquitetura monolítica ou atrito de UI já superado.
 
-## Fonte principal — `develop/SPEC_NOVO_ATENDIMENTO_V0.2.md`
+A regra é:
 
-A v0.2 já continha princípios que continuam válidos e hoje estão reincorporados no mapa canônico:
+```text
+comportamento útil
+→ classificar
+→ verificar se já existe na arquitetura atual
+→ RECOVER / REFINE somente se ainda faltar
+→ implementar pelo contrato atual
 
-- Atendimento como entidade central;
-- texto clínico editável;
-- evitar questionário infinito;
-- dado informado uma vez deve ser reutilizado;
-- ferramentas contextuais;
-- progressive disclosure;
-- laboratório colado dentro de Exames Complementares;
-- score usa dados já informados;
-- reavaliação/desfecho pertencem ao mesmo Atendimento.
+código legado
+→ nunca copiar em bloco
+```
 
-Classificação: `MINE / CONCEPT ALREADY RECONCILED`.
+A superfície clínica da PR #30 permanece congelada enquanto a Founder executa a homologação do Ciclo 2.
+
+## Fontes verificadas
+
+- `develop/SPEC_NOVO_ATENDIMENTO_V0.2.md`;
+- `develop/ROADMAP_V0.2.md`;
+- `develop/assets/attendance.js`;
+- `develop/prototype-novo-atendimento.html`;
+- assets históricos relacionados a templates/scores.
+
+## Achado estrutural principal
+
+A `develop` não é uma segunda linha moderna do produto. É um protótipo operacional anterior com ideias válidas de pronto-socorro, porém apoiadas em storage v2, `window.ZERA_ATTENDANCE` e UI monolítica.
+
+O patrimônio relevante é **comportamental**, não estrutural.
+
+## Matriz consolidada de patrimônio
+
+| Capacidade antiga | Classificação | Decisão |
+| --- | --- | --- |
+| múltiplos atendimentos locais | **RECOVER** | reconstruir sobre Encounter v3 após homologação do núcleo |
+| retomar/trocar atendimento | **RECOVER** | preservar contexto sem reutilizar `attendance.js` diretamente |
+| status `em andamento / reavaliação pendente / finalizado` | **REFINE / RECOVER** | virar estado formal do Encounter atual |
+| desfecho `alta / internação / transferência` | **RECOVER** | integrar ao mesmo Atendimento |
+| número diário do atendimento | **HOLD / OPTIONAL** | potencialmente útil para orientação local; sem prioridade atual |
+| resumo de altas/reavaliações | **RECOVER LATER** | integrar ao Resumo do Plantão pelo storage canônico |
+| autosave `SALVANDO / AUTOSSALVO / NÃO SALVO` | **RECOVER** | importante para confiança; depende de contrato visual de erro |
+| evolução em construção no topo | **REFINE** | preservar visibilidade sem duplicar output |
+| formulário ↔ texto | **RECOVERED / REFINE** | conceito já reapareceu; manter um único documento canônico |
+| cards recolhíveis | **REFINE** | usar somente se reduzir densidade sem criar sequência rígida |
+| abrir qualquer seção sem perda | **KEEP AS CONTRACT** | requisito operacional válido |
+| QP por chips obrigatórios | **DO NOT RECOVER AS GATE** | intake atual começa por texto livre |
+| QP/termos acionando contexto | **RECOVERED / REFINE** | listener/gatilhos condicionais substituem seleção obrigatória |
+| segunda queixa independente | **HOLD / DOMAIN** | só implementar se houver ganho real no PS |
+| HDA semipronta por síndrome | **REFINE** | patrimônio conceitual; não reintroduzir lacunas rígidas |
+| sinais de alarme contextuais | **KEEP** | princípio central preservado |
+| HPP quick choices | **POTENTIAL UX MICROFUNCTION** | só se clique for mais barato que digitação e NEGA seguir explícito |
+| modelo de exame normal | **KEEP** | somente após ação médica explícita |
+| `HIPOHIDRATADO` | **DO NOT RECOVER** | substituído por graduação em cruzes definida pela Founder |
+| `COLAR LABORATÓRIO` | **RECOVERED** | parser bruto/compactador atual é o contrato vigente |
+| laudo de imagem colado | **RECOVERED / REFINE** | `Formatar Imagem`: UPPERCASE + parágrafo único |
+| score contextual | **RECOVERED** | `available ≠ applicable ≠ calculable ≠ applied` |
+| HEART contextual | **RECOVERED / GENERALIZED** | engine atual é mais geral que o protótipo |
+| sugestões de CID | **HOLD / DOMAIN** | exige confirmação, fonte/catalogação e validação de custo cognitivo |
+| condutas rápidas | **HOLD / DOMAIN** | não assumir que mais botões reduzem atrito |
+| reavaliação como pendência | **KEEP / RECOVER** | temporalidade existe; falta multi-Encounter/fila operacional |
+| justificativa reutilizando dados | **RECOVERED / REFINE** | PR #30 já gera texto contextual editável/copíavel |
+| impressão A4 | **FUTURE** | somente após estabilização documental |
+| drawer `Ferramentas / Histórico` | **DO NOT COPY** | não expor arquitetura interna como produto |
 
 ## `develop/assets/attendance.js`
 
 Capacidades verificadas:
 
-- persistência de uma lista de atendimentos;
-- atendimento atual por id;
-- numeração diária;
-- `em_andamento`, `reavaliacao_pendente`, `finalizado`;
-- desfechos `alta`, `internacao`, `transferencia`;
-- reavaliações filhas do mesmo atendimento;
-- metadados hospital/unidade/convênio/CID/alergias.
+```text
+list()
+create()
+save()
+start()
+get()
+current()
+setCurrent()
+clearCurrent()
+updateClinical()
+addReassessment()
+finish()
+```
 
-### Decisão
+O schema guardava:
 
-Não transplantar o módulo.
+- `startedAt`, `updatedAt`, `finishedAt`;
+- `status`;
+- `outcome`;
+- `clinical`;
+- `reassessments[]`;
+- `reports[]`;
+- hospital/unidade/convênio/CID/alergias;
+- lista de atendimentos e atendimento atual por id.
 
-Motivos:
-
-1. é schema v2 diferente do Encounter v3 vigente;
-2. grava `clinical` como snapshot amplo sem o mesmo contrato atual de proveniência/temporalidade;
-3. misturá-lo ao storage atual criaria três domínios locais concorrentes;
-4. Encounter v3 é mais maduro em pendências, resultados seriados, snapshots e ferramentas.
-
-### Patrimônio a recuperar futuramente por adaptação
+### Patrimônio a recuperar
 
 - lista de atendimentos locais;
-- `current encounter id`;
+- current encounter id;
 - retomar atendimento em andamento;
-- status operacional do atendimento;
+- status operacional;
 - finalização/desfecho sem apagar história;
-- eventualmente numeração local de atendimento, se houver valor de UX.
+- eventualmente numeração local, se houver valor de UX.
 
-Classificação: `RECOVER BY ADAPTATION`, não merge.
+### Implementação que não será recuperada
 
-Essa recuperação só deve ocorrer quando a UI canônica de Atendimento estiver homologada; caso contrário, multiplicar atendimentos persistidos apenas multiplica uma UX ainda transitória.
+O módulo antigo:
 
-## Cards progressivos da v0.2
+1. acessa `localStorage` diretamente;
+2. engole falhas de leitura/escrita e converte erro em fallback silencioso;
+3. usa schema v2 incompatível com Encounter v3;
+4. grava snapshot clínico amplo sem o contrato atual de estado/proveniência/temporalidade;
+5. duplicaria ownership de persistência.
 
-A especificação antiga propunha cards QP/HDA/HPP/exame/exames/hipóteses/conduta, com resumo quando fechados e liberdade para abrir qualquer seção.
+A reconstrução futura deve seguir:
 
-Classificação: `UX REFERENCE / REFINE LATER`.
+```text
+UI
+→ Encounter repository/store canônico
+→ storage.js
+→ storage-io.js
+→ Web Storage / IndexedDB
+```
 
-Não há decisão para copiar literalmente. O princípio útil é:
+Classificação do módulo: **RECOVER BY ADAPTATION, NEVER MERGE**.
+
+## Confiança do autosave
+
+O protótipo distinguia:
+
+```text
+SALVANDO
+AUTOSSALVO
+NÃO SALVO
+```
+
+Isso é patrimônio importante porque reduz incerteza operacional. A engenharia atual já diferencia ausência, corrupção, quota e falha de acesso; portanto o próximo passo correto é um **contrato explícito de persistência + estado visual de falha**, e não `try/catch` silencioso.
+
+Classificação: **RECOVER após gate de UI**.
+
+## Destino, pendências e Resumo do Plantão
+
+A especificação antiga acerta ao evitar taxonomia administrativa excessiva. Para o médico, os conceitos úteis são:
+
+```text
+ATENDIMENTO ATIVO
+REAVALIAÇÃO / PENDÊNCIA
+FINALIZADO
+
+DESFECHO
+ALTA
+INTERNAÇÃO
+TRANSFERÊNCIA
+```
+
+Espera de exame, resposta à medicação e parecer são eventos/pendências dentro do mesmo Atendimento.
+
+Esse patrimônio deverá alimentar futuramente:
+
+- lista de atendimentos ativos;
+- retomada;
+- fila de reavaliações;
+- desfecho;
+- Resumo do Plantão.
+
+## Evolução em construção
+
+O protótipo mantinha o documento em posição visual forte com `ATUALIZAR / EDITAR / COPIAR`.
+
+O patrimônio real não são esses botões específicos. É o princípio:
+
+> o médico deve conseguir ver rapidamente o documento que está sendo construído sem abandonar o atendimento.
+
+A implementação moderna deve manter **um único output canônico**, evitando documento duplicado entre formulário, preview e reavaliação.
+
+## Cards progressivos
+
+A v0.2 propunha cards QP/HDA/HPP/exame/exames/hipóteses/conduta, resumo fechado e liberdade para abrir qualquer seção.
+
+Classificação: **UX REFERENCE / REFINE LATER**.
+
+Princípio preservável:
 
 ```text
 reduzir densidade visual
@@ -72,19 +194,15 @@ sem criar sequência rígida
 sem exigir clique quando digitar é mais rápido
 ```
 
-## QP e atalhos de apresentação
+## QP e HDA
 
-A v0.2 listava queixas como dor abdominal, dor torácica, cefaleia, dispneia, síndrome diarreica, náuseas/vômitos, lombalgia, síndrome gripal, sintomas urinários, tontura/síncope, palpitações, odinofagia e otalgia.
+A antiga lista de QPs não vira catálogo obrigatório atual. O intake aprovado na PR #30 inicia por texto livre e revela contexto progressivamente.
 
-Classificação: `DOMAIN CANDIDATE / NOT AUTO-RECOVER`.
+A HDA semipronta continua sendo patrimônio conceitual quando realmente reduz trabalho, mas templates com lacunas rígidas ou seleção obrigatória não devem voltar.
 
-A lista antiga não vira automaticamente catálogo atual. Hoje `Contexto clínico` é a abstração de produto e novos contextos dependem de prioridade da Founder e especificação clínica própria.
+## Exame físico — conflito resolvido
 
-## Exame físico pré-preenchido — conflito resolvido
-
-A v0.2 dizia que o exame padrão deveria aparecer previamente preenchido.
-
-Esse comportamento foi **explicitamente substituído** pela fundação de segurança atual:
+A v0.2 propunha exame padrão previamente preenchido. O comportamento vigente é:
 
 ```text
 template disponível
@@ -93,13 +211,18 @@ template disponível
 → texto autorizado
 ```
 
-Portanto, qualquer parte do legado que trate exame normal como fato pré-confirmado está `OBSOLETE / DO NOT RECOVER`.
+Portanto:
 
-## Templates legados com hipótese e conduta automáticas — não recuperar
+- template normal disponível: **KEEP**;
+- template tratado como fato: **DO NOT RECOVER**;
+- `HIPOHIDRATADO`: **DO NOT RECOVER**;
+- graduação de desidratação em cruzes: contrato atual.
 
-`develop/assets/templates.js` continha roteiros que, além da QP/HDA, já carregavam `hipoteses` e `conduta` prontas. Exemplos históricos incluíam diagnóstico presumido de rinossinusite/PAC e frases como analgesia, hidratação, exames, antibioticoterapia ou observação.
+## Templates com hipótese/conduta automáticas
 
-Esse comportamento conflita com a arquitetura vigente:
+Templates históricos carregavam hipóteses e condutas prontas.
+
+Contrato atual:
 
 ```text
 contexto disponível
@@ -109,76 +232,85 @@ contexto disponível
 
 Decisão:
 
-- **HDA pronta/editável:** patrimônio útil, já reconciliado;
-- **hipótese automática:** `OBSOLETE / DO NOT RECOVER`;
-- **conduta automática por template:** `OBSOLETE / DO NOT RECOVER`;
-- frases históricas podem servir, no máximo, como referência de linguagem após decisão explícita da Founder — nunca como defaults clínicos.
+- HDA pronta/editável quando útil: patrimônio;
+- hipótese automática: **OBSOLETE**;
+- conduta automática: **OBSOLETE**.
 
-A remoção dessas automações não é perda funcional a recuperar; é correção de segurança e de responsabilidade clínica.
+## Scores legados
 
-## Scores legados — nenhuma calculadora escondida adicional encontrada em `develop`
+A `develop` contém apenas CRB-65, qSOFA, CURB-65 e Glasgow simplificado, todos já absorvidos. Não há Wells/PERC/SNNOOP10 escondidos nessa branch.
 
-`develop/assets/scores.js` contém apenas CRB-65, qSOFA, CURB-65 e Glasgow simplificado — todos já possuem equivalentes vigentes. Não foram encontrados Wells, PERC, SNNOOP10 ou outro catálogo oculto nessa branch.
+Classificação: **HERITAGE ALREADY ABSORBED**.
 
-Classificação: `HERITAGE ALREADY ABSORBED`.
+## Laboratório
 
-Isso não impede novos scores futuramente; apenas evita atribuir ao histórico uma implementação que não existia.
+A v0.2 já previa `COLAR LABORATÓRIO` e saída compacta; o predecessor HMS continha parser real.
 
-## HPP quick choices
+Essa linhagem já foi recuperada no módulo atual. O contrato vigente é o da Founder, inclusive diferencial leucocitário condicional.
 
-A v0.2 propunha opções rápidas para comorbidades, MUC, alergias, hábitos e cirurgias.
-
-Classificação: `POTENTIAL UX MICROFUNCTION`.
-
-Pode reduzir digitação, mas exige desenho que preserve:
-
-- NEGA explícito;
-- edição livre;
-- não transformar opção disponível em fato;
-- custo de clique menor que digitação.
-
-Não é prioridade técnica deste housekeeping.
-
-## Laboratório — patrimônio recuperado
-
-A v0.2 já especificava `COLAR LABORATÓRIO` e saída compacta. O predecessor HMS continha parser real de texto bruto.
-
-Essa linhagem foi reconciliada no módulo atual `src/lab-parser.js`.
-
-Classificação: `RECOVERED`.
-
-O contrato vigente é o da Founder, não o texto literal da v0.2.
+Classificação: **RECOVERED**.
 
 ## CID
 
-A v0.2 previa sugestões múltiplas de CID e confirmação médica antes de inserir.
+Sugestões múltiplas com confirmação explícita são uma possibilidade futura, não patrimônio a reativar automaticamente.
 
-Classificação: `DOMAIN/PRODUCT REVIEW BEFORE RECOVER`.
-
-Motivos para não recuperar automaticamente:
-
-- sugestão de CID já se aproxima de apoio à decisão semântica;
-- precisa de fonte/catalogação e tratamento de versões;
-- pode aumentar cliques se a QP/HD livre for mais rápida;
-- qualquer reutilização em métricas futuras depende de modelo de dados estável.
+Classificação: **DOMAIN / PRODUCT REVIEW BEFORE RECOVER**.
 
 ## Métricas
 
-A v0.2 mencionava que CID poderia alimentar métricas e o protótipo exibia números operacionais. O protótipo encontrado usa valores hardcoded e não prova motor longitudinal.
+Os números operacionais encontrados no protótipo eram hardcoded e não comprovam um motor longitudinal. O painel `Resumo do Plantão` atual é implementação nova baseada no Encounter atual.
 
-Classificação: `UNRESOLVED / DO NOT RECREATE FROM SPEC`.
+Classificação do suposto gráfico histórico: **UNRESOLVED / DO NOT RECREATE FROM SPEC**.
 
-## Conclusão de mineração
+## Regras antigas bloqueadas
 
-O maior patrimônio de `develop` não é código pronto. É confirmação histórica de decisões de produto que agora reaparecem de forma mais segura:
+Não podem voltar por arqueologia:
+
+- QP obrigatoriamente escolhida por botão antes de começar;
+- `HIPOHIDRATADO`;
+- exame normal como fato não confirmado;
+- fallback silencioso de storage;
+- vazio → `NEGA`;
+- hipótese/conduta injetadas por template;
+- navegação `Ferramentas / Histórico` apenas porque existia no protótipo;
+- módulo monolítico `window.ZERA_ATTENDANCE`.
+
+## Gate para apagar `develop`
+
+`develop` só poderá ser removida quando:
+
+- multi-Encounter/retomada estiver especificado no modelo atual ou arquivado como requisito canônico;
+- status/desfecho estiver mapeado no Encounter atual;
+- contrato de autosave/erro de persistência estiver documentado canonicamente;
+- nenhum comportamento exclusivo restante depender do protótipo para ser lembrado.
+
+Até lá:
 
 ```text
-Atendimento único
+develop
+→ MINE
+→ NÃO MERGEAR
+→ NÃO USAR COMO BASE
+→ NÃO APAGAR AINDA
+```
+
+## Conclusão
+
+O maior patrimônio da `develop` não é código pronto. É a confirmação histórica de decisões de produto úteis, agora implementáveis com arquitetura mais segura:
+
+```text
+Atendimento central
 + documentação como eixo
 + ferramentas no contexto
 + reutilização de dados
 + temporalidade
 + liberdade de texto
++ multi-Encounter futuro
++ confiança operacional de salvamento
 ```
 
-A única macrofunção estrutural claramente ausente da `main` e ainda valiosa é **persistência de múltiplos atendimentos locais / retomada de atendimento**. Ela deve ser reconstruída sobre Encounter v3 em ciclo posterior, nunca pela incorporação direta de `attendance.js`.
+Toda recuperação permanece subordinada ao objetivo principal:
+
+> **reduzir o atrito entre escuta/raciocínio clínico e registro seguro no pronto-socorro.**
+
+Uma microfunção não será recuperada porque existia. Ela precisa reduzir digitação, cliques, reconstrução de contexto ou incerteza operacional sem fabricar informação clínica.
