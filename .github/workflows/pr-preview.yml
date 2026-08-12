@@ -80,10 +80,16 @@ jobs:
           echo "PREVIEW_URL=$PREVIEW_URL" >> "$GITHUB_ENV"
           echo "::notice title=Zera PS PR #30 Preview::$PREVIEW_URL"
 
-          gh pr comment 30 --repo "$GITHUB_REPOSITORY" --body "<!-- zera-pr30-preview -->
+          COMMENT_BODY="$(cat <<EOF
+          <!-- zera-pr30-preview -->
           **Preview isolado da PR #30:** $PREVIEW_URL
 
-          HTTPS efêmero para homologação desktop/mobile/PWA. O endereço permanece ativo enquanto o job \`PR 30 Browser Preview\` estiver executando (máximo de 6 horas). Cada atualização da PR gera um novo endereço e invalida o anterior."
+          HTTPS efêmero para homologação desktop/mobile/PWA. O endereço permanece ativo enquanto o job \`PR 30 Browser Preview\` estiver executando (máximo de 6 horas). Cada atualização da PR gera um novo endereço e invalida o anterior.
+          EOF
+          )"
+          gh api --method POST \
+            "repos/${GITHUB_REPOSITORY}/issues/30/comments" \
+            -f body="$COMMENT_BODY" >/dev/null
 
       - name: Keep preview available for homologation
         run: |
