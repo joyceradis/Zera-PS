@@ -60,24 +60,25 @@ test('confirmed normal template authorizes physical exam rendering', () => {
   assert.equal(text.includes('ACV: RCR, 2T, BNF, SEM SOPROS'), true);
 });
 
-test('complementary exams are transcribed one item per line, not glued into a single bullet', () => {
+test('complementary exams are transcribed as concise clinical lines without technical category wrappers', () => {
   const text = renderEvolution({
     qp: 'DOR',
     hda: 'DOR HÁ 1 DIA',
     laboratoriais: 'HEMOGRAMA: NORMAL\nPCR: 12 MG/L',
     imagem: 'TC DE ABDOME: SEM ALTERAÇÕES AGUDAS'
   }, baseClinicalState());
-  assert.match(text, /# EXAMES COMPLEMENTARES:\nLABORATORIAIS:\n- HEMOGRAMA: NORMAL\n- PCR: 12 MG\/L\nIMAGEM:\n- TC DE ABDOME: SEM ALTERAÇÕES AGUDAS/);
+  assert.match(text, /# EXAMES COMPLEMENTARES:\n- HEMOGRAMA: NORMAL\n- PCR: 12 MG\/L\n- TC DE ABDOME: SEM ALTERAÇÕES AGUDAS/);
+  assert.doesNotMatch(text, /LABORATORIAIS:|IMAGEM:/);
 });
 
-test('a category with no complementary exam content is omitted entirely, not fabricated as empty', () => {
+test('a missing complementary exam category is omitted without creating an empty wrapper', () => {
   const text = renderEvolution({
     qp: 'DOR',
     hda: 'DOR HÁ 1 DIA',
     imagem: 'TC DE ABDOME: NORMAL'
   }, baseClinicalState());
-  assert.doesNotMatch(text, /LABORATORIAIS:/);
-  assert.match(text, /IMAGEM:\n- TC DE ABDOME: NORMAL/);
+  assert.match(text, /# EXAMES COMPLEMENTARES:\n- TC DE ABDOME: NORMAL/);
+  assert.doesNotMatch(text, /LABORATORIAIS:|IMAGEM:/);
 });
 
 test('no complementary exam content omits the whole section, same as before', () => {
