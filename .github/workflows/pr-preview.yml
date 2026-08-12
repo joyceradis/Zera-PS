@@ -7,7 +7,6 @@ on:
 
 permissions:
   contents: read
-  issues: write
 
 concurrency:
   group: pr-30-browser-preview
@@ -52,8 +51,6 @@ jobs:
       - name: Open HTTPS preview tunnel
         id: tunnel
         shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           cloudflared tunnel --no-autoupdate --url http://127.0.0.1:4173 > /tmp/cloudflared.log 2>&1 &
@@ -79,17 +76,8 @@ jobs:
           echo "url=$PREVIEW_URL" >> "$GITHUB_OUTPUT"
           echo "PREVIEW_URL=$PREVIEW_URL" >> "$GITHUB_ENV"
           echo "::notice title=Zera PS PR #30 Preview::$PREVIEW_URL"
-
-          COMMENT_BODY="$(cat <<EOF
-          <!-- zera-pr30-preview -->
-          **Preview isolado da PR #30:** $PREVIEW_URL
-
-          HTTPS efêmero para homologação desktop/mobile/PWA. O endereço permanece ativo enquanto o job \`PR 30 Browser Preview\` estiver executando (máximo de 6 horas). Cada atualização da PR gera um novo endereço e invalida o anterior.
-          EOF
-          )"
-          gh api --method POST \
-            "repos/${GITHUB_REPOSITORY}/issues/30/comments" \
-            -f body="$COMMENT_BODY" >/dev/null
+          echo "### Zera PS PR #30 Preview" >> "$GITHUB_STEP_SUMMARY"
+          echo "$PREVIEW_URL" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Keep preview available for homologation
         run: |
