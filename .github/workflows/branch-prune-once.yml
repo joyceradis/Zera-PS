@@ -1,0 +1,55 @@
+name: One-off proven branch prune
+
+on:
+  push:
+    branches:
+      - chore/housekeeping-product-convergence
+
+permissions:
+  contents: write
+
+jobs:
+  prune:
+    if: contains(github.event.head_commit.message, '[branch-prune]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout without persisted credentials
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify ancestry and delete only proven obsolete refs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          branches=(
+            'chore/housekeeping-product-convergence-v2'
+            'docs/repository-housekeeping'
+            'docs/repository-housekeeping-clean'
+            'docs/repository-housekeeping-clean-2'
+            'docs/repository-housekeeping-clean-3'
+            'docs/repository-housekeeping-clean-4'
+            'docs/repository-housekeeping-clean-5'
+            'docs/repository-housekeeping-clean-6'
+            'docs/repository-housekeeping-final'
+            'docs/repository-housekeeping-plan'
+            'docs/repository-housekeeping-v2'
+            'docs/repository-housekeeping-work'
+          )
+
+          git fetch --no-tags origin main
+          remote="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+
+          for branch in "${branches[@]}"; do
+            git fetch --no-tags origin "+refs/heads/${branch}:refs/remotes/origin/${branch}"
+            if ! git merge-base --is-ancestor "refs/remotes/origin/${branch}" refs/remotes/origin/main; then
+              echo "REFUSING DELETE: ${branch} is not an ancestor of main"
+              exit 1
+            fi
+            echo "Deleting proven ancestor branch: ${branch}"
+            git push "$remote" --delete "$branch"
+          done
