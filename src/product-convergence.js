@@ -2,6 +2,7 @@ import { transformLaboratoryText } from './lab-parser.js';
 import { matchTriggerGroups, composeHdaFromQp } from './clinical-intake.js';
 import { formatImageReport } from './text-formatters.js';
 import { assembleFreeExamJustification } from './justification-engine.js';
+import { createEncounterStorage } from './storage.js';
 import {
   extractEncounterRecords,
   summarizeProductivity,
@@ -319,25 +320,30 @@ function formatProductivityRange(summary) {
 }
 
 function readProductivityRecords(adapter = globalThis.localStorage) {
-  if (!adapter) return [];
-  try {
-    const raw = adapter.getItem('zera-ps:encounter:v3');
-    if (!raw) return [];
-    return extractEncounterRecords(JSON.parse(raw));
-  } catch {
-    return [];
-  }
+  const snapshot = createEncounterStorage(adapter).loadActiveEncounter();
+  return snapshot ? extractEncounterRecords(snapshot) : [];
 }
 
 function renderProductivitySummary() {
-  const summary = summarizeProductivity(readProductivityRecords(), { now: new Date().toISOString() });
   const rate = document.getElementById('patients-per-hour');
   const total = document.getElementById('total-patients');
   const range = document.getElementById('zera-productivity-range');
-  if (rate) rate.textContent = formatPatientsPerHour(summary);
-  if (total) total.textContent = String(summary.totalPatients);
-  if (range) range.textContent = formatProductivityRange(summary);
-  return summary;
+  const feedback = document.getElementById('shift-summary-feedback');
+
+  try {
+    const summary = summarizeProductivity(readProductivityRecords(), { now: new Date().toISOString() });
+    if (rate) rate.textContent = formatPatientsPerHour(summary);
+    if (total) total.textContent = String(summary.totalPatients);
+    if (range) range.textContent = formatProductivityRange(summary);
+    return summary;
+  } catch (error) {
+    if (rate) rate.textContent = '--';
+    if (total) total.textContent = '--';
+    if (range) range.textContent = 'DADOS LOCAIS INDISPONÍVEIS';
+    if (feedback) feedback.textContent = 'Não foi possível ler os dados locais do plantão. Nenhum dado foi apagado.';
+    console.error('Zera PS: falha ao ler produtividade local', error);
+    return { totalPatients: null, durationHours: null, rate: null, rangeStart: null, rangeEnd: null, error };
+  }
 }
 
 function createProductivityPanel() {
@@ -382,6 +388,7 @@ function createProductivityPanel() {
   feedback.id = 'shift-summary-feedback';
   endShift.addEventListener('click', () => {
     const summary = renderProductivitySummary();
+    if (summary.error) return;
     feedback.textContent = summary.totalPatients ? 'Resumo atualizado. Os dados clínicos permanecem intactos.' : 'Ainda não há atendimentos reconhecidos nesta sessão.';
   });
   actions.appendChild(endShift);
