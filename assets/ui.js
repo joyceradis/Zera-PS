@@ -143,8 +143,17 @@ function activateView(name) {
   $('sidebar-overlay')?.classList.remove('open');
 }
 
+function reportPwaRegistrationError(error) {
+  console.error('Zera PS: falha ao registrar service worker', error);
+  window.dispatchEvent(new CustomEvent('zera:pwa-registration-error', { detail: { error } }));
+}
+
 function setupPwa() {
-  if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js').catch(() => {}));
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./service-worker.js').catch(reportPwaRegistrationError);
+    });
+  }
   let installPrompt;
   window.addEventListener('beforeinstallprompt', (event) => { event.preventDefault(); installPrompt = event; if ($('install-button')) $('install-button').hidden = false; });
   $('install-button')?.addEventListener('click', async () => { if (!installPrompt) return; installPrompt.prompt(); await installPrompt.userChoice; installPrompt = null; $('install-button').hidden = true; });
