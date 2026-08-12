@@ -87,11 +87,13 @@ test('definitive shell reserves a Resumo do Plantão productivity component', as
   assert.match(source, /createProductivityPanel/);
 });
 
-test('mobile document switch changes presentation only and keeps the same editable output node', async () => {
+test('mobile document switch changes presentation only and keeps the canonical editable output node', async () => {
   const source = await read('src/product-convergence.js');
+  const html = await read('app.html');
   assert.match(source, /createMobileDocumentSwitcher/);
-  assert.match(source, /evolution-output/);
   assert.match(source, /data-mobile-surface|mobile-surface/);
+  assert.doesNotMatch(source, /createElement\(['"]textarea['"]\)|cloneNode\s*\(/);
+  assert.equal((html.match(/id=["']evolution-output["']/g) || []).length, 1);
 });
 
 test('current clinical document fields and safety microfunctions remain present in app html', async () => {
