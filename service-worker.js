@@ -1,4 +1,4 @@
-const CACHE_NAME = 'zera-ps-v11';
+const CACHE_NAME = 'zera-ps-v12';
 
 const APP_SHELL = [
   './',
@@ -21,6 +21,8 @@ const APP_SHELL = [
   './src/product-convergence.js',
   './src/productivity.js',
   './src/lab-parser.js',
+  './src/clinical-intake.js',
+  './src/text-formatters.js',
   './src/context-coordination.js',
   './src/justification-engine.js',
   './src/hda-composer.js',
@@ -60,9 +62,7 @@ self.addEventListener('fetch', (event) => {
   const sameOrigin = requestUrl.origin === self.location.origin;
 
   if (event.request.mode === 'navigate') {
-    event.respondWith(
-      fetch(event.request).catch(() => caches.match('./app.html'))
-    );
+    event.respondWith(fetch(event.request).catch(() => caches.match('./app.html')));
     return;
   }
 
