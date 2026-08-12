@@ -5,28 +5,26 @@ import { ENCOUNTER_ACTION_VIEWS, PRIMARY_DESTINATIONS } from '../src/product-con
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
+function functionBody(source, name, nextName) {
+  const start = source.indexOf(`function ${name}`);
+  const end = nextName ? source.indexOf(`function ${nextName}`, start + 1) : source.length;
+  return source.slice(start, end > start ? end : source.length);
+}
+
 test('product convergence module remains importable without a browser DOM', () => {
-  assert.deepEqual(
-    ENCOUNTER_ACTION_VIEWS.map(({ id }) => id),
-    ['reavaliacao', 'internacao', 'alta', 'scores']
-  );
+  assert.deepEqual(ENCOUNTER_ACTION_VIEWS.map(({ id }) => id), ['reavaliacao', 'internacao', 'alta', 'scores']);
 });
 
 test('definitive primary navigation exposes only Atendimento, Rascunhos and Resumo do Plantão', () => {
-  assert.deepEqual(
-    PRIMARY_DESTINATIONS.map(({ id, label }) => [id, label]),
-    [
-      ['evolucao', 'Atendimento'],
-      ['rascunhos', 'Rascunhos'],
-      ['plantao', 'Resumo do Plantão']
-    ]
-  );
+  assert.deepEqual(PRIMARY_DESTINATIONS.map(({ id, label }) => [id, label]), [
+    ['evolucao', 'Atendimento'], ['rascunhos', 'Rascunhos'], ['plantao', 'Resumo do Plantão']
+  ]);
 });
 
 test('product convergence is loaded after the existing application engines', async () => {
   const entry = await read('src/app.js');
   assert.match(entry, /import '\.\/product-convergence\.js';/);
-  assert.ok(entry.indexOf("./product-convergence.js") > entry.indexOf("./temporal-ui.js"));
+  assert.ok(entry.indexOf('./product-convergence.js') > entry.indexOf('./temporal-ui.js'));
 });
 
 test('DOM composition waits for the base UI render instead of racing template initialization', async () => {
@@ -62,25 +60,25 @@ test('starting temporal reassessment no longer navigates to a legacy top-level v
 
 test('convergence layer preserves continuation controls while presenting them as encounter actions', async () => {
   const source = await read('src/product-convergence.js');
-  for (const view of ['reavaliacao', 'internacao', 'alta', 'scores']) {
-    assert.match(source, new RegExp(`view-${view}|${view}`));
-  }
+  for (const view of ['reavaliacao', 'internacao', 'alta', 'scores']) assert.match(source, new RegExp(`view-${view}|${view}`));
   assert.match(source, /AÇÕES DO ATENDIMENTO/i);
-  assert.match(source, /CONTEXTO CLÍNICO/i);
 });
 
-test('workflow/protocol infrastructure remains internal and the duplicate workflow card is collapsed from the clinician surface', async () => {
+test('legacy context selection is hidden and no workflow selector is required on the clinical surface', async () => {
   const source = await read('src/product-convergence.js');
   assert.match(source, /workflow-card/);
   assert.match(source, /workflow-context/);
-  assert.match(source, /workflow-scenario/);
-  assert.match(source, /hidden\s*=\s*true|setAttribute\(['"]hidden/);
+  assert.match(source, /template-grid/);
+  assert.match(source, /hidden\s*=\s*true/);
+  assert.doesNotMatch(functionBody(source, 'createZeroFrictionIntake', 'openEncounterPanel'), /getElementById\(['"]workflow-scenario['"]\)/);
+  assert.match(source, /Queixa e contexto clínico \(QP\)/);
 });
 
-test('legacy reassessment launcher is hidden when reassessment is exposed as an encounter action', async () => {
+test('legacy reassessment controls are not exposed as a primary navigation destination', async () => {
   const source = await read('src/product-convergence.js');
-  assert.match(source, /getElementById\(['"]reassess-encounter['"]\)/);
-  assert.match(source, /reassess[^\n]*hidden\s*=\s*true|legacyReassess[^\n]*hidden\s*=\s*true/i);
+  assert.match(source, /hideInternalNavigation/);
+  assert.match(source, /ENCOUNTER_ACTION_VIEWS/);
+  assert.match(source, /nav\.hidden\s*=\s*true/);
 });
 
 test('convergence DOM is built with text nodes instead of injecting protocol or action labels as HTML', async () => {
@@ -98,19 +96,26 @@ test('laboratory restore state is isolated from DOM attributes and invalidated a
 
 test('definitive shell reserves a Resumo do Plantão productivity component', async () => {
   const source = await read('src/product-convergence.js');
-  for (const id of ['patients-per-hour', 'total-patients', 'zera-productivity-range', 'end-shift-button']) {
-    assert.match(source, new RegExp(id));
-  }
+  for (const id of ['patients-per-hour', 'total-patients', 'zera-productivity-range', 'end-shift-button']) assert.match(source, new RegExp(id));
   assert.match(source, /createProductivityPanel/);
 });
 
 test('mobile document switch changes presentation only and keeps the canonical editable output node', async () => {
   const source = await read('src/product-convergence.js');
   const html = await read('app.html');
-  assert.match(source, /createMobileDocumentSwitcher/);
-  assert.match(source, /data-mobile-surface|mobile-surface/);
-  assert.doesNotMatch(source, /createElement\(['"]textarea['"]\)|cloneNode\s*\(/);
+  const mobile = functionBody(source, 'createMobileDocumentSwitcher', 'formatProductivityRange');
+  assert.match(mobile, /data-mobile-surface|mobile-surface/);
+  assert.doesNotMatch(mobile, /createElement\(['"]textarea['"]\)|cloneNode\s*\(/);
   assert.equal((html.match(/id=["']evolution-output["']/g) || []).length, 1);
+});
+
+test('cycle 2 adds contextual QP triggers, image formatter and free exam justification without removing canonical fields', async () => {
+  const source = await read('src/product-convergence.js');
+  assert.match(source, /createZeroFrictionIntake/);
+  assert.match(source, /conditional-clinical-triggers/);
+  assert.match(source, /createImageFormatter/);
+  assert.match(source, /Formatar Imagem/);
+  assert.match(source, /justification-exam-name/);
 });
 
 test('current clinical document fields and safety microfunctions remain present in app html', async () => {
@@ -118,7 +123,5 @@ test('current clinical document fields and safety microfunctions remain present 
   for (const id of [
     'qp', 'hda', 'fill-negatives', 'fill-normal-exam', 'laboratoriais', 'imagem',
     'hipoteses', 'conduta', 'evolution-output', 'reassess-encounter', 'reassessment-output'
-  ]) {
-    assert.match(html, new RegExp(`id=["']${id}["']`));
-  }
+  ]) assert.match(html, new RegExp(`id=["']${id}["']`));
 });
