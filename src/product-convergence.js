@@ -183,6 +183,24 @@ function createLabOrganizer() {
   input.insertAdjacentElement('afterend', row);
 }
 
+function injectConvergenceStyles() {
+  if (document.getElementById('zera-product-convergence-styles')) return;
+  const style = document.createElement('style');
+  style.id = 'zera-product-convergence-styles';
+  style.textContent = `
+    .context-protocol-card{appearance:none;text-align:left;cursor:pointer;font:inherit;color:inherit}
+    .context-protocol-card strong,.context-protocol-card span{display:block}
+    .context-protocol-card span{margin-top:4px;font-size:.75rem;color:#637083}
+    .contextual-workspace:empty{display:none}
+    .contextual-workspace #workflow-context{margin:18px 0 0}
+    .encounter-actions{margin-top:20px;padding-top:18px;border-top:1px solid rgba(11,31,51,.12)}
+    .encounter-action-row,.lab-organizer-row{display:flex;flex-wrap:wrap;gap:10px}
+    .lab-organizer-row{margin-top:8px}
+    @media(max-width:760px){.encounter-action-row .button{flex:1 1 calc(50% - 10px)}}
+  `;
+  document.head.appendChild(style);
+}
+
 function initProductConvergence() {
   relabelPrimarySurface();
   hideInternalNavigation();
@@ -190,6 +208,7 @@ function initProductConvergence() {
   convergeWorkflowSurface();
   createEncounterActions();
   createLabOrganizer();
+  injectConvergenceStyles();
 }
 
 if (typeof document !== 'undefined') initProductConvergence();
