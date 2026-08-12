@@ -34,8 +34,8 @@ Nenhuma funcionalidade é avanço se economizar texto, mas aumentar cliques, nav
 | 3. Ferramentas clínicas | v1.1 implementada | `available ≠ applicable ≠ calculable ≠ applied` |
 | 4. Documento temporal | v1.1 implementada | Estado operacional não vaza para prontuário |
 | 5. Persistência/histórico | Parcial | Sem perda ou reinterpretação de estado |
-| 6. Housekeeping + Product Convergence | **Inventário/ownership concluídos; gate manual aberto** | Uma única experiência de Atendimento sem perda de microfunções |
-| 7. Recuperação de microfunções | Parser laboratorial recuperado; ledger consolidado | Recuperar por contrato/teste, não por cópia cega |
+| 6. Housekeeping + Product Convergence | **UI estrutural implementada; homologação clínica manual aberta** | Uma única experiência de Atendimento sem perda de microfunções |
+| 7. Recuperação de microfunções | Parser laboratorial + alternância móvel recuperados; ledger consolidado | Recuperar por contrato/teste, não por cópia cega |
 | 8. Expansão clínica | Futuro | Novo contexto só após provar o motor atual |
 | 9. Piloto | Futuro | Zero informação fabricada + ganho operacional mensurável |
 | 10. Produção/assinatura | Futuro | Requisitos SaaS, segurança e privacidade |
@@ -140,7 +140,7 @@ Objetivo: reduzir a entropia acumulada sem rewrite e sem perder comportamento.
 - [x] consolidar ledger de microfunções presentes, recuperadas, candidatas e inseguras;
 - [x] definir owner semântico para cada responsabilidade em `docs/architecture/OWNERSHIP.md`;
 - [x] minerar `develop/assets/attendance.js`, templates e scores sem merge bruto;
-- [~] localizar/classificar métricas e gráficos antigos — placeholders hardcoded localizados; gráfico longitudinal/mensal ainda não localizado;
+- [~] localizar/classificar métricas e gráficos antigos — placeholders hardcoded localizados; gráfico longitudinal/mensal legado ainda não localizado;
 - [x] finalizar classificação documental canonical/audit/legacy-reference/obsolete/duplicate;
 - [x] separar e remover CI irrelevante/conflitante sem tocar o gate canônico.
 
@@ -153,7 +153,7 @@ Regras vigentes:
 - wrappers simples não são uma segunda implementação;
 - `assets/document-engine.js` mantém renderer documental base enquanto `src/document-engine.js` acrescenta composição temporal;
 - `assets/app.js` é legado estabilizado, mas não recebe nova lógica estrutural;
-- `src/temporal-ui.js` e `src/product-convergence.js` são adapters transitórios;
+- `src/temporal-ui.js` mantém coordenação temporal e `src/product-convergence.js` é o owner da composição da superfície definitiva nesta fase;
 - regra clínica concreta vive em configuração clínica (`protocols/`) ou engine apropriado, nunca espalhada pela UI;
 - reorganização física de diretórios só acontece depois de ownership e equivalência comportamental estarem estáveis.
 
@@ -161,7 +161,7 @@ Próximo passo arquitetural após gate manual:
 
 ```text
 homologar Atendimento
-→ remover dependência visual das views antigas
+→ remover containers-fonte legados já vazios após a composição runtime
 → caracterizar microfunções restantes de assets/app.js
 → extrair coordenação por responsabilidade
 → reduzir adapters transitórios
@@ -180,7 +180,7 @@ Workflow contextual
 Reavaliação / Internação / Alta / Scores como páginas independentes
 ```
 
-Estado-alvo:
+Estado implementado para homologação:
 
 ```text
 ATENDIMENTO
@@ -192,8 +192,14 @@ ATENDIMENTO
 → EXAMES COMPLEMENTARES
 → HIPÓTESES
 → CONDUTA
-→ REAVALIAR
-→ DESTINO / DOCUMENTOS
+→ AÇÕES DO MESMO ATENDIMENTO
+   ├── REAVALIAR
+   ├── INTERNAÇÃO
+   ├── ALTA
+   └── FERRAMENTAS
+
+RASCUNHOS
+RESUMO DO PLANTÃO
 ```
 
 Tarefas:
@@ -203,9 +209,16 @@ Tarefas:
 - [x] remover da superfície principal a exposição concorrente “roteiro × workflow”;
 - [x] mover reavaliação para ação/etapa do Atendimento na superfície;
 - [x] mover alta/internação para ações/desfechos do Atendimento na superfície, preservando seus geradores;
+- [x] mover Scores/Ferramentas para painel contextual do Atendimento;
+- [x] eliminar dependência de clique em navegação legacy para iniciar reavaliação temporal;
 - [x] manter Rascunhos como superfície própria enquanto histórico de Atendimentos não estiver pronto;
-- [ ] validar manualmente desktop/mobile/PWA antes de homologar a experiência clínica;
-- [ ] substituir, em ciclo posterior e somente após equivalência comprovada, a navegação transitória por views internas escondidas por integração estrutural definitiva.
+- [x] recuperar alternância móvel `Formulário ↔ Texto final` sem duplicar estado/documento;
+- [x] criar superfície `Resumo do Plantão` e reservar contrato visual para pacientes/hora + total + encerramento;
+- [x] proteger navegação da nova superfície contra o listener genérico legacy durante a fase de compatibilidade;
+- [x] incluir módulos da UI definitiva no APP_SHELL e versionar cache para `zera-ps-v11`;
+- [ ] homologar manualmente desktop/mobile/PWA com a Founder.
+
+Os nós HTML antigos de Reavaliação/Internação/Alta/Scores permanecem apenas como containers-fonte de compatibilidade nesta PR. Na inicialização, seus controles reais — sem clone e mantendo IDs/handlers — são realocados para o workspace do Atendimento. A remoção física desses containers fica condicionada à homologação manual para evitar perda silenciosa de microfunções.
 
 ### 6.4 HDA
 
@@ -255,11 +268,12 @@ A arqueologia encontrou capacidades reais no predecessor, agora registradas sem 
 - medicações rápidas;
 - condutas rápidas;
 - status operacionais;
-- toggle móvel formulário/texto;
 - sinais vitais;
 - handoff.
 
-Nenhuma dessas capacidades é requisito atual só por ter existido. Recuperação depende de ganho operacional real, owner compatível, segurança atual e validação da Founder.
+A alternância móvel `Formulário ↔ Texto` saiu desta lista: foi recuperada na UI definitiva como controle de apresentação, sem criar um segundo modelo documental.
+
+Nenhuma das capacidades restantes é requisito atual só por ter existido. Recuperação depende de ganho operacional real, owner compatível, segurança atual e validação da Founder.
 
 Comportamentos históricos que convertiam vazio em `NA`, presumiam estabilidade/alta ou carregavam hipótese/conduta pelo roteiro foram classificados como `DO NOT RECOVER`.
 
@@ -277,9 +291,13 @@ A arqueologia separou:
 
 - protótipo de `develop` com valores hardcoded de produtividade/volume;
 - referências históricas de feedback operacional do predecessor, ainda sem motor longitudinal reconciliado;
-- gráfico longitudinal/mensal referido pela Founder, ainda sem implementação localizada.
+- gráfico longitudinal/mensal legado referido pela Founder, ainda sem implementação localizada.
 
-Detalhes: [`docs/audits/METRICS_ARCHAEOLOGY_2026-08-12.md`](docs/audits/METRICS_ARCHAEOLOGY_2026-08-12.md).
+A UI atual passa a reservar uma superfície canônica de **Resumo do Plantão**, com componente para `Pacientes / Hora`, total atendido, faixa temporal e ação explícita de encerramento. A agregação fica isolada do documento clínico e retorna `--` quando não existe série local suficiente — nunca inventa taxa a partir de um único registro sem janela temporal mensurável.
+
+A expansão diária/mensal é evolução desta mesma superfície quando o repositório local de múltiplos Encounters estiver reconciliado. Não depende de ressuscitar o gráfico histórico perdido.
+
+Detalhes de arqueologia: [`docs/audits/METRICS_ARCHAEOLOGY_2026-08-12.md`](docs/audits/METRICS_ARCHAEOLOGY_2026-08-12.md).
 
 Nenhuma sugestão automática de destino será transplantada do legado: destino é decisão clínica e exige estado/semântica explicitamente autorizados.
 
