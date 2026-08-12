@@ -24,6 +24,27 @@ function throwingAdapter(method) {
   };
 }
 
+test('missing storage adapter is an explicit persistence failure, never missing data', () => {
+  assert.throws(
+    () => readStorageItem(null, 'zera-ps:test'),
+    (error) => error instanceof StoragePersistenceError
+      && error.operation === 'read'
+      && error.key === 'zera-ps:test'
+  );
+  assert.throws(
+    () => writeStorageItem(undefined, 'zera-ps:test', '{}'),
+    (error) => error instanceof StoragePersistenceError
+      && error.operation === 'write'
+      && error.key === 'zera-ps:test'
+  );
+  assert.throws(
+    () => removeStorageItem(null, 'zera-ps:test'),
+    (error) => error instanceof StoragePersistenceError
+      && error.operation === 'remove'
+      && error.key === 'zera-ps:test'
+  );
+});
+
 test('storage reads preserve failures as explicit contextual errors', () => {
   assert.throws(
     () => readStorageItem(throwingAdapter('read'), 'zera-ps:test'),
