@@ -1,4 +1,5 @@
 import { createClinicalField } from './clinical-state.js';
+import { readStorageItem, writeStorageItem, removeStorageItem } from './storage-io.js';
 
 const STORAGE_KEYS = Object.freeze({
   autosave: 'zera-ps:autosave:v2',
@@ -67,31 +68,31 @@ function safeParse(raw, fallback) {
 function createStorage(adapter = globalThis.localStorage) {
   const api = {
     loadAutosave() {
-      const current = safeParse(adapter?.getItem(STORAGE_KEYS.autosave), null);
+      const current = safeParse(readStorageItem(adapter, STORAGE_KEYS.autosave), null);
       if (current) return current;
-      const legacy = safeParse(adapter?.getItem(STORAGE_KEYS.legacyAutosave), null);
+      const legacy = safeParse(readStorageItem(adapter, STORAGE_KEYS.legacyAutosave), null);
       if (!legacy) return null;
       const migrated = migrateLegacyAutosave(legacy);
       api.saveAutosave(migrated);
       return migrated;
     },
     saveAutosave(value) {
-      adapter?.setItem(STORAGE_KEYS.autosave, JSON.stringify(value));
+      writeStorageItem(adapter, STORAGE_KEYS.autosave, JSON.stringify(value));
     },
     clearAutosave() {
-      adapter?.removeItem(STORAGE_KEYS.autosave);
+      removeStorageItem(adapter, STORAGE_KEYS.autosave);
     },
     loadDrafts() {
-      const current = safeParse(adapter?.getItem(STORAGE_KEYS.drafts), null);
+      const current = safeParse(readStorageItem(adapter, STORAGE_KEYS.drafts), null);
       if (current) return current;
-      const legacy = safeParse(adapter?.getItem(STORAGE_KEYS.legacyDrafts), null);
+      const legacy = safeParse(readStorageItem(adapter, STORAGE_KEYS.legacyDrafts), null);
       if (!legacy) return [];
       const migrated = migrateLegacyDrafts(legacy);
       api.saveDrafts(migrated);
       return migrated;
     },
     saveDrafts(drafts) {
-      adapter?.setItem(STORAGE_KEYS.drafts, JSON.stringify(drafts));
+      writeStorageItem(adapter, STORAGE_KEYS.drafts, JSON.stringify(drafts));
     }
   };
   return api;
