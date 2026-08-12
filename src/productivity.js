@@ -18,6 +18,15 @@ function normalizeEncounterRecord(value) {
   };
 }
 
+function extractEncounterRecords(value) {
+  const candidates = Array.isArray(value)
+    ? value
+    : Array.isArray(value?.encounters)
+      ? value.encounters
+      : [];
+  return candidates.map(normalizeEncounterRecord).filter(Boolean);
+}
+
 function summarizeProductivity(records = [], options = {}) {
   const normalized = records.map(normalizeEncounterRecord).filter(Boolean);
   const rangeStartMs = parseInstant(options.rangeStart);
@@ -68,6 +77,7 @@ function formatPatientsPerHour(summary = {}) {
 }
 
 export {
+  extractEncounterRecords,
   normalizeEncounterRecord,
   summarizeProductivity,
   formatPatientsPerHour
