@@ -1,13 +1,24 @@
-function normalizeSource(raw = '') {
+function stripSourceNoise(raw = '') {
   return String(raw)
     .replace(/https?:\/\/\S+/gi, ' ')
     .replace(/Chave de acesso:\s*\S+/gi, ' ')
     .replace(/Resultado completo acesse:[^\n]*/gi, ' ')
     .replace(/Assinado eletronicamente por[^\n]*/gi, ' ')
     .replace(/Responsável técnico:[^\n]*/gi, ' ')
-    .replace(/\u00a0/g, ' ')
+    .replace(/\u00a0/g, ' ');
+}
+
+function normalizeSource(raw = '') {
+  return stripSourceNoise(raw)
     .replace(/[ \t]+/g, ' ')
     .replace(/\n+/g, ' ')
+    .trim();
+}
+
+function normalizeLineSource(raw = '') {
+  return stripSourceNoise(raw)
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n{2,}/g, '\n')
     .trim();
 }
 
@@ -23,20 +34,45 @@ function numericResult(label) {
   return new RegExp(`${label}\\s*(?:RESULTADO\\s*)?[:=-]?\\s*([0-9][0-9.,]*)`, 'i');
 }
 
+function lineNumericResult(label) {
+  return new RegExp(`${label}[ \\t]*(?:RESULTADO[ \\t]*)?[:=-]?[ \\t]*([0-9][0-9.,]*)`, 'i');
+}
+
+function relativePercentResult(label) {
+  return new RegExp(`${label}[^\\n%]{0,80}?([0-9]{1,3}(?:[.,][0-9]+)?)[ \\t]*%`, 'i');
+}
+
+function parseRelativePercent(value) {
+  const normalized = String(value || '').trim().replace(',', '.');
+  if (!/^\d+(?:\.\d+)?$/.test(normalized)) return null;
+  const parsed = Number(normalized);
+  if (!Number.isFinite(parsed) || parsed < 0 || parsed > 100) return null;
+  return parsed;
+}
+
+function differentialValue(lineSource, label) {
+  const explicitPercent = pick(lineSource, [relativePercentResult(label)]);
+  if (explicitPercent && parseRelativePercent(explicitPercent) !== null) return explicitPercent;
+
+  const compactValue = pick(lineSource, [lineNumericResult(label)]);
+  return parseRelativePercent(compactValue) !== null ? compactValue : '';
+}
+
 function parseLaboratoryText(raw = '') {
   const source = normalizeSource(raw);
+  const lineSource = normalizeLineSource(raw);
   if (!source) return {};
 
   const parsed = {
     hb: pick(source, [numericResult('(?:HEMOGLOBINA|\\bHB\\b)')]),
     ht: pick(source, [numericResult('(?:HEMAT[ÓO]CRITO|\\bHT\\b)')]),
     leuco: pick(source, [numericResult('(?:LEUC[ÓO]CITOS|LEUCOCITOS|\\bLEUCO\\b)')]),
-    neut: pick(source, [numericResult('(?:NEUTR[ÓO]FILOS|NEUTROFILOS|SEGMENTADOS|\\bSEG\\b)')]),
-    bast: pick(source, [numericResult('(?:BASTONETES|\\bBAST\\b)')]),
-    eos: pick(source, [numericResult('(?:EOSIN[ÓO]FILOS|EOSINOFILOS|\\bEOS\\b)')]),
-    baso: pick(source, [numericResult('(?:BAS[ÓO]FILOS|BASOFILOS|\\bBASO\\b|\\bBAS\\b)')]),
-    linf: pick(source, [numericResult('(?:LINF[ÓO]CITOS(?:\\s+T[IÍ]PICOS)?|LINFOCITOS(?:\\s+TIPICOS)?|\\bLINF\\b)')]),
-    mono: pick(source, [numericResult('(?:MON[ÓO]CITOS|MONOCITOS|\\bMONO\\b)')]),
+    neut: differentialValue(lineSource, '(?:NEUTR[ÓO]FILOS|NEUTROFILOS|SEGMENTADOS|\\bSEG\\b)'),
+    bast: differentialValue(lineSource, '(?:BASTONETES|\\bBAST\\b)'),
+    eos: differentialValue(lineSource, '(?:EOSIN[ÓO]FILOS|EOSINOFILOS|\\bEOS\\b)'),
+    baso: differentialValue(lineSource, '(?:BAS[ÓO]FILOS|BASOFILOS|\\bBASO\\b|\\bBAS\\b)'),
+    linf: differentialValue(lineSource, '(?:LINF[ÓO]CITOS(?:\\s+T[IÍ]PICOS)?|LINFOCITOS(?:\\s+TIPICOS)?|\\bLINF\\b)'),
+    mono: differentialValue(lineSource, '(?:MON[ÓO]CITOS|MONOCITOS|\\bMONO\\b)'),
     plaq: pick(source, [numericResult('(?:CONTAGEM DE PLAQUETAS|PLAQUETAS|\\bPLAQ\\b)')]),
     pcr: pick(source, [numericResult('(?:PROTE[IÍ]NA\\s+["\']?C["\']?\\s+REATIVA|\\bPCR\\b)')]),
     ur: pick(source, [numericResult('(?:\\bUREIA\\b|\\bUR\\b)')]),
@@ -62,13 +98,6 @@ function formatCellCount(value) {
   return text;
 }
 
-function parsePercent(value) {
-  const normalized = String(value || '').trim().replace(',', '.');
-  if (!/^\d+(?:\.\d+)?$/.test(normalized)) return null;
-  const parsed = Number(normalized);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
 const DIFFERENTIAL_OUTPUT_RULES = Object.freeze([
   { key: 'neut', label: 'S', upperReference: 70 },
   { key: 'bast', label: 'B', upperReference: 5 },
@@ -80,7 +109,7 @@ const DIFFERENTIAL_OUTPUT_RULES = Object.freeze([
 
 function renderElevatedDifferential(values = {}) {
   return DIFFERENTIAL_OUTPUT_RULES.flatMap(({ key, label, upperReference }) => {
-    const percent = parsePercent(values[key]);
+    const percent = parseRelativePercent(values[key]);
     if (percent === null || percent <= upperReference) return [];
     return [`${label} ${values[key]}%`];
   });
