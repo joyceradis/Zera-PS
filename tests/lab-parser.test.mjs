@@ -18,6 +18,26 @@ Assinado eletronicamente por Fulano
 Responsável técnico: CRM 0000
 `;
 
+const LEGACY_HERITAGE = `
+HEMOGRAMA
+Hemoglobina 12,8
+Hematócrito 38,1
+Leucócitos 11800
+Bastonetes 2
+Segmentados 78
+Eosinófilos 1
+Basófilos 0
+Linfócitos Típicos 14
+Monócitos 5
+Contagem de Plaquetas 321000
+NITROGENIO UREICO 18
+TAXA FILTRAÇÃO GLOMERULAR SUPERIOR A 90
+TRANSAMINASE GLUTAMICO OXALACETICA RESULTADO 31
+TRANSAMINASE GLUTAMICO PIRUVICA RESULTADO 27
+AMILASE SERICA RESULTADO 55
+LIPASE RESULTADO 42
+`;
+
 test('recovers laboratory values from noisy pasted output', () => {
   const parsed = parseLaboratoryText(RAW);
   assert.deepEqual(parsed, {
@@ -32,6 +52,32 @@ test('recovers laboratory values from noisy pasted output', () => {
     na: '138',
     k: '4,1'
   });
+});
+
+test('preserves additional explicit analytes recovered from the predecessor without forcing them into the compact renderer', () => {
+  const parsed = parseLaboratoryText(LEGACY_HERITAGE);
+  assert.deepEqual(parsed, {
+    hb: '12,8',
+    ht: '38,1',
+    leuco: '11800',
+    neut: '78',
+    bast: '2',
+    eos: '1',
+    baso: '0',
+    linf: '14',
+    mono: '5',
+    plaq: '321000',
+    bun: '18',
+    rfg: 'SUPERIOR A 90',
+    tgo: '31',
+    tgp: '27',
+    amilase: '55',
+    lipase: '42'
+  });
+
+  const line = renderCompactLabLine(parsed);
+  assert.equal(line, '- LAB: HB: 12,8 / HT: 38,1 / LEUCO: 11.800 (NEUT: 78%) / PLAQ: 321.000');
+  assert.doesNotMatch(line, /BAST|EOS|BASO|LINF|MONO|BUN|RFG|TGO|TGP|AMILASE|LIPASE/);
 });
 
 test('renders the Founder compact PS format in one LAB line', () => {
