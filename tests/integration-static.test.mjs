@@ -38,9 +38,11 @@ test('PWA app shell contains only existing local files', async () => {
   assert.deepEqual(missing, []);
 });
 
-test('PWA caches the definitive productivity module under a new cache generation', () => {
+test('PWA caches cycle 2 interaction modules under a new cache generation', () => {
   assert.match(serviceWorker, /\.\/src\/productivity\.js/);
-  assert.match(serviceWorker, /const CACHE_NAME = 'zera-ps-v11'/);
+  assert.match(serviceWorker, /\.\/src\/clinical-intake\.js/);
+  assert.match(serviceWorker, /\.\/src\/text-formatters\.js/);
+  assert.match(serviceWorker, /const CACHE_NAME = 'zera-ps-v12'/);
 });
 
 test('offline fallback is limited to navigation requests', () => {
@@ -48,19 +50,13 @@ test('offline fallback is limited to navigation requests', () => {
   assert.doesNotMatch(serviceWorker, /cached \|\|\s*caches\.match\('\.\/app\.html'\)/);
 });
 
-test('evolution screen contains the guided diarrhea HDA controls and an explicit complete Markdown output', () => {
+test('legacy guided diarrhea controls remain in source as recoverable heritage, not the primary cycle 2 surface', () => {
   assert.match(appHtml, /id="hda-diarrhea-guide"/);
   assert.match(appHtml, /id="hda-diarrhea-onset-value"/);
   assert.match(appHtml, /data-hda-finding="blood"/);
-  assert.match(appHtml, /data-hda-finding="mucus"/);
-  assert.match(appHtml, /data-hda-finding="pus"/);
-  assert.match(appHtml, /id="apply-generated-hda"/);
-  assert.match(appHtml, /TEXTO COMPLETO · MARKDOWN/);
-  assert.match(appHtml, />Copiar evolução completa</);
 });
 
-test('selecting a roteiro inserts its complete HDA draft into the editable HDA field', () => {
+test('legacy template engine remains recoverable without being the primary clinical entry point', () => {
   assert.match(legacyApp, /\$\('hda'\)\.value = template\.hdaDraft/);
   assert.match(legacyApp, /function readDiarrheaComposer[\s\S]*?draft:\s*true/);
-  assert.match(appHtml, /HDA · RASCUNHO CLÍNICO PRONTO PARA EDITAR/);
 });
