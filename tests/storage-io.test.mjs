@@ -2,9 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   StoragePersistenceError,
+  StorageCorruptionError,
   readStorageItem,
   writeStorageItem,
-  removeStorageItem
+  removeStorageItem,
+  parseStoredJson
 } from '../assets/storage-io.js';
 
 function throwingAdapter(method) {
@@ -64,4 +66,18 @@ test('storage IO preserves the browser adapter contract on success', () => {
   assert.equal(readStorageItem(adapter, 'zera-ps:test'), '{"ok":true}');
   removeStorageItem(adapter, 'zera-ps:test');
   assert.equal(readStorageItem(adapter, 'zera-ps:test'), null);
+});
+
+test('missing stored JSON may resolve to an explicit fallback', () => {
+  assert.deepEqual(parseStoredJson(null, 'zera-ps:test', []), []);
+});
+
+test('corrupted stored JSON never masquerades as absent data', () => {
+  assert.throws(
+    () => parseStoredJson('{broken', 'zera-ps:test', null),
+    (error) => error instanceof StorageCorruptionError
+      && error.key === 'zera-ps:test'
+      && error.raw === '{broken'
+      && error.cause instanceof SyntaxError
+  );
 });
