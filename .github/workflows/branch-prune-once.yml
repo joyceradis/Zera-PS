@@ -1,51 +1,14 @@
-name: One-off audited residual branch prune
+name: Completed branch prune (disabled)
 
 on:
-  push:
-    branches:
-      - chore/housekeeping-product-convergence
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  prune:
-    if: contains(github.event.head_commit.message, '[branch-prune]')
+  archived:
+    if: ${{ false }}
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     steps:
-      - name: Checkout without persisted credentials
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
-        with:
-          fetch-depth: 1
-          persist-credentials: false
-
-      - name: Delete only audited residual branches with exact SHA guards
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          remote="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-
-          delete_exact() {
-            branch="$1"
-            expected="$2"
-            actual=$(git ls-remote --heads "$remote" "refs/heads/${branch}" | awk '{print $1}')
-            if [ -z "$actual" ]; then
-              echo "Already absent: ${branch}"
-              return 0
-            fi
-            if [ "$actual" != "$expected" ]; then
-              echo "REFUSING DELETE: ${branch} moved; expected ${expected}, got ${actual}"
-              exit 1
-            fi
-            echo "Deleting audited residual branch: ${branch} @ ${actual}"
-            git push "$remote" --delete "$branch"
-          }
-
-          delete_exact 'docs/repository-housekeeping-clean-7' '43fcd223df4c1a23dd9bd452fd59142ec6f23e27'
-          delete_exact 'feat/temporal-results-and-applied-tools' '1e9a2db7b2aeef33d6ba9dd4b5ccb43ee3e50030'
-          delete_exact 'feat/temporal-workflow-engine' '45b55a9e90d7366e402051c0c2234c2f4097382e'
-          delete_exact 'fix/temporal-state-persistence' 'fe73c132075ceda0869db829eedb8dad906b961d'
-          delete_exact 'refactor/clinical-safety-foundation' '7706cbabce306a1180a0f48ac54ff9d2355df433'
+      - run: echo 'Residual branch audit/prune completed; workflow retained disabled because connector deletion is restricted.'
