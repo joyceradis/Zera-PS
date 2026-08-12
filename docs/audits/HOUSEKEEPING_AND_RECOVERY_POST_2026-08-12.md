@@ -11,7 +11,7 @@ A PR modifica produto, documentação, PWA e testes. Não há deleção de engin
 ## 2. Evidência automatizada atual
 
 Workflow canônico: `.github/workflows/checks.yml`
-Run PR mais recente após correção de superfície: `31556209385`
+Run PR mais recente após correção de superfície e housekeeping documental: `31556477488`
 Job: `verify`
 Resultado: `success`
 
@@ -37,6 +37,8 @@ todo 0
 ```
 
 O ciclo TDD da correção de superfície foi observado no CI: o commit de teste `4f74a8b...` falhou como esperado porque o launcher legado de reavaliação ainda permanecia visível; a implementação `08c79eaf...` ocultou esse launcher na camada convergida e restaurou o gate para verde com 177/177 testes.
+
+Após atualização documental subsequente, o run `31556477488` revalidou o head com `success`.
 
 Code scanning default do GitHub havia concluído com sucesso no marco funcional anterior desta mesma PR. A regressão canônica `checks` permanece o gate obrigatório a cada alteração.
 
@@ -158,6 +160,8 @@ Nenhum documento foi apagado apenas por parecer antigo. A limpeza de CI foi exec
 
 O ROADMAP canônico foi reconciliado com a decisão já implementada do diferencial leucocitário; a antiga pendência de “definir quando outros componentes entram” foi encerrada para a regra atual.
 
+Durante o fechamento documental, uma atualização do `CHANGELOG.md` inicialmente substituiu conteúdo histórico demais. A auditoria do próprio write identificou a perda imediatamente; o blob anterior foi recuperado e o changelog foi regravado preservando integralmente os marcos de 08–09/08, com o marco de 12/08 acrescentado no topo. O run automatizado subsequente permaneceu verde. Esse incidente confirma a regra de housekeeping: documentação histórica não deve ser “resumida” por sobrescrita destrutiva.
+
 ## 9. Métricas — arqueologia pós
 
 Foram separadas três linhagens:
@@ -193,14 +197,15 @@ A origem da implementação longitudinal/mensal continua não resolvida. Ausênc
 ## 11. Gate desta auditoria
 
 ```text
-AUTOMATED CODE/TEST GATE     = PASS — 177/177 no run 31556209385
+AUTOMATED CODE/TEST GATE     = PASS — 177/177; run final documental 31556477488
 DEFAULT CODEQL               = PASS no marco funcional anterior; revalidar no head final se houver nova execução
 CLINICAL FABRICATION GATE    = regressões automatizadas preservadas
 WBC DISPLAY RULE             = DOMAIN DECISION RESOLVED / IMPLEMENTED
 REASSESSMENT SURFACE DEDUPE  = PASS automatizado / manual visual pendente
+CHANGELOG HISTORY            = PRESERVED após recuperação do blob anterior
 PWA STATIC APP-SHELL GATE    = PASS automatizado
 MANUAL CLINICAL UX GATE      = PENDING
 MONTHLY METRICS ARCHAEOLOGY  = UNRESOLVED
 ```
 
-Conclusão técnica: o núcleo automatizado permanece verde após a convergência adicional da superfície. A homologação clínica da UX e a arqueologia do gráfico longitudinal continuam abertas.
+Conclusão técnica: o núcleo automatizado permanece verde após a convergência adicional da superfície e o fechamento documental. A homologação clínica da UX e a arqueologia do gráfico longitudinal continuam abertas.
