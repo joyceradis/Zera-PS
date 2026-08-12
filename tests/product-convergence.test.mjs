@@ -29,6 +29,11 @@ test('product convergence is loaded after the existing application engines', asy
   assert.ok(entry.indexOf("./product-convergence.js") > entry.indexOf("./temporal-ui.js"));
 });
 
+test('productivity navigation remains compatible with the legacy generic nav listener', async () => {
+  const source = await read('src/product-convergence.js');
+  assert.match(source, /shiftButton\.dataset\.view\s*=\s*['"]plantao['"]/);
+});
+
 test('continuation actions are housed inside Atendimento instead of routing through hidden legacy navigation', async () => {
   const source = await read('src/product-convergence.js');
   assert.match(source, /openEncounterPanel/);
