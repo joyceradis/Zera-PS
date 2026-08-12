@@ -37,7 +37,7 @@ const QUICK_CHOICES = Object.freeze({
       ['BEG', 'REG', 'MEG'],
       ['LOTE', 'CONFUSO', 'REBAIXADO'],
       ['CORADO', 'HIPOCORADO'],
-      ['HIDRATADO', 'HIPOHIDRATADO', 'DESIDRATADO'],
+      ['HIDRATADO', 'DESIDRATADO +/4+', 'DESIDRATADO ++/4+', 'DESIDRATADO +++/4+', 'DESIDRATADO ++++/4+'],
       ['ANICTÉRICO', 'ICTÉRICO'],
       ['ACIANÓTICO', 'CIANÓTICO'],
       ['AFEBRIL', 'FEBRIL']
