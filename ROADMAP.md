@@ -34,8 +34,8 @@ Nenhuma funcionalidade é avanço se economizar texto, mas aumentar cliques, nav
 | 3. Ferramentas clínicas | v1.1 implementada | `available ≠ applicable ≠ calculable ≠ applied` |
 | 4. Documento temporal | v1.1 implementada | Estado operacional não vaza para prontuário |
 | 5. Persistência/histórico | Parcial | Sem perda ou reinterpretação de estado |
-| 6. Housekeeping + Product Convergence | **Em andamento** | Uma única experiência de Atendimento sem perda de microfunções |
-| 7. Recuperação de microfunções | Em arqueologia | Parser/atalhos recuperados por teste, não por cópia cega |
+| 6. Housekeeping + Product Convergence | **Em auditoria pós** | Uma única experiência de Atendimento sem perda de microfunções |
+| 7. Recuperação de microfunções | Parser laboratorial recuperado; arqueologia segue | Recuperar por contrato/teste, não por cópia cega |
 | 8. Expansão clínica | Futuro | Novo contexto só após provar o motor atual |
 | 9. Piloto | Futuro | Zero informação fabricada + ganho operacional mensurável |
 | 10. Produção/assinatura | Futuro | Requisitos SaaS, segurança e privacidade |
@@ -66,7 +66,7 @@ Próximos itens após convergência da UI: múltiplos resultados seriados na sup
 
 Concluído tecnicamente: protocolo declarativo, schema/validador, registry, renderer genérico e SCA como caso de referência.
 
-**Correção de produto:** essa infraestrutura permanece interna. A médica não deve escolher entre “roteiro” e “workflow contextual”. Ambos devem convergir para uma única porta de **Contexto clínico**.
+**Correção de produto:** essa infraestrutura permanece interna. A médica não deve escolher entre “roteiro” e “workflow contextual”. Ambos convergem para uma única porta de **Contexto clínico**.
 
 ## 3 — Ferramentas clínicas estruturadas
 
@@ -102,13 +102,13 @@ Contrato protegido de reavaliação:
 - ...
 ```
 
-`Reavaliação` passa a ser tratada como etapa/evento do mesmo Atendimento também na experiência de produto, não apenas no engine.
+`Reavaliação` é tratada como etapa/evento do mesmo Atendimento também na experiência de produto, não apenas no engine.
 
 ## 5 — Persistência e histórico
 
 Atual: núcleo documental local + Encounter v3 temporal ativo.
 
-A branch histórica `develop` contém um modelo anterior de Atendimento e persistência multi-atendimento. Não será mesclada: seus conceitos úteis serão reconciliados com o Encounter v3 atual.
+A branch histórica `develop` contém um modelo anterior de Atendimento e persistência multi-atendimento. Não será mesclada: seus conceitos úteis são reconciliados com o Encounter v3 atual.
 
 Próximos itens: múltiplos Atendimentos, histórico de documentos, versionamento de reavaliações, avaliação de IndexedDB, retenção, exportação/importação e testes de corrupção/recuperação.
 
@@ -124,12 +124,13 @@ Objetivo: reduzir a entropia acumulada sem rewrite e sem perder comportamento.
 - [x] localizar parser bruto de exames no commit legado `c3828267...`;
 - [x] confirmar HDA integral e microfunções atuais;
 - [x] auditar baseline do service worker;
-- [ ] localizar/classificar métricas e gráficos antigos citados pela Founder;
-- [ ] finalizar classificação documental canonical/audit/legacy/obsolete/duplicate.
+- [~] localizar/classificar métricas e gráficos antigos — placeholders e métricas do atendimento corrente classificados; gráfico longitudinal/mensal ainda não localizado;
+- [x] finalizar classificação documental canonical/audit/legacy-reference/obsolete/duplicate;
+- [x] separar e remover CI irrelevante/conflitante sem tocar o gate canônico.
 
 ### 6.2 Convergência da interface
 
-Estado atual problemático:
+Estado anterior problemático:
 
 ```text
 Roteiros de documentação
@@ -157,13 +158,14 @@ ATENDIMENTO
 
 Tarefas:
 
-- [ ] criar teste de caracterização da navegação atual;
-- [ ] unificar a seleção de contexto sem apagar templates/protocol engines;
-- [ ] remover a exposição duplicada “roteiro × workflow”;
-- [ ] mover reavaliação para ação/etapa do Atendimento;
-- [ ] mover alta/internação para destino/documentos do Atendimento, preservando seus geradores;
-- [ ] manter Rascunhos como superfície própria enquanto histórico de Atendimentos não estiver pronto;
-- [ ] validar desktop/mobile/PWA.
+- [x] criar testes de caracterização da convergência e das microfunções preservadas;
+- [x] unificar incrementalmente a seleção de contexto sem apagar templates/protocol engines;
+- [x] remover da superfície principal a exposição concorrente “roteiro × workflow”;
+- [x] mover reavaliação para ação/etapa do Atendimento na superfície;
+- [x] mover alta/internação para ações/desfechos do Atendimento na superfície, preservando seus geradores;
+- [x] manter Rascunhos como superfície própria enquanto histórico de Atendimentos não estiver pronto;
+- [ ] validar manualmente desktop/mobile/PWA antes de homologar a experiência clínica;
+- [ ] substituir, em ciclo posterior e somente após equivalência comprovada, a navegação transitória por views internas escondidas por integração estrutural definitiva.
 
 ### 6.3 HDA
 
@@ -181,29 +183,46 @@ Gate: nenhuma construção assistida pode tornar a HDA mais lenta que a escrita 
 
 A implementação ancestral foi localizada em `drajoyceradis/HMS-Dra-Joyce-Radis`, commit `c3828267fd393d722af6cc99f137b8d442eac690`.
 
-Não recuperar por cópia integral. Extrair o parser para módulo puro, criar testes sintéticos e adaptar a saída ao padrão atual:
+O comportamento foi recuperado por adaptação, não por cópia integral. O módulo puro atual reconhece o núcleo compacto e preserva analitos adicionais do predecessor em estrutura interna sem promovê-los automaticamente ao documento.
+
+Saída clínica compacta atual:
 
 ```text
 - LAB: HB: ... / HT: ... / LEUCO: ... (NEUT: ...%) / PLAQ: ... / PCR: ... / UR: ... / CR: ... / NA: ... / K: ...
 ```
 
-Somente analitos encontrados entram. Diferencial leucocitário só aparece quando houver dado de origem pertinente.
+Somente analitos encontrados entram. O diferencial neutrofílico só aparece quando explicitamente presente; nenhum “predomínio” é inferido.
 
-- [ ] caracterizar entradas legadas;
-- [ ] escrever testes RED;
-- [ ] portar limpeza/parsing para módulo puro;
-- [ ] adaptar aliases e saída compacta;
-- [ ] integrar ao campo de Exames Complementares;
-- [ ] substituir com segurança o renderer “um item por linha”;
-- [ ] regressão pós-migração.
+- [x] caracterizar entradas legadas;
+- [x] escrever regressões para entradas completas, aliases compactos e ausência de dados;
+- [x] portar limpeza/parsing para módulo puro;
+- [x] adaptar aliases e saída compacta;
+- [x] integrar ao campo de Exames Complementares;
+- [x] convergir o renderer para `# EXAMES COMPLEMENTARES:` sem duplicar bullets;
+- [x] preservar/restaurar o texto cru enquanto não houver edição manual do resultado organizado;
+- [x] invalidar snapshot de restauração após edição manual;
+- [ ] definir, em decisão clínica própria, quando outros componentes do diferencial leucocitário devem ser exibidos no documento;
+- [ ] executar regressão manual no navegador/PWA.
 
 ### 7.2 Entrada por voz
 
-Há evidência documental no predecessor Acelerador de “Digitação por Voz”.
+A arqueologia até aqui não localizou implementação verificável que justifique transplante. Memória de produto ou referência indireta não será tratada como código existente.
 
-- [ ] localizar a implementação exata;
-- [ ] avaliar se funciona offline/nos navegadores-alvo;
-- [ ] somente recuperar se reduzir interação sem criar dependência frágil.
+- [~] procurar implementação exata em histórico/predecessores — buscas atuais sem evidência suficiente;
+- [ ] avaliar suporte offline/nos navegadores-alvo somente se a implementação ou requisito verificável for localizado;
+- [ ] recuperar apenas se reduzir interação sem criar dependência frágil.
+
+### 7.3 Métricas e feedback operacional
+
+A arqueologia separou três linhagens:
+
+- protótipo de `develop` com valores hardcoded de produtividade/volume;
+- predecessor HMS com feedback calculado do atendimento corrente (`mCrit`, `mAudit`, `mDestino`);
+- gráfico longitudinal/mensal referido pela Founder, ainda sem implementação localizada.
+
+Detalhes: [`docs/audits/METRICS_ARCHAEOLOGY_2026-08-12.md`](docs/audits/METRICS_ARCHAEOLOGY_2026-08-12.md).
+
+`mDestino` não será transplantado: sugestão automática de destino exige metodologia e validação clínica próprias. `mCrit` e `mAudit` permanecem patrimônio a avaliar, não requisito atual.
 
 ## 8 — Expansão clínica
 
