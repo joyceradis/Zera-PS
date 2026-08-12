@@ -31,6 +31,10 @@ function requireStorageAdapter(adapter) {
   return adapter;
 }
 
+function getDefaultStorageAdapter(root = globalThis) {
+  return withStorageContext('access', 'localStorage', () => requireStorageAdapter(root?.localStorage));
+}
+
 function readStorageItem(adapter, key) {
   return withStorageContext('read', key, () => requireStorageAdapter(adapter).getItem(key));
 }
@@ -55,6 +59,7 @@ function parseStoredJson(raw, key, fallback = null) {
 export {
   StoragePersistenceError,
   StorageCorruptionError,
+  getDefaultStorageAdapter,
   readStorageItem,
   writeStorageItem,
   removeStorageItem,
