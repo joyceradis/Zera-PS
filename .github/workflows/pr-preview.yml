@@ -1,0 +1,84 @@
+name: PR 30 Browser Preview
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-30-browser-preview
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    if: github.event.pull_request.number == 30
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v5
+
+      - name: Start static server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/zera-http.log 2>&1 &
+          echo $! > /tmp/zera-http.pid
+          for i in {1..20}; do
+            if curl -fsS http://127.0.0.1:4173/app.html >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/zera-http.log
+          exit 1
+
+      - name: Install Cloudflare tunnel client
+        run: |
+          curl -fsSL -o /tmp/cloudflared.deb \
+            https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+          sudo dpkg -i /tmp/cloudflared.deb
+          cloudflared --version
+
+      - name: Open HTTPS preview tunnel
+        id: tunnel
+        shell: bash
+        run: |
+          set -euo pipefail
+          cloudflared tunnel --no-autoupdate --url http://127.0.0.1:4173 > /tmp/cloudflared.log 2>&1 &
+          echo $! > /tmp/cloudflared.pid
+
+          PREVIEW_ORIGIN=""
+          for i in {1..45}; do
+            PREVIEW_ORIGIN=$(grep -Eo 'https://[a-z0-9-]+\.trycloudflare\.com' /tmp/cloudflared.log | head -n 1 || true)
+            if [ -n "$PREVIEW_ORIGIN" ]; then
+              break
+            fi
+            sleep 1
+          done
+
+          if [ -z "$PREVIEW_ORIGIN" ]; then
+            cat /tmp/cloudflared.log
+            exit 1
+          fi
+
+          PREVIEW_URL="${PREVIEW_ORIGIN}/app.html"
+          curl --retry 8 --retry-delay 2 --retry-all-errors -fsS "$PREVIEW_URL" >/dev/null
+          echo "origin=$PREVIEW_ORIGIN" >> "$GITHUB_OUTPUT"
+          echo "url=$PREVIEW_URL" >> "$GITHUB_OUTPUT"
+          echo "PREVIEW_URL=$PREVIEW_URL" >> "$GITHUB_ENV"
+          echo "::notice title=Zera PS PR #30 Preview::$PREVIEW_URL"
+          printf '%s\n' "$PREVIEW_URL" | tee /tmp/preview-url.txt
+
+      - name: Keep preview available for homologation
+        run: |
+          echo "Zera PS PR #30 preview: $PREVIEW_URL"
+          echo "This HTTPS tunnel remains available while this job is running (maximum 6 hours)."
+          while kill -0 "$(cat /tmp/cloudflared.pid)" 2>/dev/null && kill -0 "$(cat /tmp/zera-http.pid)" 2>/dev/null; do
+            sleep 30
+          done
+          echo "Preview process stopped unexpectedly."
+          cat /tmp/cloudflared.log || true
+          cat /tmp/zera-http.log || true
+          exit 1
