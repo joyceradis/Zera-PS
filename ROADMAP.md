@@ -188,10 +188,10 @@ O comportamento foi recuperado por adaptação, não por cópia integral. O mód
 Saída clínica compacta atual:
 
 ```text
-- LAB: HB: ... / HT: ... / LEUCO: ... (NEUT: ...%) / PLAQ: ... / PCR: ... / UR: ... / CR: ... / NA: ... / K: ...
+- LAB: HB: ... / HT: ... / LEUCO: ... (S ...% / B ...% / L ...% / M ...% / E ...% / Bas ...%) / PLAQ: ... / PCR: ... / UR: ... / CR: ... / NA: ... / K: ...
 ```
 
-Somente analitos encontrados entram. O diferencial neutrofílico só aparece quando explicitamente presente; nenhum “predomínio” é inferido.
+Somente analitos encontrados entram. No diferencial leucocitário, apenas frações explicitamente informadas **e acima do limite superior de referência adotado para a regra de produto** aparecem na linha compacta. O renderer não infere predominância, desvio à esquerda, infecção ou qualquer diagnóstico.
 
 - [x] caracterizar entradas legadas;
 - [x] escrever regressões para entradas completas, aliases compactos e ausência de dados;
@@ -201,7 +201,7 @@ Somente analitos encontrados entram. O diferencial neutrofílico só aparece qua
 - [x] convergir o renderer para `# EXAMES COMPLEMENTARES:` sem duplicar bullets;
 - [x] preservar/restaurar o texto cru enquanto não houver edição manual do resultado organizado;
 - [x] invalidar snapshot de restauração após edição manual;
-- [ ] definir, em decisão clínica própria, quando outros componentes do diferencial leucocitário devem ser exibidos no documento;
+- [x] aplicar decisão clínica do diferencial leucocitário: exibir somente S/B/L/M/E/Bas explicitamente informados acima do limite superior configurado;
 - [ ] executar regressão manual no navegador/PWA.
 
 ### 7.2 Entrada por voz
