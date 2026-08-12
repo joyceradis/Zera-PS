@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  extractEncounterRecords,
   normalizeEncounterRecord,
   summarizeProductivity,
   formatPatientsPerHour
@@ -10,6 +11,18 @@ test('invalid or missing encounter timestamps are ignored', () => {
   assert.equal(normalizeEncounterRecord(null), null);
   assert.equal(normalizeEncounterRecord({}), null);
   assert.equal(normalizeEncounterRecord({ startedAt: 'not-a-date' }), null);
+});
+
+test('encounter adapter accepts only explicit record collections for shift productivity', () => {
+  assert.deepEqual(extractEncounterRecords(null), []);
+  assert.deepEqual(extractEncounterRecords({ id: 'active', startedAt: '2026-08-11T18:00:00-03:00' }), []);
+  assert.deepEqual(extractEncounterRecords([
+    { id: 'a', startedAt: '2026-08-11T18:00:00-03:00' },
+    { id: 'bad' }
+  ]).map((item) => item.id), ['a']);
+  assert.deepEqual(extractEncounterRecords({ encounters: [
+    { id: 'b', startedAt: '2026-08-11T19:00:00-03:00' }
+  ] }).map((item) => item.id), ['b']);
 });
 
 test('one encounter without a measurable shift duration never fabricates a patients per hour value', () => {
