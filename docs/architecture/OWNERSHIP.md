@@ -40,7 +40,7 @@ uma responsabilidade clínica/técnica
 | Integração temporal com UI | `src/temporal-ui.js` | TRANSITIONAL/REFINE | coordena engines atuais; reduzir responsabilidades após convergência da superfície |
 | Convergência da superfície | `src/product-convergence.js` | TRANSITIONAL | camada de migração; não deve virar novo monólito permanente |
 | Estilos | `assets/styles.css` | KEEP FOR NOW | mover/fragmentar só após estabilização da UI canônica |
-| PWA/cache | `service-worker.js` + `manifest.json` | KEEP/AUDIT | cache explícito; nenhuma regra clínica |
+| PWA/cache | `service-worker.js` + `manifest.json` | KEEP/AUDIT | cache explícito e versionado; pruning restrito ao namespace `zera-ps-*`; APP_SHELL deve permanecer fechado sobre imports locais; nenhuma regra clínica |
 
 ## Duplicações aparentes que NÃO são duplicações funcionais
 
@@ -71,6 +71,8 @@ Consolidar só quando houver teste de caracterização para todas as microfunç�
 `assets/app.js` ainda concentra muita coordenação de UI e comportamento documental legado. Ele não deve receber novas capacidades estruturais. O caminho de redução será por extração incremental, sempre com teste antes e depois.
 
 `src/product-convergence.js` e `src/temporal-ui.js` são adapters de transição. A arquitetura final não deve depender de duas camadas de coordenação para sempre.
+
+A persistência local ainda não possui uma política explícita de sinalização de erro de escrita (`QuotaExceededError`, storage indisponível ou falha de permissões). O código atual não deve ser silenciado com `try/catch` que faça a médica acreditar que um rascunho foi salvo quando não foi. A correção futura precisa introduzir feedback operacional observável antes de capturar esses erros.
 
 ## Política para novas mudanças
 
