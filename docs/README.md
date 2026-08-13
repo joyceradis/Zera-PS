@@ -1,6 +1,6 @@
 # Documentação técnica — Zera PS
 
-Esta pasta concentra a documentação vigente, evidência de auditoria e histórico de decisões. O `README.md` da raiz permanece a página principal do projeto.
+Esta pasta concentra documentação vigente, evidência de auditoria e histórico de decisões. O `README.md` da raiz permanece a página principal do projeto.
 
 ## O que é normativo hoje
 
@@ -11,8 +11,9 @@ Antes de usar planos antigos ou auditorias como referência de implementação, 
 3. [`product/WORKFLOWS.md`](product/WORKFLOWS.md) — modelo temporal do Atendimento;
 4. [`architecture/ARCHITECTURE.md`](architecture/ARCHITECTURE.md) — responsabilidades técnicas;
 5. [`architecture/OWNERSHIP.md`](architecture/OWNERSHIP.md) — owner semântico de cada responsabilidade e limites da migração `assets/` → `src/`;
-6. [`architecture/AGENT_COORDINATION.md`](architecture/AGENT_COORDINATION.md) — papéis, autoridade de decisão e regra de trabalho concorrente entre Founder, Lead Engineering e auditor independente;
-7. [`safety/INVARIANTS.md`](safety/INVARIANTS.md) — invariantes que nenhuma implementação pode quebrar.
+6. [`architecture/AGENT_COORDINATION.md`](architecture/AGENT_COORDINATION.md) — divisão operacional Founder / Platform-Core / Quality-Verification e protocolo de integração;
+7. [`safety/INVARIANTS.md`](safety/INVARIANTS.md) — doutrina ampla de invariantes que nenhuma implementação pode quebrar;
+8. [`clinical/INVARIANT_REGISTRY.md`](clinical/INVARIANT_REGISTRY.md) — subset crítico rastreado mecanicamente pelo gate de testes.
 
 ## Navegação
 
@@ -26,7 +27,9 @@ Antes de usar planos antigos ou auditorias como referência de implementação, 
 
 - [`architecture/ARCHITECTURE.md`](architecture/ARCHITECTURE.md) — visão técnica consolidada e responsabilidades dos módulos.
 - [`architecture/OWNERSHIP.md`](architecture/OWNERSHIP.md) — ownership canônico, wrappers transitórios e ordem de consolidação arquitetural.
-- [`architecture/AGENT_COORDINATION.md`](architecture/AGENT_COORDINATION.md) — coordenação multiagente, fronteiras Founder/Engineering/auditoria e regra para hotfixes concorrentes.
+- [`architecture/AGENT_COORDINATION.md`](architecture/AGENT_COORDINATION.md) — coordenação multiagente e fronteiras de setor.
+- [`coordination/README.md`](coordination/README.md) — protocolo operacional de estado/leases por setor.
+- [`coordination/active/`](coordination/active/) — estado atual separado de Founder, Platform/Core e Quality/Verification.
 - [`architecture/PROTOCOL_CONTRACT.md`](architecture/PROTOCOL_CONTRACT.md) — contrato declarativo interno de protocolos/contextos.
 - [`architecture/TEMPORAL_WORKFLOW.md`](architecture/TEMPORAL_WORKFLOW.md) — contrato do workflow temporal e estados do Atendimento.
 
@@ -35,7 +38,10 @@ Antes de usar planos antigos ou auditorias como referência de implementação, 
 ### Segurança clínica
 
 - [`safety/CLINICAL_SAFETY.md`](safety/CLINICAL_SAFETY.md) — política de segurança clínico-documental.
-- [`safety/INVARIANTS.md`](safety/INVARIANTS.md) — invariantes que nenhuma implementação pode violar.
+- [`safety/INVARIANTS.md`](safety/INVARIANTS.md) — doutrina ampla de invariantes.
+- [`clinical/INVARIANT_REGISTRY.md`](clinical/INVARIANT_REGISTRY.md) — registry crítico usado pelo gate `tests/invariant-coverage.test.mjs`.
+
+A existência do registry não revoga invariantes doutrinários que ainda não foram promovidos ao gate executável. Coverage `FULL` significa integral **no escopo mapeado**, não prova absoluta sobre qualquer estado imaginável.
 
 ### Verificação
 
@@ -45,6 +51,8 @@ Antes de usar planos antigos ou auditorias como referência de implementação, 
 
 Auditorias são fotografias de um marco, não especificação vigente.
 
+Novas auditorias/checkpoints multiagente usam **um arquivo por entrada** em [`audits/entries/`](audits/entries/), evitando colisão em ledger único. `audits/SHARED_AUDIT_LOG.md` permanece histórico/transicional para ciclos iniciados antes dessa migração.
+
 - [`audits/HOUSEKEEPING_AND_RECOVERY_2026-08-11.md`](audits/HOUSEKEEPING_AND_RECOVERY_2026-08-11.md) — auditoria ativa de housekeeping, arqueologia e convergência do produto.
 - [`audits/HOUSEKEEPING_AND_RECOVERY_POST_2026-08-12.md`](audits/HOUSEKEEPING_AND_RECOVERY_POST_2026-08-12.md) — auditoria pós do marco automatizado, limites transitórios e gates ainda pendentes de validação manual.
 - [`audits/ENGINEERING_HARDENING_2026-08-12.md`](audits/ENGINEERING_HARDENING_2026-08-12.md) — hardening não clínico: namespace de cache PWA, fechamento do APP_SHELL sobre imports, dívida técnica e gates restantes.
@@ -53,7 +61,7 @@ Auditorias são fotografias de um marco, não especificação vigente.
 - [`audits/UI_SURFACE_INVENTORY_2026-08-12.md`](audits/UI_SURFACE_INVENTORY_2026-08-12.md) — telas, campos, botões, ações e views transitórias da superfície clínica atual.
 - [`audits/MICROFUNCTION_RECOVERY_LEDGER_2026-08-12.md`](audits/MICROFUNCTION_RECOVERY_LEDGER_2026-08-12.md) — microfunções atuais, recuperadas, candidatas, inseguras e ainda não localizadas.
 - [`audits/BRANCH_ARCHAEOLOGY_2026-08-12.md`](audits/BRANCH_ARCHAEOLOGY_2026-08-12.md) — arqueologia e classificação original das branches.
-- [`audits/BRANCH_PRUNE_2026-08-12.md`](audits/BRANCH_PRUNE_2026-08-12.md) — fechamento da branch hygiene: 26 → 3 refs, critérios de equivalência e guards de exclusão.
+- [`audits/BRANCH_PRUNE_2026-08-12.md`](audits/BRANCH_PRUNE_2026-08-12.md) — fechamento histórico da grande poda inicial; novas branches transitórias posteriores são tratadas separadamente.
 - [`audits/LEGACY_MINING_2026-08-12.md`](audits/LEGACY_MINING_2026-08-12.md) — mineração consolidada de `develop`/v0.2: multi-Encounter, retomada, autosave, destino, microfunções recuperadas e comportamentos bloqueados.
 - [`audits/DOCUMENT_CLASSIFICATION_2026-08-12.md`](audits/DOCUMENT_CLASSIFICATION_2026-08-12.md) — classificação canonical/audit/legacy/obsolete/duplicate e regras de preservação.
 - [`audits/METRICS_ARCHAEOLOGY_2026-08-12.md`](audits/METRICS_ARCHAEOLOGY_2026-08-12.md) — separa placeholders históricos, feedback do atendimento corrente e o gráfico longitudinal ainda não localizado.
@@ -77,10 +85,10 @@ Auditorias são fotografias de um marco, não especificação vigente.
 
 ```text
 CANONICAL
-→ product/, architecture/, safety/, testing/
+→ product/, architecture/, coordination/, safety/, clinical/, testing/
 
 AUDIT
-→ audits/
+→ audits/entries/ + auditorias históricas em audits/
 
 LEGACY REFERENCE
 → history/ ou repositório predecessor explicitamente citado
@@ -91,7 +99,7 @@ OBSOLETE / DUPLICATE
 
 Planos e auditorias não ganham autoridade apenas por serem mais longos ou mais recentes. Quando houver conflito, o documento canônico vigente e o comportamento verificado do código prevalecem; conflitos clínicos retornam à Founder para decisão de domínio.
 
-Toda mudança clínico-documental segue:
+Toda mudança clinicamente relevante segue:
 
 ```text
 AUDITORIA PRÉVIA
