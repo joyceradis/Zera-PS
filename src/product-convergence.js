@@ -3,6 +3,7 @@ import { matchTriggerGroups, composeHdaFromQp } from './clinical-intake.js';
 import { formatImageReport } from './text-formatters.js';
 import { assembleFreeExamJustification } from './justification-engine.js';
 import { createEncounterStorage } from './storage.js';
+import { CONTEXT_EVENTS } from './context-coordination.js';
 import {
   extractEncounterRecords,
   summarizeProductivity,
@@ -161,7 +162,6 @@ function createZeroFrictionIntake() {
   triggerHost.setAttribute('aria-live', 'polite');
 
   const selected = new Set();
-  const previousHda = hdaInput.value.toLowerCase();
 
   const syncDocumentState = () => {
     const selectedLabels = [...triggerHost.querySelectorAll('input[type="checkbox"]:checked')].map((node) => node.value);
@@ -171,12 +171,13 @@ function createZeroFrictionIntake() {
     hdaInput.dispatchEvent(new Event('input', { bubbles: true }));
   };
 
-  const renderTriggers = () => {
+  const renderTriggers = ({ sync = true } = {}) => {
     const groups = matchTriggerGroups(free.value);
     const allowed = new Set(groups.flatMap((group) => group.flags));
     for (const flag of [...selected]) if (!allowed.has(flag)) selected.delete(flag);
     triggerHost.replaceChildren();
     triggerHost.hidden = groups.length === 0;
+    const sourceHda = hdaInput.value.toLowerCase();
 
     for (const group of groups) {
       const groupNode = document.createElement('fieldset');
@@ -190,7 +191,7 @@ function createZeroFrictionIntake() {
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.value = flag;
-        checkbox.checked = selected.has(flag) || previousHda.includes(flag.toLowerCase());
+        checkbox.checked = selected.has(flag) || sourceHda.includes(flag.toLowerCase());
         if (checkbox.checked) selected.add(flag);
         checkbox.addEventListener('change', () => {
           if (checkbox.checked) selected.add(flag); else selected.delete(flag);
@@ -202,10 +203,17 @@ function createZeroFrictionIntake() {
       groupNode.appendChild(grid);
       triggerHost.appendChild(groupNode);
     }
-    syncDocumentState();
+    if (sync) syncDocumentState();
   };
 
-  free.addEventListener('input', renderTriggers);
+  const restoreVisibleIntake = () => {
+    selected.clear();
+    free.value = hdaInput.value || qpInput.value || '';
+    renderTriggers({ sync: false });
+  };
+
+  free.addEventListener('input', () => renderTriggers());
+  document.addEventListener(CONTEXT_EVENTS.DOCUMENTATION_RESTORED, restoreVisibleIntake);
   historySection.insertBefore(field, qpField);
   field.insertAdjacentElement('afterend', triggerHost);
   renderTriggers();
