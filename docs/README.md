@@ -11,7 +11,8 @@ Antes de usar planos antigos ou auditorias como referência de implementação, 
 3. [`product/WORKFLOWS.md`](product/WORKFLOWS.md) — modelo temporal do Atendimento;
 4. [`architecture/ARCHITECTURE.md`](architecture/ARCHITECTURE.md) — responsabilidades técnicas;
 5. [`architecture/OWNERSHIP.md`](architecture/OWNERSHIP.md) — owner semântico de cada responsabilidade e limites da migração `assets/` → `src/`;
-6. [`safety/INVARIANTS.md`](safety/INVARIANTS.md) — invariantes que nenhuma implementação pode quebrar.
+6. [`architecture/AGENT_COORDINATION.md`](architecture/AGENT_COORDINATION.md) — papéis, autoridade de decisão e regra de trabalho concorrente entre Founder, Lead Engineering e auditor independente;
+7. [`safety/INVARIANTS.md`](safety/INVARIANTS.md) — invariantes que nenhuma implementação pode quebrar.
 
 ## Navegação
 
@@ -25,6 +26,7 @@ Antes de usar planos antigos ou auditorias como referência de implementação, 
 
 - [`architecture/ARCHITECTURE.md`](architecture/ARCHITECTURE.md) — visão técnica consolidada e responsabilidades dos módulos.
 - [`architecture/OWNERSHIP.md`](architecture/OWNERSHIP.md) — ownership canônico, wrappers transitórios e ordem de consolidação arquitetural.
+- [`architecture/AGENT_COORDINATION.md`](architecture/AGENT_COORDINATION.md) — coordenação multiagente, fronteiras Founder/Engineering/auditoria e regra para hotfixes concorrentes.
 - [`architecture/PROTOCOL_CONTRACT.md`](architecture/PROTOCOL_CONTRACT.md) — contrato declarativo interno de protocolos/contextos.
 - [`architecture/TEMPORAL_WORKFLOW.md`](architecture/TEMPORAL_WORKFLOW.md) — contrato do workflow temporal e estados do Atendimento.
 
