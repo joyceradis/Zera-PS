@@ -10,7 +10,8 @@ Antes de alterar owner compartilhado, sincronize a branch-alvo e registre um lea
 | --- | --- | --- | --- | --- | --- | --- |
 | Founder | PR #30 | superfície clínica | Homologação clínica manual e relatório de domínio | — | ACTIVE | — |
 | Lead Engineering | `chore/housekeeping-product-convergence` / #30 | governança multiagente, documentação canônica e reconciliação | Consolidar shared audit log, invariant registry e coordenação; sem alterar comportamento clínico em homologação | `f588a05` | ACTIVE | não |
-| Auditor independente (Claude) | `audit/maturity-report-publication` → PR filha da #30 | `docs/audits/MATURITY_AUDIT_2026-08-12.md` (novo) + entrada aditiva em `docs/audits/SHARED_AUDIT_LOG.md` + esta linha | Publicar relatório de maturidade independente no repositório e registrá-lo no log compartilhado | `3577383` | ACTIVE | não |
+| Auditor independente (Claude) | `audit/maturity-report-publication` → PR filha da #30 | `docs/audits/MATURITY_AUDIT_2026-08-12.md` (novo) + entrada aditiva em `docs/audits/SHARED_AUDIT_LOG.md` + `docs/README.md` (índice) | Publicar relatório de maturidade independente e registrá-lo no log compartilhado | `3577383` | CLOSED — `AUD-2026-08-13-004`, suíte 231/231 | não |
+| Auditor independente (Claude) | declarar antes do próximo write | próximo bloco técnico — ver checkpoint | A definir sem conflito com lease ativo | sincronizar antes do write | AVAILABLE | não |
 
 ### Sobreposição declarada — 2026-08-12
 

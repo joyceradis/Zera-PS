@@ -45,6 +45,8 @@ Antes de usar planos antigos ou auditorias como referência de implementação, 
 
 Auditorias são fotografias de um marco, não especificação vigente.
 
+- [`audits/SHARED_AUDIT_LOG.md`](audits/SHARED_AUDIT_LOG.md) — índice cronológico canônico de auditorias e reconciliações multiagente.
+- [`audits/MATURITY_AUDIT_2026-08-12.md`](audits/MATURITY_AUDIT_2026-08-12.md) — auditoria independente de maturidade da PWA para uso de plantão, com separação explícita entre fato, interpretação e proposta.
 - [`audits/HOUSEKEEPING_AND_RECOVERY_2026-08-11.md`](audits/HOUSEKEEPING_AND_RECOVERY_2026-08-11.md) — auditoria ativa de housekeeping, arqueologia e convergência do produto.
 - [`audits/HOUSEKEEPING_AND_RECOVERY_POST_2026-08-12.md`](audits/HOUSEKEEPING_AND_RECOVERY_POST_2026-08-12.md) — auditoria pós do marco automatizado, limites transitórios e gates ainda pendentes de validação manual.
 - [`audits/ENGINEERING_HARDENING_2026-08-12.md`](audits/ENGINEERING_HARDENING_2026-08-12.md) — hardening não clínico: namespace de cache PWA, fechamento do APP_SHELL sobre imports, dívida técnica e gates restantes.
