@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'zera-ps-';
-const CACHE_NAME = 'zera-ps-v15';
+const CACHE_NAME = 'zera-ps-v16';
 
 const APP_SHELL = [
   './',
@@ -28,6 +28,8 @@ const APP_SHELL = [
   './src/context-coordination.js',
   './src/justification-engine.js',
   './src/hda-composer.js',
+  './src/generated-text-sync.js',
+  './src/intake-restore-bridge.js',
   './src/tool-presentation.js',
   './src/clinical-state.js',
   './src/data.js',
