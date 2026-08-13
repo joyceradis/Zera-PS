@@ -89,6 +89,24 @@ Cobertura integral declarada significa que cada invariante do registry tem prote
 
 Especificamente para este invariante: a exaustão é sobre o espaço **declarativo** — etapas, protocolos, regras de disclosure e templates declarados. Ela não cobre, e não pretende cobrir, comportamento de DOM real nem combinações clinicamente possíveis versus impossíveis. Se um protocolo futuro introduzir disclosure que dependa de algo fora das regras declarativas, a coleta não o enxerga; o piso ancorado protege contra encolhimento dos protocolos conhecidos, não contra uma forma nova de declarar disclosure.
 
+## Bloco adjacente — último elo do INV-GOV-001 (issue #40)
+
+Platform/Core endereçou a issue #40 em `0ff8396`, com o step de CI `Guard critical safety sentinels`, que reprova o job se o registry, o gate ou a âncora sumirem. Verifiquei o resultado por execução, não por leitura:
+
+| Cenário | Detectado por |
+| --- | --- |
+| `integration-static.test.mjs` esvaziado | suíte — 2 falhas (o gate lê os protetores declarados nele) |
+| `invariant-coverage.test.mjs` esvaziado | suíte — 1 falha (âncora externa lê o gate de volta) |
+| um dos dois apagado | suíte, pelo outro; e também pelo step de CI |
+| **os dois apagados na mesma mudança** | **somente o step de CI** — nenhum dos dois testes chega a rodar |
+| **step de CI removido** | **nada** |
+
+O último cenário reabria o penúltimo: sem o step, apagar os dois arquivos de uma vez voltava a passar em silêncio. Fechado com `workflow-security.test.mjs :: 'the CI guard for critical safety sentinels cannot be removed silently'`, mapeado como protetor de `INV-GOV-001`.
+
+Três mutações verificadas, todas detectadas: remover o step; rebaixá-lo a aviso (tirar `exit 1`); tirar um arquivo da lista protegida.
+
+Owner tocado: `tests/workflow-security.test.mjs` apenas. `.github/workflows/checks.yml` foi **lido, não modificado** — o arquivo de CI é de Platform/Core; o que este setor acrescenta é a asserção de que ele continua existindo e reprovando.
+
 ## Owner e fronteira
 
 Owner tocado: `tests/` apenas. `docs/clinical/INVARIANT_REGISTRY.md` continua **lido, não modificado** — pertence ao owner `documentação canônica` de Platform/Core e está `ACTIVE`.

@@ -177,6 +177,11 @@ const PROTECTED_BY = Object.freeze({
     protectors: [
       // Âncora EXTERNA: quebra se este arquivo for apagado.
       ['integration-static.test.mjs', 'the invariant coverage gate exists and is wired to the clinical registry'],
+      // Âncora de CI: o gate e a âncora acima se protegem mutuamente contra remoção
+      // individual, mas apagar OS DOIS na mesma mudança não faria nenhum dos dois rodar.
+      // Só o step de CI cobre esse caso — e este protetor impede que o step suma em
+      // silêncio. Fecha a issue #40.
+      ['workflow-security.test.mjs', 'the CI guard for critical safety sentinels cannot be removed silently'],
       // Propriedades verificadas aqui dentro.
       ['invariant-coverage.test.mjs', 'every invariant declared in the registry has a declared coverage decision'],
       ['invariant-coverage.test.mjs', 'every mapped protecting test still exists with the exact declared name']

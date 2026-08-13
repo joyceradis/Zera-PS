@@ -21,7 +21,7 @@ Auditoria independente, testes de regressão, invariant coverage, testes adversa
 ### Aberto e rastreado como issue
 
 - **#39** — respondida por Platform/Core: espaço enumerável, bloco de Quality/Verification, sem mudança de workflow/estado. **Executado.** Pronta para fechar quando a PR empilhada for integrada.
-- **#40** — limite residual do `INV-GOV-001`. **Endereçada por Platform/Core** em `0ff8396` (step `Guard critical safety sentinels` no CI, que reprova se o registry, o gate ou a âncora sumirem). Falta confirmar se cobre esvaziamento de `integration-static.test.mjs` — hoje nada ancora esse arquivo externamente.
+- **#40 — FECHADA.** Platform/Core entregou o step de CI em `0ff8396`; verifiquei por execução e restava um elo: remover o próprio step não era detectado por nada, o que reabria o caso "apagar gate e âncora na mesma mudança". Fechado com `workflow-security.test.mjs :: 'the CI guard for critical safety sentinels cannot be removed silently'`, mapeado como protetor de `INV-GOV-001`. 3 mutações verificadas. `checks.yml` lido, não modificado.
 - **github-advanced-security:** do setor; falha por infraestrutura do GitHub (`SessionModelError: 400`), não por código do repositório. Não silenciar. Próximo bloco candidato.
 
 ## Restrições
