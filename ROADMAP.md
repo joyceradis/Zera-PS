@@ -28,7 +28,7 @@ Nenhuma funcionalidade é avanço se economizar texto, mas aumentar cliques, nav
 
 | Fase | Estado | Gate principal |
 | --- | --- | --- |
-| 0. Fundação de segurança | Concluída | Sem fabricação clínica |
+| 0. Fundação de segurança | Concluída + P0 revalidado | Sem fabricação clínica; trava contra negativas automáticas restaurada |
 | 1. Workflow temporal | v1.1 implementada | Reavaliação preserva admissão e resultados seriados |
 | 2. Progressive disclosure | Infraestrutura técnica concluída | Engines continuam genéricos |
 | 3. Ferramentas clínicas | v1.1 implementada | `available ≠ applicable ≠ calculable ≠ applied` |
@@ -40,11 +40,46 @@ Nenhuma funcionalidade é avanço se economizar texto, mas aumentar cliques, nav
 | 9. Piloto | Futuro | Zero informação fabricada + ganho operacional mensurável |
 | 10. Produção/assinatura | Futuro | Requisitos SaaS, segurança e privacidade |
 
+## Coordenação multiagente — gate operacional atual
+
+Documento canônico: [`docs/architecture/AGENT_COORDINATION.md`](docs/architecture/AGENT_COORDINATION.md).
+
+```text
+FOUNDER / DOMÍNIO CLÍNICO
+→ define prática real do PS, prioridade, linguagem, fluxo cognitivo e homologação
+
+LEAD ENGINEERING
+→ arquitetura, estado, engines, persistência, PWA, testes, CI/CD, segurança, dívida e regressão
+
+AUDITOR INDEPENDENTE
+→ segunda leitura, procura regressões/invariantes removidos e apresenta evidência reproduzível
+```
+
+Regras vigentes:
+
+- PR #30 é a linha canônica de convergência e **não será mergeada antes da homologação manual da Founder**;
+- `main` recebe apenas hotfix mínimo quando existir risco real que não pode aguardar a PR #30;
+- hotfix na `main` exige teste de regressão e reconciliação com a PR #30;
+- nenhum agente remove teste de segurança para fazer a suíte passar;
+- nenhuma decisão de domínio clínico é tomada silenciosamente por Engineering ou auditor;
+- dúvida sobre fronteira técnica/clínica é tratada como decisão clínica;
+- microfunções existentes são patrimônio até prova de obsolescência ou insegurança.
+
+### Âncora de 2026-08-13
+
+- P0 de negativas clínicas pré-escritas confirmado por auditoria independente;
+- hotfix #32 aplicado na `main`: negativas removidas dos cinco roteiros legados e teste de trava restaurado;
+- PR #30 ganhou proteção adicional do invariant: HDA livre sem flags não recebe achados; somente flags explicitamente selecionados podem ser renderizados;
+- gate automatizado da PR #30 após a correção: **230 testes / 230 pass / 0 fail**;
+- Founder segue homologando a PR #30; Engineering mantém o chão técnico estável e não altera silenciosamente a UX clínica em avaliação.
+
 ## 0 — Fundação de segurança
 
 **Concluído:** eliminação de `vazio → NEGA`, NEGA em HPP como ação explícita, template normal confirmado, scores sem falso zero/Glasgow 15, separação de estado/documento/UI/storage, persistência, testes, CI e PWA endurecido.
 
-**Gate permanente:** nenhum campo vazio ou template não confirmado pode produzir afirmação clínica.
+**P0 revalidado em 2026-08-13:** a `main` continha negativas pré-escritas em cinco roteiros históricos. O defeito foi reproduzido com teste RED, corrigido por hotfix mínimo #32 e verificado em GREEN. A PR #30 mantém trava arquitetural adicional para impedir recorrência no compositor atual.
+
+**Gate permanente:** nenhum campo vazio, template, roteiro, protocolo, compositor ou fallback pode produzir afirmação clínica sem estado/ação explícita que a autorize.
 
 ## 1 — Workflow temporal de Atendimento
 
