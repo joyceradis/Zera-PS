@@ -56,6 +56,7 @@ import {
   composeDiarrheaHda,
   synchronizeGeneratedHda
 } from '../src/hda-composer.js';
+import { synchronizeGeneratedText } from '../src/generated-text-sync.js';
 
 const storage = createStorage();
 const HPP_KEYS = ['comorbidades', 'muc', 'alergias', 'habitos', 'cirurgias'];
@@ -72,6 +73,7 @@ let scoreStates = Object.fromEntries(SCORE_LIST.map((definition) => [definition.
 let glasgowAnswers = { eye: null, verbal: null, motor: null };
 let activeTemplateSelection = null;
 let templateSelectionKnown = true;
+let lastGeneratedEvolution = '';
 let hdaComposerState = {
   templateId: null,
   values: emptyDiarrheaHdaState(),
@@ -120,7 +122,8 @@ function currentSnapshot() {
     clinicalState,
     templateSelection: activeTemplateSelection,
     hdaComposer: hdaComposerState,
-    output: $('evolution-output')?.value || ''
+    output: $('evolution-output')?.value || '',
+    generatedEvolution: lastGeneratedEvolution
   };
 }
 
@@ -317,6 +320,7 @@ function resetDocumentationSurface() {
   clinicalState = emptyClinicalState();
   scoreStates = Object.fromEntries(SCORE_LIST.map((definition) => [definition.id, createScoreState(definition)]));
   glasgowAnswers = { eye: null, verbal: null, motor: null };
+  lastGeneratedEvolution = '';
   renderScores(SCORE_LIST, handleScoreAnswer, handleGlasgowChange);
   if ($('evolution-output')) $('evolution-output').value = '';
   deactivateTemplate({ persist: false });
@@ -457,8 +461,26 @@ function countUnconfirmedHpp() {
 
 function generateEvolution() {
   const raw = readForm();
-  const text = renderEvolution(raw, clinicalState);
-  $('evolution-output').value = text;
+  const nextGeneratedText = renderEvolution(raw, clinicalState);
+  const output = $('evolution-output');
+  const synchronized = synchronizeGeneratedText({
+    currentText: output?.value || '',
+    previousGeneratedText: lastGeneratedEvolution,
+    nextGeneratedText
+  });
+
+  if (synchronized.requiresConfirmation) {
+    const accepted = window.confirm(
+      'O texto final contém edição manual que será substituída ao atualizar a evolução. Substituir mesmo assim?'
+    );
+    if (!accepted) {
+      showFeedback('Edição manual preservada. A evolução não foi atualizada.');
+      return;
+    }
+  }
+
+  if (output) output.value = nextGeneratedText;
+  lastGeneratedEvolution = nextGeneratedText;
   $('save-status').textContent = 'GERADO';
   autosave();
   const pending = countUnconfirmedHpp();
@@ -503,7 +525,13 @@ function saveDraft() {
     createdAt: new Date().toISOString(),
     snapshot
   });
-  storage.saveDrafts(drafts.slice(0, 30));
+  try {
+    storage.saveDrafts(drafts.slice(0, 30));
+  } catch {
+    $('save-status').textContent = 'NÃO SALVO';
+    showFeedback('Não foi possível salvar o rascunho neste dispositivo. O conteúdo atual foi preservado na tela.');
+    return;
+  }
   renderDrafts();
   $('save-status').textContent = 'SALVO';
   showFeedback('Rascunho v2 salvo neste dispositivo.');
@@ -537,6 +565,7 @@ function loadDraft(id) {
     clinicalState = snapshot.clinicalState || emptyClinicalState();
     restoreTemplateSelection(snapshot);
     $('evolution-output').value = snapshot.output || '';
+    lastGeneratedEvolution = snapshot.generatedEvolution || '';
   }
   syncAllQuickChoices(QUICK_CHOICES, FIELD_MAP);
   activateView('evolucao');
@@ -560,6 +589,7 @@ function clearForm() {
   $('evolution-form').reset();
   $('evolution-output').value = '';
   clinicalState = emptyClinicalState();
+  lastGeneratedEvolution = '';
   resetHdaComposer();
   storage.clearAutosave();
   deactivateTemplate({ persist: false });
@@ -677,6 +707,7 @@ function loadAutosave() {
     clinicalState = snapshot.clinicalState || emptyClinicalState();
     restoreTemplateSelection(snapshot);
     $('evolution-output').value = snapshot.output || '';
+    lastGeneratedEvolution = snapshot.generatedEvolution || '';
     $('save-status').textContent = snapshot.migratedFrom ? 'MIGRADO — REVISE' : 'RECUPERADO';
   } catch {
     $('save-status').textContent = 'NÃO SALVO';
