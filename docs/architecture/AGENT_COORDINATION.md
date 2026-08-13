@@ -6,89 +6,78 @@ Contrato canônico de governança enquanto mais de um agente atua no repositóri
 
 1. GitHub é a fonte única de verdade operacional.
 2. A Founder não transporta contexto entre agentes.
-3. Setor vem antes do lease.
-4. CI verde prova que os testes presentes passaram; não prova que invariantes críticos continuam suficientemente protegidos.
-5. PR #30 (`chore/housekeeping-product-convergence`) é a linha canônica de convergência e não pode ser mergeada antes da homologação clínica manual da Founder.
-6. Nenhum agente altera silenciosamente UX clínica, semântica clínica ou comportamento em homologação.
-7. PR filha submetida a segunda leitura **não pode ser integrada enquanto existir revisão bloqueante pendente**. Como as sessões operam sob a mesma identidade GitHub e o mecanismo nativo de `REQUEST_CHANGES` pode não ser tecnicamente aplicável, o gate operacional é explícito: integração só após comentário do setor integrador contendo `INTEGRATION READY` para o HEAD revisado.
+3. Agente novo reconstrói o estado a partir da documentação canônica; não pede à Founder que reconte a história técnica.
+4. Setor vem antes do lease.
+5. CI verde prova que os testes presentes passaram; não prova que invariantes críticos continuam suficientemente protegidos.
+6. PR #30 (`chore/housekeeping-product-convergence`) é a linha canônica de convergência e não pode ser mergeada antes da homologação clínica manual da Founder.
+7. Nenhum agente altera silenciosamente UX clínica, semântica clínica ou comportamento em homologação.
+8. PR filha submetida a segunda leitura não pode ser integrada enquanto existir revisão bloqueante pendente. Integração só após comentário do setor revisor contendo `INTEGRATION READY — <HEAD SHA>` para o HEAD revisado.
+
+## Bootstrap obrigatório de agente novo
+
+Antes de qualquer write:
+
+1. sincronizar `chore/housekeeping-product-convergence`;
+2. ler este documento;
+3. ler `docs/coordination/active/founder.md`;
+4. ler `docs/coordination/active/platform-core.md`;
+5. ler `docs/coordination/active/quality-verification.md`;
+6. ler `ROADMAP.md`;
+7. ler `docs/clinical/INVARIANT_REGISTRY.md`;
+8. abrir PR/issue citada na lane do próprio setor;
+9. somente então registrar lease no arquivo do próprio setor.
+
+`docs/architecture/ACTIVE_WORK.md` e `docs/audits/SHARED_AUDIT_LOG.md` são históricos/transicionais e não representam estado corrente.
 
 ## Divisão operacional
 
 ### Joyce — Founder / Produto / Domínio Clínico
 
-Owner de:
-
-- fluxo real do pronto-socorro;
-- prioridade de produto;
-- UX clínica;
-- linguagem documental;
-- relevância clínica;
-- microfunções úteis;
-- homologação;
-- decisão final em trade-off de domínio.
+Owner de fluxo real do PS, prioridade de produto, UX clínica, linguagem documental, relevância clínica, microfunções úteis, homologação e decisão final em trade-off de domínio.
 
 A Founder não decide branch hygiene, CI/CD, storage, PWA, ownership ou refatoração puramente técnica e não atua como mensageira entre agentes.
 
+**Contrato de evidência da Founder:** observação em linguagem natural é suficiente. `Fiz X → ocorreu Y → eu esperava Z` é dado bruto de produto. A Founder não precisa nomear invariant, teste, módulo ou causa arquitetural.
+
 ### ChatGPT — Platform / Core Engineering
 
-Owner de:
-
-- arquitetura canônica;
-- modelagem de estado e proveniência;
-- document engine;
-- workflow/temporalidade;
-- storage/persistência;
-- PWA/offline;
-- integração entre módulos;
-- CI/CD estrutural e supply chain;
-- segurança técnica de plataforma;
-- ownership;
-- housekeeping;
-- roadmap e documentação canônica;
-- merge/reconciliação;
-- dívida técnica estrutural.
+Owner de arquitetura canônica, modelagem de estado/proveniência, document engine, workflow/temporalidade, storage/persistência, PWA/offline, integração, CI/CD estrutural/supply chain, segurança técnica, ownership, housekeeping, roadmap/documentação canônica, merge/reconciliação e dívida estrutural.
 
 Pode executar autonomamente mudanças não clínicas, reversíveis e testáveis dentro desse setor. Garantias críticas devem receber segunda leitura independente quando viável.
 
 ### Claude — Quality / Verification Engineering
 
-Owner de:
+Owner de auditoria independente, testes de regressão, invariant coverage, testes adversariais, investigação/reprodução de bugs, arqueologia complementar, análise de PR, compatibilidade, revisão de segurança, detecção de teste removido/enfraquecido, testes de interação, observabilidade de CI, análise de maturidade e correções técnicas localizadas demonstradas por auditoria que não alterem silenciosamente Core ou domínio.
 
-- auditoria independente;
-- testes de regressão;
-- invariant coverage;
-- testes adversariais;
-- investigação/reprodução de bugs;
-- arqueologia complementar;
-- análise de PR;
-- compatibilidade;
-- revisão de segurança;
-- detecção de teste removido/enfraquecido;
-- testes de interação;
-- observabilidade de CI;
-- análise de maturidade;
-- correções técnicas localizadas demonstradas por auditoria, desde que não alterem silenciosamente Core ou domínio.
-
-Se uma lacuna exigir mudança de arquitetura canônica, estado, document engine, workflow, storage, PWA ou UX/semântica clínica, Quality registra o RED/evidência e faz handoff ao owner correto em vez de refatorar o Core por iniciativa própria.
+Se uma lacuna exigir arquitetura, estado, document engine, workflow, storage, PWA ou UX/semântica clínica, Quality registra RED/evidência e faz handoff ao owner correto.
 
 ## Interface entre setores
 
 ```text
-QUALITY encontra bug/gap
-→ reproduz e caracteriza
-→ fortalece teste/garantia dentro de Quality
-→ pode corrigir bug técnico localizado do próprio setor
-→ se exigir Core: handoff para Platform/Core
-→ se exigir domínio/UX: handoff para Founder
+FOUNDER observa uso real
+→ relata comportamento/fricção em linguagem natural
 
-PLATFORM/CORE implementa mudança estrutural
-→ Quality faz segunda leitura/adversarial quando crítico
+QUALITY
+→ reproduz e caracteriza
+→ converte observação/achado em RED e teste
+→ faz regressão/adversarial/mutation testing
+→ delimita exatamente o que a evidência prova
+→ se exigir Core: handoff
+→ se exigir domínio: Founder
+
+PLATFORM/CORE
+→ verifica causalidade e composição real entre camadas
+→ implementa/reconcilia mudança estrutural
+→ impede promoção de cobertura local a garantia sistêmica sem evidência
+
+QUALITY
+→ tenta quebrar novamente quando crítico
 
 FOUNDER
-→ entra somente em decisão real de produto/domínio/homologação
+→ homologa o comportamento clínico/produto
 ```
 
-Autorrevisão não substitui segunda leitura quando a mudança toca segurança clínica, estado, documento, microfunções ou garantias críticas.
+**Regra epistemológica:** quem implementa uma garantia crítica não é seu único validador. Autorrevisão não substitui contraditório técnico. Um teste pode estar correto e ainda sustentar uma conclusão maior do que aquilo que realmente exercitou.
 
 ### Handshake de integração
 
@@ -104,75 +93,39 @@ AUTOR publica checkpoint + HEAD SHA
 → somente então merge na branch-alvo
 ```
 
-Regras:
-
-- `INTEGRATION READY` vale **somente para o SHA citado**; push/rebase posterior invalida o handshake;
-- `CI verde`, `mergeable=true`, lease fechado ou autorrevisão **não substituem** esse handshake;
-- comentário `BLOCKED`, `não integrar`, `aguarda segunda leitura` ou equivalente mantém a PR sem merge;
-- quem integra deve conferir que o HEAD atual é o mesmo SHA liberado;
-- este gate é processual enquanto a configuração externa de branch protection não puder ser comprovada/enforced pela integração.
+- `INTEGRATION READY` vale somente para o SHA citado; push/rebase posterior invalida o handshake;
+- `CI verde`, `mergeable=true`, lease fechado ou autorrevisão não substituem o handshake;
+- `BLOCKED`, `não integrar` ou equivalente mantém a PR sem merge;
+- quem integra confere HEAD atual = SHA liberado;
+- gate é processual enquanto branch protection externa não puder ser comprovada/enforced.
 
 ## Estado operacional sem colisão
 
-Novos leases usam **um arquivo por setor**, evitando múltiplos agentes editarem a mesma tabela:
+Novos leases usam um arquivo por setor:
 
 - `docs/coordination/active/founder.md`
 - `docs/coordination/active/platform-core.md`
 - `docs/coordination/active/quality-verification.md`
 
-`docs/architecture/ACTIVE_WORK.md` está **FROZEN / HISTÓRICO**. Não registrar novos leases, checkpoints ou estado corrente nele. PR antiga que ainda o carregue no diff deve descartar esse write no rebase e usar a lane do próprio setor.
+Antes de escrever: sincronizar HEAD; executar bootstrap; confirmar setor/owner; registrar lease apenas na própria lane; executar; publicar checkpoint/PR; fechar lease.
 
-Antes de escrever:
-
-1. sincronizar o HEAD da linha-alvo;
-2. ler os três arquivos de estado em `docs/coordination/active/`;
-3. confirmar setor e owner;
-4. registrar lease somente no arquivo do próprio setor;
-5. executar;
-6. publicar PR/checkpoint;
-7. fechar o lease no mesmo arquivo.
-
-Dois agentes não escrevem simultaneamente no mesmo owner. Enquanto um escreve, o outro pode auditar/revisar ou trabalhar em owner ortogonal.
+Dois agentes não escrevem simultaneamente no mesmo owner. Enquanto um escreve, outro pode revisar/auditar ou trabalhar em owner ortogonal.
 
 ## Auditorias sem colisão
 
-`docs/audits/SHARED_AUDIT_LOG.md` é **histórico/transicional**, não arquivo de write concorrente.
-
-Novas auditorias/checkpoints relevantes usam um arquivo por entrada em:
-
-`docs/audits/entries/`
-
-Convenção:
-
-```text
-YYYY-MM-DDTHHMMSSZ-<sector>-<slug>.md
-```
-
-Isso elimina disputa por contador `AUD-*` e conflito por ponto único de inserção. Platform/Core pode atualizar/recompor o índice em lote depois, sem bloquear Quality.
+Novas auditorias/checkpoints relevantes usam um arquivo por entrada em `docs/audits/entries/`, convenção `YYYY-MM-DDTHHMMSSZ-<sector>-<slug>.md`. `SHARED_AUDIT_LOG.md` é histórico/transicional.
 
 ## Invariantes
 
 Registry canônico: `docs/clinical/INVARIANT_REGISTRY.md`.
 
-Regras mínimas:
+Regras mínimas: ausência de confirmação nunca vira afirmação clínica; template não equivale a achado confirmado; contexto/sugestão não equivale a diagnóstico; score incompleto não equivale a zero; disponível ≠ aplicável ≠ calculável ≠ aplicado/documentado; estado operacional não vaza para prontuário; reavaliação não sobrescreve admissão; falha de persistência não equivale a ausência de dado; métrica/informação clínica não pode ser fabricada.
 
-- ausência de confirmação nunca vira afirmação clínica;
-- template não equivale a achado confirmado;
-- contexto/sugestão não equivale a diagnóstico;
-- score incompleto não equivale a zero;
-- disponível ≠ aplicável ≠ calculável ≠ aplicado/documentado;
-- estado operacional não vaza para prontuário;
-- reavaliação não sobrescreve admissão;
-- falha de persistência não equivale a ausência de dado;
-- métrica/informação clínica não pode ser fabricada.
+Teste protetor é patrimônio. Remoção/enfraquecimento exige segunda leitura. Coverage declarada distingue integral no escopo mapeado de parcial com gap nomeado.
 
-Teste protetor de invariant é patrimônio. Remoção/enfraquecimento exige segunda leitura explícita. Coverage declarada deve distinguir cobertura integral no escopo mapeado de cobertura parcial com gap nomeado; não usar suíte verde como prova absoluta.
+### Cobertura de composição
 
-### Regra adicional para cobertura de composição
-
-Um invariant que atravessa múltiplas camadas só pode ser classificado como cobertura integral quando ao menos um protetor atravessa a **composição real** entre essas camadas. Testes isolados de duas pontas não provam automaticamente a ponte entre elas.
-
-Exemplo:
+Invariant que atravessa múltiplas camadas só pode ser integral quando ao menos um protetor atravessa a composição real:
 
 ```text
 contexto/progressive disclosure
@@ -181,11 +134,9 @@ contexto/progressive disclosure
 → documento final
 ```
 
-Calcular um `renderPlan` e depois renderizar um formulário vazio independente não prova que o contexto não possa contaminar a projeção documental em um glue intermediário.
+Calcular `renderPlan` e depois renderizar formulário vazio independente não prova a ponte.
 
 ## Branches
-
-### Convergência
 
 ```text
 main
@@ -195,24 +146,9 @@ PR #30 — chore/housekeeping-product-convergence
 PRs filhas por setor
 ```
 
-- mudanças do produto convergente entram diretamente na PR #30 ou por PR filha apontando para ela;
-- não criar terceira linha de produto;
-- PR #30 permanece bloqueada até homologação da Founder.
+Mudanças convergentes entram na PR #30 ou por PR filha apontando para ela. Não criar terceira linha de produto. PR #30 permanece bloqueada até homologação da Founder.
 
-### Hotfix P0
-
-Hotfix em `main` só quando risco real não puder aguardar:
-
-```text
-RED reproduzível
-→ correção mínima
-→ GREEN
-→ segunda leitura quando crítico
-→ merge explícito PR #N → main
-→ reconciliação comprovada com PR #30
-```
-
-Merge em `main` nunca implica que PR #30 herdou a correção.
+Hotfix P0 em `main` somente com RED reproduzível → correção mínima → GREEN → segunda leitura quando crítico → merge explícito → reconciliação comprovada com PR #30. Merge em `main` nunca implica herança automática pela PR #30.
 
 ## Checkpoint obrigatório
 
@@ -233,16 +169,16 @@ IMPACTO CLÍNICO:
 
 A frase `mesclando` sem PR e base explícitos é comunicação inválida.
 
-## Estado ancorado — 2026-08-13
+## Estado ancorado — checkpoint corrente
 
-- PR #30 aberta/draft, linha canônica e bloqueada para merge até homologação clínica.
-- P0 de negativas clínicas automáticas corrigido/reconciliado; o incidente demonstrou que teste verde não basta.
-- divisão vigente: Joyce = Founder/Produto/Domínio; ChatGPT = Platform/Core; Claude = Quality/Verification.
-- PR #37: gate de invariantes revisado em três ciclos e integrado à PR #30 em `a5a5ade`.
-- PR #38: proteção adversarial de `INV-DOC-001` integrada à PR #30 em `3a23402`; estado operacional → documento segue allow-list no escopo testado.
-- PR #41: integrada prematuramente enquanto havia revisão bloqueante; a declaração `INV-CLIN-003 = FULL` foi revertida para `PARTIAL` em `7a947f44` sem remover os testes úteis. Incidente registrado em `docs/audits/entries/2026-08-13T020500Z-platform-pr41-premature-integration-reconciled.md`.
-- issue #40 / `INV-GOV-001`: guard externo de CI implementado em `checks.yml` antes da suíte; presença + fiação mínima dos sentinelas são verificadas. Branch protection externa não foi confirmada pela integração e não deve ser presumida.
-- `ACTIVE_WORK.md` congelado; coordenação vigente usa lanes por setor.
-- PR #36: auditoria de maturidade, draft/pausada por instrução da Founder.
-- `develop`: somente mina arqueológica, não linha de implementação.
-- gates ainda abertos: `INV-CLIN-003`, keyboard-first, remoção de fricções concorrentes, testes de interação real, PWA/offline real e homologação clínica.
+- PR #30 aberta/draft, linha canônica e bloqueada para merge até homologação clínica;
+- P0 de negativas clínicas automáticas corrigido/reconciliado;
+- Joyce = Founder/Produto/Domínio; ChatGPT = Platform/Core; Claude = Quality/Verification;
+- PR #37 integrada após três leituras: gate invariant→teste;
+- PR #38 integrada: proteção adversarial de `INV-DOC-001`;
+- PR #41 foi integrada prematuramente durante revisão bloqueante; patrimônio de testes foi preservado, mas `INV-CLIN-003 = FULL` foi revertido para `PARTIAL`. Estado verdadeiro: **9 integral / 1 parcial**;
+- incidente #41 originou handshake obrigatório `INTEGRATION READY — <HEAD SHA>`;
+- `INV-GOV-001`: guard externo no `checks.yml` antes da suíte; branch protection externa não presumida;
+- `ACTIVE_WORK.md` congelado; lanes por setor são estado corrente;
+- PR #36 draft/pausada; `develop` é somente mina arqueológica;
+- gates abertos: `INV-CLIN-003`, keyboard-first/fricção, interação real, PWA/offline real e homologação clínica.
