@@ -1,6 +1,8 @@
 import {
   WORKFLOW_STAGES,
   createEncounter,
+  ensureEncounterStarted,
+  attachWorkflow,
   transitionEncounter,
   updateEncounterContext,
   updateAdmissionSnapshot,
@@ -41,6 +43,11 @@ const STAGE_LABELS = Object.freeze({
   [WORKFLOW_STAGES.REASSESSMENT]: 'REAVALIAÇÃO',
   [WORKFLOW_STAGES.FINAL_DOCUMENTATION]: 'DOCUMENTAÇÃO FINAL'
 });
+const CLINICAL_ACTIVITY_FIELDS = Object.freeze([
+  'qp', 'hda', 'comorbidades', 'muc', 'alergias', 'habitos', 'cirurgias',
+  'estado-geral', 'acv', 'ar', 'abd', 'ext', 'neuro',
+  'laboratoriais', 'imagem', 'hipoteses', 'conduta', 'em-tempo'
+]);
 
 let encounter = encounterStorage.loadActiveEncounter();
 let protocol = null;
@@ -61,6 +68,19 @@ function toolStateList() {
 
 function readTemporalContext() {
   return { ...protocolContext(), appliedTools: serializeToolApplications(toolStateList()) };
+}
+
+function currentAdmissionSnapshot() {
+  return {
+    qp: $('qp')?.value || '',
+    hda: $('hda')?.value || '',
+    evolutionText: $('evolution-output')?.value || ''
+  };
+}
+
+function hasClinicalActivity() {
+  return CLINICAL_ACTIVITY_FIELDS.some((id) => String($(id)?.value || '').trim().length > 0)
+    || String($('evolution-output')?.value || '').trim().length > 0;
 }
 
 function persistEncounter() {
@@ -84,6 +104,18 @@ function renderProtocolVisibility() {
   if ($('workflow-context')) $('workflow-context').hidden = !protocol;
   if (!renderer) return;
   renderer.update({ stage: currentStage(), context: protocolContext() });
+}
+
+function handleClinicalActivity() {
+  if (!hasClinicalActivity()) return;
+  encounter = ensureEncounterStarted(encounter, { admissionSnapshot: currentAdmissionSnapshot() });
+  encounter = updateAdmissionSnapshot(encounter, currentAdmissionSnapshot());
+  persistEncounter();
+  renderStage();
+}
+
+function handleDocumentationReset() {
+  clearActiveWorkflow();
 }
 
 function ensurePendingItem(id, kind, label) {
@@ -254,11 +286,7 @@ function populateScenarioOptions() {
 
 function captureAdmissionSnapshot() {
   if (!encounter) return;
-  encounter = updateAdmissionSnapshot(encounter, {
-    qp: $('qp')?.value || '',
-    hda: $('hda')?.value || '',
-    evolutionText: $('evolution-output')?.value || ''
-  });
+  encounter = updateAdmissionSnapshot(encounter, currentAdmissionSnapshot());
   persistEncounter();
 }
 
@@ -295,7 +323,9 @@ function handleScenarioChange() {
       if ($('workflow-scenario')) $('workflow-scenario').value = previousScenario;
       return;
     }
-    encounter = createEncounter({ workflowId: scenario, admissionSnapshot: {}, context: {} });
+    encounter = encounter && !encounter.workflowId
+      ? attachWorkflow(encounter, scenario)
+      : createEncounter({ workflowId: scenario, admissionSnapshot: {}, context: {} });
   }
   mountProtocol(scenario);
   renderer?.setContext(encounter.context || {});
@@ -317,6 +347,7 @@ function handleContextChange() {
 }
 
 function handleEvolutionGenerated() {
+  if (!encounter) handleClinicalActivity();
   if (!encounter) return;
   const output = $('evolution-output');
   if (!output) return;
@@ -325,6 +356,7 @@ function handleEvolutionGenerated() {
 }
 
 function handleStartReassessment() {
+  if (!encounter) handleClinicalActivity();
   if (!encounter) return;
   persistTemporalContext();
   captureAdmissionSnapshot();
@@ -407,6 +439,8 @@ function injectTemporalStyles() {
 function bindTemporalEvents() {
   document.addEventListener(CONTEXT_EVENTS.TEMPLATE_SELECTION_REQUEST, handleTemplateSelectionRequest);
   $('workflow-scenario')?.addEventListener('change', handleScenarioChange);
+  $('evolution-form')?.addEventListener('input', handleClinicalActivity);
+  $('evolution-form')?.addEventListener('reset', handleDocumentationReset);
   $('reassess-encounter')?.addEventListener('click', handleStartReassessment);
   $('generate-evolution')?.addEventListener('click', () => queueMicrotask(handleEvolutionGenerated));
   $('generate-reassessment')?.addEventListener('click', () => queueMicrotask(handleReassessmentGenerated));
@@ -417,6 +451,7 @@ function initTemporalWorkflow() {
   populateScenarioOptions();
   restoreTemporalUi();
   bindTemporalEvents();
+  queueMicrotask(handleClinicalActivity);
 }
 
 document.addEventListener('DOMContentLoaded', initTemporalWorkflow);
