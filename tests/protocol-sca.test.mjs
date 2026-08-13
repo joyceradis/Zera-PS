@@ -63,6 +63,15 @@ test('calculable HEART stays out of the document until explicitly applied', () =
   assert.deepEqual(renderScores([applied]), ['# SCORES:', '- HEART: 3 PONTOS — BAIXO RISCO']);
 });
 
+test('troponin ratio guidance requires the assay-specific laboratory reference and never a universal cutoff', async () => {
+  const ratioField = getField(SCA_PROTOCOL, 'troponinRatio');
+  assert.match(ratioField.help || '', /REFER[ÊE]NCIA|ENSAIO|LABORAT[ÓO]RIO/i);
+  assert.doesNotMatch(ratioField.help || '', /0[,.]0019/);
+
+  const source = await readFile('protocols/sca.js', 'utf8');
+  assert.doesNotMatch(source, /(?:cutoff|limite|refer[êe]ncia)\s*[:=]\s*['"]?0[,.]0019/i);
+});
+
 test('SCA declares ECG and troponin as temporal results with pending and available rules', () => {
   const declarations = Object.fromEntries(SCA_PROTOCOL.temporalResults.map((item) => [item.id, item]));
   assert.deepEqual(Object.keys(declarations), ['ecg_initial', 'troponin_1']);
