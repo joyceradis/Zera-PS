@@ -58,8 +58,8 @@ Dezessete pontos de ocultação foram identificados no módulo. Os elementos ori
 no documento com o atributo `hidden`; não são removidos, e parte deles conserva listeners
 registrados por `assets/app.js`.
 
-Essa dobra é a origem causal direta de seis dos catorze achados desta auditoria (UX-02, UX-03,
-UX-05, UX-07, UX-10 e UX-12).
+Essa dobra é a origem causal direta de sete dos quinze achados desta auditoria (UX-02, UX-03,
+UX-05, UX-07, UX-10, UX-12 e UX-15).
 
 ## 5. Escala de severidade
 
@@ -507,9 +507,50 @@ O invariante é honrado pelo motor e perdido na borda. Nenhum protetor cobre a b
 
 ---
 
+### UX-15 — Dois caminhos concorrentes de reavaliação no mesmo botão; o contrato documental do README é inalcançável
+
+**Severidade:** S2
+**Local:** `assets/app.js:715`; `src/temporal-ui.js:412`, `:343`; `src/document-engine.js:63-95`
+**Owner da correção:** Platform/Core
+**Relação:** decorre de UX-03; agrava UX-12
+
+O botão `#generate-reassessment` tem **dois** listeners registrados por módulos diferentes:
+
+```text
+assets/app.js:715      → generateReassessment
+                         → renderReassessment  (assets/document-engine.js:82)
+                         → emite # EVOLUÇÃO / # EXAMES DISPONIBILIZADOS / # CONDUTA
+
+src/temporal-ui.js:412 → queueMicrotask(handleReassessmentGenerated)
+                         → src/temporal-ui.js:343   if (!encounter) return;
+                         → nunca executa, por UX-03
+```
+
+Existem, portanto, dois renderizadores de reavaliação no repositório:
+
+| Renderizador | Conteúdo | Alcançável |
+| --- | --- | --- |
+| `renderReassessment` (`assets/document-engine.js:82`) | evolução, exames, conduta | **sim** |
+| `renderTemporalReassessment` (`src/document-engine.js:63`) | `# HDA (ADMISSÃO):`, `# SCORES:`, carry-forward da admissão | **não** |
+
+**Consequência documental.** O `README.md:74` declara como contrato vigente:
+
+> O contrato documental atual mantém, entre outras regras, `# QP: "..."` inline, `# SCORES:` abaixo
+> da QP somente quando houver ferramenta aplicada/documentada e `# HDA (ADMISSÃO):` preservando o
+> contexto inicial.
+
+Esse contrato está implementado apenas em `src/document-engine.js`, chamado apenas por
+`src/temporal-ui.js`, cujos caminhos exigem encounter. **Nenhuma dessas regras alcança o documento
+que o usuário obtém hoje.** A reavaliação efetivamente produzida descarta o contexto de admissão.
+
+Isso viola diretamente o gate declarado no `ROADMAP.md:45` — *"Reavaliação única deve preservar
+admissão e funcionar sem caminhos concorrentes"* — nos dois termos simultaneamente.
+
+---
+
 ## 6.1 Padrão sistêmico
 
-Os catorze achados desta auditoria não são independentes. Todos têm a mesma forma:
+Os quinze achados desta auditoria não são independentes. Todos têm a mesma forma:
 
 ```text
 o motor está correto e protegido por teste
@@ -525,6 +566,7 @@ o ponto de chamada que liga o motor ao usuário não está
 | UX-11 | `restoreForm` restaura corretamente | o campo visível não é ressincronizado |
 | UX-12 | `handleStartReassessment` protege-se corretamente | o chamador ignora que ela não executou |
 | UX-14 | `writeStorageItem` lança, nunca falha em silêncio | `saveDraft` não captura |
+| UX-15 | `renderTemporalReassessment` implementa o contrato do README | o botão executa o renderizador legado |
 
 O mesmo se aplica ao `INV-CLIN-003`: a propriedade é verdadeira no código e o espaço que ela
 protege está fora do alcance do usuário (UX-03).
@@ -572,9 +614,13 @@ lista."*
 | UX-12 | — | Sem cobertura |
 | UX-13 | — | Sem cobertura |
 | UX-14 | — | Motor coberto (`storage-io.test.mjs`); **borda não coberta** |
+| UX-15 | — | Motor coberto (`reassessment-document.test.mjs`); **o renderizador coberto é o inalcançável** |
 
-Onze dos catorze achados não têm protetor algum. Entre eles estão os quatro de maior severidade
+Doze dos quinze achados não têm protetor algum. Entre eles estão os quatro de maior severidade
 (UX-01, UX-09, UX-11 e UX-03). Nenhum seria detectado pela suíte se fosse introduzido hoje.
+
+UX-15 é o caso mais nítido do padrão da seção 6.1: `reassessment-document.test.mjs` cobre
+`renderTemporalReassessment` com rigor — e é justamente o renderizador que o usuário nunca alcança.
 
 Isso delimita o significado da contagem 267/267: a suíte protege propriedades de motores puros e
 de composição entre módulos. Ela não observa a superfície de uso, e por construção não observaria
@@ -594,8 +640,9 @@ Ordenada por severidade, não por esforço.
 2. **UX-01** — decisão de redação pela Founder sobre a moldura da justificativa; em seguida,
    correção do mecanismo e protetor que reprove emissão de predicado clínico não derivado de
    entrada. Enquanto a decisão não vier, o defeito permanece ativo em documento de uso externo.
-3. **UX-03** — reconciliação arquitetural entre a ocultação da camada temporal e a existência do
-   Resumo do Plantão. Issue #44 aberta.
+3. **UX-03 e UX-15 em conjunto** — reconciliação arquitetural entre a ocultação da camada temporal,
+   a existência do Resumo do Plantão e os dois caminhos concorrentes de reavaliação. Ocupam o mesmo
+   gate do roadmap (`:45`, `:53`). Issue #44 aberta.
 4. **UX-10** — restituição de estado inicial, rótulo de orientação e indicação de posição.
    Sobrepõe-se parcialmente a UX-03 e deve ser tratado junto com ele.
 5. **UX-02** — correção da duplicação QP/HDA e protetor correspondente.
@@ -626,7 +673,70 @@ demonstração concreta dessa distinção dentro deste próprio repositório.
 
 O gate de homologação permanece aberto e pertence à Founder.
 
-## 12. Falha de método na primeira rodada
+## 12. Reconciliação com `ROADMAP.md` e `README.md`
+
+Leitura obrigatória executada após a segunda varredura. Três consequências.
+
+### 12.1 Correção de uma recomendação deste próprio relatório
+
+A disposição inicialmente proposta para UX-09 e UX-11 — acrescentar guarda no padrão dos
+`confirm()` já existentes — **contraria o roadmap**:
+
+- `ROADMAP.md:50` — *"UX operacional / keyboard-first | **Lacuna real** | atalhos, **remoção de
+  `confirm()` nativo** e eliminação de caminhos/seletores concorrentes"*;
+- `README.md:37` — *"a interface deve ser previsível, keyboard-first e **parcimoniosa em cliques,
+  confirmações** e mudanças de tela"*.
+
+Acrescentar diálogo nativo resolveria a perda de dado às custas de uma fricção que o roadmap
+classifica como lacuna P1. **A disposição correta é desfazer, não confirmar** — o padrão que o
+organizador de laboratório já implementa em `src/product-convergence.js:420-445` ("Restaurar texto
+colado"), listado no roadmap entre o patrimônio preservado.
+
+Recomendação revista para UX-09 e UX-11: preservar a versão anterior e oferecer restauração
+não bloqueante, sem modal. A distinção conteúdo real versus conteúdo gerado
+(`hasFormContentBeyondTemplate`) continua sendo o mecanismo que decide **quando** oferecer.
+
+Registrado como correção porque a recomendação errada já havia sido publicada nas issues #47 e #49.
+
+### 12.2 Achados mapeados aos gates já declarados no roadmap
+
+Nenhum achado desta auditoria exige gate novo. Todos caem em gates existentes, o que indica que o
+roadmap está correto e que o que falta é evidência, não planejamento.
+
+| Gate do `ROADMAP.md` | Achados que o ocupam |
+| --- | --- |
+| Invariant coverage — `INV-CLIN-003` parcial até teste da composição real (`:44`) | endereçado pela PR #43 |
+| Workflow temporal — reavaliação preserva admissão, sem caminhos concorrentes (`:45`) | **UX-15**, UX-12, UX-03 |
+| Progressive disclosure — validar que reduz carga cognitiva (`:46`) | UX-10 |
+| Ferramentas clínicas — contexto real (`:47`) | UX-03 |
+| Persistência/histórico — sem perda/reinterpretação (`:49`) | UX-13, UX-14, UX-09, UX-11 |
+| UX operacional / keyboard-first (`:50`) | UX-04, UX-07, UX-10 |
+| Testes de interação real (`:52`) | seção 12 deste relatório |
+| Housekeeping/Convergence — sem perda de microfunções (`:53`) | UX-03, UX-12, UX-15 |
+
+Alimentam também o item 2 do Gate da PR #30 (`ROADMAP.md:149`): *"achados do Quality/Verification
+estiverem reconciliados contra a PR #30"*.
+
+### 12.3 Divergências entre `README.md` e o comportamento verificado
+
+O README descreve capacidades atuais que não são alcançáveis na superfície convergida. Registradas
+para o owner de documentação canônica (Platform/Core); **não corrigidas por este setor**.
+
+| `README.md` | Afirmação | Estado verificado |
+| --- | --- | --- |
+| `:48` | "reavaliação vinculada ao mesmo Atendimento e sem sobrescrever a admissão" | UX-15 — a reavaliação alcançável não vincula nem preserva admissão |
+| `:51` | "contexto temporal declarativo, com progressive disclosure por cenário + etapa + estado" | UX-03 — inalcançável |
+| `:52` | "pendências e resultados seriados no workflow de referência" | UX-03 — inalcançável |
+| `:56` | "justificativas piloto derivadas de dados já confirmados" | UX-01 — a moldura afirma urgência não derivada de dado algum |
+| `:74` | contrato documental com `# HDA (ADMISSÃO):` e `# SCORES:` | UX-15 — implementado apenas no renderizador inalcançável |
+| `:78` | "A superfície canônica apresenta **Contexto clínico**" | UX-03 — o seletor de contexto está oculto; não há superfície de contexto clínico |
+| `:41` | "sem apagar as implementações anteriores antes de comprovar equivalência de UX" | UX-03 — a ocultação removeu alcance sem equivalência demonstrada |
+
+O item `:53` — HEART com `disponível ≠ aplicável ≠ calculável ≠ aplicado` — **não foi verificado**
+quanto a alcance e não é afirmado aqui em nenhum sentido. Os scores independentes de protocolo
+(CRB-65, CURB-65, qSOFA, Glasgow) permanecem alcançáveis pelo painel Ferramentas.
+
+## 13. Falha de método na primeira rodada
 
 Os achados UX-09 e UX-10 foram incorporados após observação direta da Founder em uso real. **A
 primeira rodada desta auditoria não os detectou**, e o motivo é estrutural, não acidental.

@@ -29,6 +29,24 @@ Implementados e verificados: **3** (hidratação em cruzes), **4** (diferencial 
 - **Achado 8 — NÃO resolvido, defeito de alcance confirmado.** `createEncounter()` só é chamado por `handleScenarioChange`, ligado a `#workflow-scenario`, que é filho de `.workflow-card`, que a camada de convergência oculta; e `handleStartReassessment()` retorna cedo sem encounter. Logo `zera-ps:encounter:v3` nunca é escrito e o Resumo do Plantão mostra `ATENDIDOS: 0` com atendimento em curso. O motor puro está correto — o defeito é de alcance, não de cálculo. **Consequência maior:** a mesma ocultação tira do alcance toda a camada temporal/protocolo, o que limita o alcance prático do próprio `INV-CLIN-003`. Fixado em `tests/converged-surface-reachability.test.mjs` com pin que reprova quando a correção chegar (2 correções simuladas, ambas detectadas). **Handoff → Platform/Core.**
 - **Achado 2 — não implementado.** Nenhum `accesskey`/`keydown`/atalho na superfície clínica. Fixado por teste.
 
+### Auditoria da superfície de uso — `docs/audits/UX_SURFACE_AUDIT_2026-08-13.md`
+
+Quinze achados. Origem: instrução da Founder de verificar os 10 achados de homologação contra o código, ampliada após ela relatar perda de dado e desorientação em uso real — classe de defeito que a primeira rodada não alcançava.
+
+- **S1:** #45 (justificativa afirma urgência não confirmada), #47 (Atualizar evolução destrói edição manual), #49 (abrir rascunho + digitar destrói QP/HDA restauradas).
+- **S2:** #44 (camada temporal inalcançável), #48 (superfície sem estado inicial), UX-12 (reavaliação silenciosamente parcial), UX-15 (dois listeners no mesmo botão; contrato documental do README inalcançável).
+- **S3/S4:** #46, UX-05, UX-06, UX-07, UX-13, UX-14, UX-04.
+
+**Padrão sistêmico (seção 6.1):** motor correto e coberto por teste; ponto de chamada que liga o motor ao usuário, não. Vale para os quinze e para o próprio `INV-CLIN-003`. **Doze dos quinze não têm protetor algum.** A fronteira de verificação deste projeto está nos motores; os defeitos que a Founder encontra estão nas bordas.
+
+**Falha de método registrada (seção 13):** leitura de código + execução de motores puros verifica o que o sistema produz e é cega para o que ele permite perder e deixa de comunicar. Auditoria sem harness de interação não deve ser apresentada como cobertura de superfície de uso.
+
+**Correção de recomendação após ler o roadmap (seção 12.1):** a disposição que eu havia publicado em #47 e #49 — acrescentar guarda no padrão dos `confirm()` existentes — contraria `ROADMAP.md:50` e `README.md:37`, que classificam diálogo nativo como fricção a remover. Disposição revista: **desfazer, não confirmar**, no padrão de "Restaurar texto colado".
+
+**Reconciliação com roadmap (seção 12.2):** nenhum achado exige gate novo; todos caem em gates já declarados. Alimentam o item 2 do Gate da PR #30.
+
+**Divergências do README (seção 12.3):** sete afirmações de capacidade atual não alcançáveis na superfície convergida. Registradas para o owner de documentação canônica; não corrigidas por este setor.
+
 ### Aberto e rastreado como issue
 
 - **#39** — respondida por Platform/Core. Executada, mas a primeira entrega foi insuficiente pelo motivo acima; a ponte de composição é a correção. Fechar só depois do handshake.
