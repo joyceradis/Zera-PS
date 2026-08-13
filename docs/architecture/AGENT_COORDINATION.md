@@ -4,77 +4,112 @@ Este documento é canônico para coordenação quando mais de um agente atua no 
 
 ## Princípio
 
-Nenhum agente é autoridade isolada sobre o produto. O GitHub é a fonte única de verdade operacional. O Zera PS separa autoridade de domínio, autoridade técnica e auditoria independente para reduzir regressão, ambiguidade, trabalho duplicado e mudanças silenciosas.
+Nenhum agente é autoridade isolada sobre o produto. O GitHub é a fonte única de verdade operacional. O Zera PS separa autoridade de domínio, Platform/Core Engineering e Quality/Verification Engineering para reduzir regressão, ambiguidade, trabalho duplicado e mudanças silenciosas.
 
 CI verde prova somente que os testes existentes passaram. Não prova que invariantes importantes continuam protegidos. Testes que protegem invariantes críticos são patrimônio do produto e sua remoção/modificação exige revisão explícita.
 
-## Papéis
+## Divisão operacional por setor
 
-### Founder / domínio clínico
+### Joyce — Founder / Produto / Domínio Clínico
 
-Responsável por definir:
+Responsável por:
 
-- como o pronto-socorro funciona na prática;
-- onde o médico perde tempo;
-- o que precisa aparecer no registro;
-- o que é clinicamente relevante;
-- quais atalhos realmente ajudam;
-- linguagem e padrão documental;
-- prioridades do produto;
-- quando uma solução tecnicamente elegante é ruim na prática;
-- homologação clínica manual da superfície antes de merge de mudanças com impacto assistencial.
+- fluxo real do pronto-socorro;
+- prioridade de produto;
+- UX clínica;
+- linguagem documental;
+- relevância clínica;
+- microfunções úteis;
+- homologação clínica;
+- decisão final quando houver trade-off de domínio.
 
 A Founder não precisa decidir arquitetura, branch hygiene, CI/CD, PWA, storage, ownership ou refatoração puramente técnica, nem atuar como mensageira entre agentes.
 
-### Lead Engineering
+### ChatGPT — Platform / Core Engineering
 
-Responsável por:
+Owner primário de:
 
-- transformar decisões de domínio em arquitetura;
+- arquitetura canônica;
 - modelagem de estado e proveniência;
-- engines, persistência, PWA, performance e segurança técnica;
-- testes, TDD, regressão, CI/CD e supply chain;
-- refatoração, dívida técnica, documentação e housekeeping;
-- recuperar microfunções perdidas sem transplantar comportamento inseguro;
-- impedir que uma feature quebre outra;
-- auditar antes e depois de mudanças relevantes;
-- bloquear tecnicamente uma mudança quando não houver evidência suficiente;
-- reconciliar hotfixes e trabalho concorrente com a linha canônica de convergência;
-- integrar achados de auditoria independente sem tratar suíte verde como prova suficiente de maturidade.
+- document engine;
+- workflow/temporalidade;
+- storage/persistência;
+- PWA/offline;
+- integração entre módulos;
+- CI/CD estrutural e supply chain;
+- segurança técnica de plataforma;
+- ownership;
+- housekeeping;
+- roadmap e documentação canônica;
+- merge/reconciliação;
+- dívida técnica estrutural.
 
-Lead Engineering pode decidir e executar autonomamente mudanças não clínicas, reversíveis e testáveis.
+Também é responsável por transformar decisões de domínio em arquitetura, recuperar microfunções sem transplantar comportamento inseguro, impedir regressões entre módulos e integrar achados de Quality/Verification sem tratar suíte verde como prova suficiente de maturidade.
 
-### Auditor independente / segunda leitura
+Platform/Core pode decidir e executar autonomamente mudanças não clínicas, reversíveis e testáveis dentro do próprio setor.
 
-Pode ser exercido por Claude ou outro agente independente.
+### Claude — Quality / Verification Engineering
 
-Responsável por:
+Owner primário de:
 
-- auditar o código sem pressupor que a suíte verde implica segurança completa;
-- procurar regressões, testes removidos, invariantes não protegidos e patrimônio não mesclado;
-- apresentar evidência reproduzível;
-- contradizer a implementação atual quando a evidência exigir;
-- implementar correções técnicas quando o escopo estiver claramente definido e não depender de decisão clínica nova;
-- publicar auditorias relevantes no repositório para leitura direta pelos demais agentes.
+- auditoria independente;
+- testes de regressão;
+- invariant coverage;
+- testes adversariais;
+- investigação e reprodução de bugs;
+- arqueologia complementar;
+- análise de PR;
+- compatibilidade;
+- revisão de segurança;
+- detecção de teste removido/enfraquecido;
+- testes de interação;
+- observabilidade de CI;
+- análise de maturidade;
+- correções técnicas localizadas demonstradas por auditoria, desde que não alterem silenciosamente arquitetura canônica, UX clínica ou semântica clínica.
 
-O auditor não altera sozinho a doutrina clínica do produto.
+Quality/Verification pode escrever código dentro desse setor. Se provar uma lacuna cuja correção exige mudança de arquitetura canônica, estado, document engine, workflow, storage, PWA ou UX/semântica clínica, registra o gap e faz handoff ao owner correto em vez de refatorar o core por iniciativa própria.
+
+## Regra de fronteira entre setores
+
+Setor vem antes do lease.
+
+```text
+QUALITY encontra bug/invariant gap
+→ reproduz
+→ cria/fortalece teste quando isso pertence a Quality
+→ pode corrigir bug técnico localizado se não mudar Core/domínio
+→ se exigir Core: registra handoff para Platform/Core
+→ se exigir decisão clínica/UX: registra handoff para Founder
+
+PLATFORM/CORE implementa arquitetura/correção estrutural
+→ Quality faz segunda leitura/adversarial quando crítico
+
+FOUNDER
+→ entra somente em decisão real de domínio, produto ou homologação
+```
+
+Nenhum agente usa a Founder como canal de transporte de contexto. O estado deve ser publicado no GitHub.
 
 ## Matriz de autoridade
 
 ```text
-DECISÃO PURAMENTE TÉCNICA
-→ agente técnico pode caracterizar e implementar
+DECISÃO PURAMENTE TÉCNICA DENTRO DO SETOR
+→ owner do setor caracteriza e implementa
 → teste/contrato
 → alteração
 → verificação
-→ auditoria pós
-→ Lead Engineering reconcilia com a linha canônica
+→ checkpoint no GitHub
+
+MUDANÇA QUE CRUZA SETOR
+→ registrar evidência e handoff
+→ owner receptor decide implementação
+→ agente originador pode revisar/adversarialmente testar
 
 DECISÃO COM IMPACTO CLÍNICO OU OPERACIONAL
 → problema e alternativas são caracterizados
 → Founder decide o domínio
 → implementação técnica
-→ auditoria independente pode revisar
+→ Quality pode revisar
 
 DÚVIDA SE É TÉCNICA OU CLÍNICA
 → tratar como clínica
@@ -101,16 +136,18 @@ Auditoria relevante deve ser registrada no GitHub. O outro agente deve lê-la do
 3. Hotfix na `main` deve ser mínimo, ter teste de regressão e ser reconciliado imediatamente com a PR #30.
 4. Nenhum agente cria arquitetura paralela para a mesma responsabilidade sem registrar owner e motivo.
 5. Nenhum agente remove ou enfraquece teste de invariant crítico para fazer a suíte passar.
-6. Alteração/remoção de teste que protege invariant crítico exige atualização explícita do `INVARIANT_REGISTRY.md` e segunda leitura.
+6. Alteração/remoção de teste que protege invariant crítico exige segunda leitura explícita e reconciliação com o registry/gate vigente.
 7. Nenhum agente transforma auditoria histórica em especificação vigente sem reconciliar com documentos canônicos.
 8. Nenhum agente faz merge da PR #30 antes da homologação clínica manual da Founder.
 9. Microfunção existente é patrimônio até prova de obsolescência ou insegurança; primeiro recuperar/caracterizar, depois remover.
 10. Dois agentes não escrevem simultaneamente no mesmo owner sem coordenação explícita. Enquanto um agente altera um owner, o outro assume papel de auditor/reviewer naquele owner.
-11. Antes de qualquer write, o agente deve sincronizar o HEAD da branch-alvo, identificar a base real e verificar `ACTIVE_WORK.md`.
+11. Antes de qualquer write, o agente deve sincronizar o HEAD da branch-alvo, identificar a base real, verificar o setor/owner e consultar `ACTIVE_WORK.md`.
 12. Depois do write, deve informar branch, PR, base, SHA, owners alterados e testes.
 13. A frase `mesclando` é proibida sem escopo explícito. Usar `mesclando PR #<n> → <base>` ou `não mesclando; apenas commitando em <branch>`.
 14. Autorrevisão não substitui reconciliação multiagente quando a mudança toca segurança clínica, estado, documento, microfunções ou owners compartilhados.
-15. Suite verde não autoriza marcar fase como madura sem evidência compatível com o gate declarado.
+15. Suíte verde não autoriza marcar fase como madura sem evidência compatível com o gate declarado.
+16. Quality/Verification não avança para Core apenas porque encontrou o bug; handoff é obrigatório quando a correção cruza o setor.
+17. Platform/Core não valida sozinho garantias críticas quando uma segunda leitura independente é viável.
 
 ## Protocolo de branches
 
@@ -155,16 +192,17 @@ Todo bloco concorrente deve ser registrado em `docs/architecture/ACTIVE_WORK.md`
 
 ```text
 AGENTE A — WRITE LEASE
-owner: src/hda-composer.js + testes associados
+setor: Quality / Verification
+owner: tests/invariant-coverage.test.mjs
 branch/PR: ...
 objetivo: ...
 SHA inicial: ...
 status: ACTIVE
 
 AGENTE B
-→ não escreve nesses owners
+→ não escreve nesse owner
 → pode auditar/revisar
-→ trabalha em owner ortogonal
+→ trabalha em owner ortogonal do próprio setor
 ```
 
 O lease termina quando o agente publica checkpoint coerente com SHA e testes e atualiza o status para CLOSED.
@@ -174,6 +212,7 @@ O lease termina quando o agente publica checkpoint coerente com SHA e testes e a
 ```text
 OBJETIVO:
 AGENTE:
+SETOR:
 BRANCH:
 PR:
 BASE:
@@ -211,6 +250,7 @@ O registry canônico vive em `docs/clinical/INVARIANT_REGISTRY.md`. No mínimo:
 - `main`: P0 das negativas automáticas corrigido; auditoria independente demonstrou que a proteção efetiva precisa ser tratada separadamente do desenho de segurança.
 - PR #30: aberta, draft e bloqueada para merge até homologação clínica manual da Founder.
 - PR #30: linha canônica de convergência e reconciliação de hotfixes.
+- divisão operacional vigente: Joyce = Founder/Produto/Domínio; ChatGPT = Platform/Core Engineering; Claude = Quality/Verification Engineering.
 - `develop`: preservada somente como mina arqueológica; não é linha de implementação.
 - maturidade: segurança por desenho é mais forte que a garantia efetiva; keyboard-first, testes de interação real, PWA/offline real e revisão independente contínua permanecem gates abertos.
 
@@ -221,16 +261,17 @@ FOUNDER
 → finalizar relatório/homologação clínica da PR #30
 → decidir somente questões reais de domínio/UX clínico
 
-LEAD ENGINEERING
+PLATFORM / CORE ENGINEERING
 → manter chão técnico estável
-→ coordenar leases e reconciliação
-→ transformar achados auditáveis em backlog/gates
+→ coordenar integração/reconciliação
+→ transformar achados auditáveis em correções estruturais quando pertencem ao Core
 → não alterar silenciosamente UX/fluxo/texto clínico em homologação
 
-AUDITOR INDEPENDENTE
+QUALITY / VERIFICATION ENGINEERING
 → publicar auditorias no GitHub
-→ trabalhar em leases explícitos
-→ checkpoint com branch/base/SHA
+→ trabalhar em leases explícitos do próprio setor
+→ reproduzir bugs e fortalecer garantias
+→ fazer handoff quando a correção exigir Core ou domínio
 → sem merge da PR #30
 → sem linha paralela de produto
 ```
