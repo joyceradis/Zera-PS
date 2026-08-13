@@ -10,8 +10,12 @@ Antes de alterar owner compartilhado, sincronize a branch-alvo e registre um lea
 | --- | --- | --- | --- | --- | --- | --- |
 | Founder | PR #30 | superfície clínica | Homologação clínica manual e relatório de domínio | — | ACTIVE | — |
 | Lead Engineering | `chore/housekeeping-product-convergence` / #30 | governança multiagente, documentação canônica e reconciliação | Consolidar shared audit log, invariant registry e coordenação; sem alterar comportamento clínico em homologação | `f588a05` | ACTIVE | não |
-| Auditor independente (Claude) | `audit/invariant-coverage-gate` → PR filha da #30 | `tests/invariant-coverage.test.mjs` (novo) — **somente** este arquivo de código | Tornar a rastreabilidade invariante→teste um gate executável, implementando `INV-GOV-001` mecanicamente | `3577383` | CLOSED — `AUD-2026-08-13-004`, 10/10 invariantes cobertos, suíte 234/234 | não |
+| Auditor independente (Claude) | `audit/invariant-coverage-gate` / PR #37 | `tests/invariant-coverage.test.mjs` (novo) — **somente** este arquivo de código | Tornar a rastreabilidade invariante→teste um gate executável, implementando `INV-GOV-001` mecanicamente | `3577383` | **CLOSED** — entrega concluída, `AUD-2026-08-13-005`, 10/10 invariantes cobertos, suíte 234/234. PR #37 `IN REVIEW` por Lead Engineering; owner liberado | não |
 | Auditor independente (Claude) | `audit/maturity-report-publication` / PR #36 | `docs/audits/MATURITY_AUDIT_2026-08-12.md` + entrada aditiva no log + índice | Publicar auditoria independente de maturidade | `3577383` | PAUSADA (draft, por instrução da Founder) | não |
+
+### Aviso de integração — PRs #36 e #37 colidem neste arquivo
+
+Ambas partem de `3577383` e editam esta tabela e o `SHARED_AUDIT_LOG.md` no mesmo ponto. O conflito é **puramente aditivo**: nenhuma das duas altera linha escrita por outro agente. Ao integrar a segunda, manter os dois blocos. Detalhe e receita em `AUD-2026-08-13-006`.
 
 ### Escopo declarado do lease `audit/invariant-coverage-gate`
 

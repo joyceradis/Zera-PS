@@ -50,7 +50,7 @@ Auditorias extensas podem ter arquivo próprio em `docs/audits/`; este log apont
 - **Status:** `OPEN` para reconciliação completa com PR #30 e homologação da Founder.
 - **Founder:** sim somente para classificar fricção clínica/UX; não para lacunas técnicas objetivas.
 
-### AUD-2026-08-13-004 — `INV-GOV-001` convertido de regra escrita em gate executável
+### AUD-2026-08-13-005 — `INV-GOV-001` convertido de regra escrita em gate executável
 
 - **Origem:** auditor independente (Claude).
 - **Severidade:** lacuna real de garantia (não é bug de comportamento).
@@ -63,8 +63,28 @@ Auditorias extensas podem ter arquivo próprio em `docs/audits/`; este log apont
 - **Invariants:** implementa `INV-GOV-001`. Nenhum invariante alterado; nenhuma semântica clínica tocada.
 - **Owner:** `tests/invariant-coverage.test.mjs` apenas. `INVARIANT_REGISTRY.md` foi **lido, não modificado** — pertence ao owner `documentação canônica`, `ACTIVE` com Lead Engineering. O mapeamento vive dentro do teste por essa razão.
 - **Testes:** `npm run verify` — 234/234, 0 falhas (231 anteriores + 3 do gate).
-- **Status:** `CLOSED` para a implementação; `IN REVIEW` quanto ao mapeamento em si, que merece conferência de Lead Engineering.
-- **Founder:** não necessária. Zero alteração de semântica clínica ou UX em homologação.
+- **Status:** `IN REVIEW` por Lead Engineering (PR #37, draft). Implementação concluída e lease `CLOSED`; nenhum merge antes da segunda leitura.
+- **Founder:** não necessária. Zero alteração de semântica clínica ou UX em homologação. A Founder já delegou esta revisão diretamente a Lead Engineering.
+
+### AUD-2026-08-13-006 — Colisão entre as duas PRs do auditor no próprio ledger de coordenação
+
+- **Origem:** auditor independente (Claude), autodetectado antes de qualquer merge.
+- **Severidade:** processo. Sem impacto clínico, sem impacto em runtime.
+- **Achado:** as PRs #36 e #37 do auditor foram criadas independentemente a partir de `3577383` e ambas escrevem em `SHARED_AUDIT_LOG.md` e `ACTIVE_WORK.md` no mesmo ponto de inserção. Isso produziu (a) **ID duplicado** — ambas emitiram `AUD-2026-08-13-004` para auditorias diferentes — e (b) **conflito textual de merge** nos dois arquivos de coordenação.
+- **Evidência:** merge simulado em clone isolado, na ordem #36 → #37:
+
+  ```text
+  CONFLICT (content): Merge conflict in docs/architecture/ACTIVE_WORK.md
+  CONFLICT (content): Merge conflict in docs/audits/SHARED_AUDIT_LOG.md
+  ```
+
+- **Causa:** o ledger compartilhado é um arquivo Markdown único com ponto de inserção fixo. Dois blocos concorrentes do **mesmo** agente colidem nele exatamente como dois agentes distintos colidiriam. Isto é a materialização da `INTERPRETAÇÃO 6.2` do relatório de maturidade (`AUD-2026-08-13-004`), que previu esse modo de falha antes de ele ocorrer.
+- **Ação tomada:** ID renumerado para `AUD-2026-08-13-005` nesta branch, eliminando a duplicação. O conflito textual **permanece** e é esperado.
+- **Resolução para quem integrar (receita determinística):** o conflito é puramente aditivo — nenhuma linha escrita por outro agente é alterada por nenhuma das duas PRs. Ao mesclar a segunda, aceitar **ambos os lados** (`git checkout --theirs`/`--ours` não serve; manter os dois blocos). Ordem recomendada: #36 antes de #37, preservando a numeração cronológica 004 → 005. Nenhuma informação se perde em qualquer ordem.
+- **Invariants:** `INV-GOV-001` (governança). Nenhum invariante clínico afetado.
+- **Status:** `OPEN` — resolução mecânica pendente no ato do merge; não bloqueia a segunda leitura da PR #37.
+- **Founder:** não.
+- **Proposta para Lead Engineering (não implementada):** enquanto o ledger for um Markdown único, esse conflito reaparecerá a cada dois blocos concorrentes. Um formato append-only por arquivo (`docs/audits/entries/AUD-*.md` indexados) eliminaria a classe inteira. Decisão é do owner de `documentação canônica`; não a executei por não ser meu owner.
 
 ### Ponto para segunda leitura de Lead Engineering
 
