@@ -41,12 +41,7 @@ function emptyDiarrheaHdaState() {
 }
 
 function defaultDiarrheaHdaState() {
-  const state = emptyDiarrheaHdaState();
-  state.draft = true;
-  for (const key of ['fever', 'blood', 'mucus', 'pus', 'intensePain', 'oralIntolerance', 'oliguria', 'syncopeHypotension']) {
-    state.findings[key] = HDA_FACT_STATE.DENIED;
-  }
-  return state;
+  return { ...emptyDiarrheaHdaState(), draft: true };
 }
 
 function joinClinicalList(items = [], conjunction = 'E') {
