@@ -33,13 +33,15 @@ Antes de escrever código ou documentação:
 - PR #37 integrada à PR #30 em `a5a5ade`: gate invariant → teste;
 - PR #38 integrada à PR #30 em `3a23402`: proteção adversarial de `INV-DOC-001`;
 - PR #41 trouxe patrimônio útil, mas a segunda leitura encontrou falha de composição na alegação de `INV-CLIN-003 = FULL`; integração prematura foi reconciliada;
-- **PR #43 está DRAFT e NÃO autorizada para merge ainda.** Quality atualizou o rigor: reconhece explicitamente a superestimação anterior, distingue composição de DOM/PWA/tempo real e propõe nova ponte com escritores reais + âncora anti-trivialidade + mutation testing;
-- terceira leitura de Platform/Core da #43: a nova ponte é materialmente superior e candidata legítima a sustentar `INV-CLIN-003 = FULL` no escopo de código, mas o handshake só será emitido após revisão integral dos protetores e compatibilidade com reachability;
-- achado crítico da #43 confirmado: a superfície convergida oculta `.workflow-card`, enquanto `createEncounter()` depende de `#workflow-scenario`; isso deixa o Encounter temporal sem caminho de criação na superfície entregue, quebra o alcance da produtividade e torna parte da camada temporal/protocolar implementada porém inacessível;
-- achado crítico da auditoria de superfície confirmado: justificativa de exame pode emitir predicados de urgência/gravidade sem entrada confirmatória; classificado Platform/Core P0 quanto ao mecanismo, com redação final subordinada à Founder;
+- **PR #43 está DRAFT e BLOQUEADA neste HEAD.** Quality elevou o rigor: reconheceu a superestimação anterior, separou composição de DOM/PWA/tempo real, adicionou ponte com escritores reais, âncora anti-trivialidade, contraprova e mutation testing. O núcleo é candidato legítimo a `INV-CLIN-003 = FULL` no escopo de código, mas a PR precisa rebasear e atualizar evidência após correções Core abaixo;
+- P0 justificativa de exame: RED `915c1c58` / run 669 confirmou fabricação de `EM CARÁTER DE URGÊNCIA`, `CONDUTA IMEDIATA` e `COMPLICAÇÕES POTENCIALMENTE GRAVES`; GREEN `db1d5347` / run 670 removeu os predicados não confirmados e preservou a utilidade documental com fechamento conservador. Achado histórico válido, defeito corrente corrigido tecnicamente; redação clínica final continua sujeita à Founder;
+- reachability do Atendimento: RED `4d364b33` e teste refinado `248ef744` provaram ausência de lifecycle canônico independente de protocolo; `a5e6d8e5` adicionou primitivas puras `ensureEncounterStarted` + `attachWorkflow`; GREEN `8b793045` / run 676 ligou o owner temporal diretamente à atividade real do `#evolution-form`, criou Encounter protocol-agnostic sem inventar cenário, atualizou snapshot de admissão, preservou identidade ao anexar protocolo posteriormente e limpou `zera-ps:encounter:v3` no reset do formulário;
+- consequência: produtividade e reavaliação deixam de depender do seletor `#workflow-scenario` oculto para existir. O falso `ATENDIDOS: 0` por ausência absoluta de Encounter foi tratado na origem, não no contador;
+- **não confundir lifecycle com reachability de ferramentas:** `.workflow-card` e `workflow-context` ainda podem manter a camada protocolo/ferramentas fora do alcance visual da médica. Isso permanece problema separado e aberto. A correção do lifecycle NÃO autoriza declarar ferramentas/protocolo acessíveis;
+- revisão #43 recebeu comentário `BLOCKED` no HEAD `eac1b05f`: rebase obrigatório; seu teste `converged-surface-reachability` deve deixar de fixar o defeito corrigido e virar protetor positivo do lifecycle, preservando separadamente o gap de ferramentas/protocolo;
 - QP×HDA redundantes: problema documental demonstrável, mas semântica/solução não será decidida unilateralmente por Core;
 - keyboard-first: ausência demonstrada; benefício/ordem final depende de homologação real;
-- estado de invariant permanece **9 FULL / 1 PARTIAL** até handshake e integração válida da #43;
+- estado de invariant permanece **9 FULL / 1 PARTIAL** até novo HEAD da #43 + segunda leitura + handshake válido;
 - `INV-GOV-001`: guard externo antes da suíte; presença/fiação mínima de sentinelas verificadas;
 - Founder lane registra achados de homologação já fornecidos e que não devem ser pedidos novamente;
 - troponina é dependente de ensaio/kit + unidade + referência local; `0,0019` no Meridional não é cutoff universal;
@@ -54,16 +56,15 @@ Regra: **quem implementa uma garantia crítica não é seu único validador**.
 
 ## Trabalho aberto — ordem atual
 
-1. **P0:** remover fabricação de urgência/gravidade da justificativa de alto custo sem degradar utilidade documental;
-2. **P1 Core:** restaurar uma ponte canônica e alcançável entre superfície convergida → Encounter temporal/storage → produtividade/protocolo, sem reexpor dois produtos concorrentes;
-3. concluir terceira leitura da PR #43 e decidir handshake de `INV-CLIN-003` com escopo explicitamente limitado a código/composição;
-4. tratar produtividade falsa `ATENDIDOS: 0` como consequência da ponte de Encounter, não patch cosmético do contador;
-5. reduzir fricção operacional/keyboard-first após estabilizar o caminho canônico;
-6. testes reais de interação desktop/mobile;
-7. evidência real de PWA instalado/offline;
-8. provar equivalência de `fix/p0-fabricated-negatives` antes de poda;
-9. concluir homologação clínica contínua da PR #30;
-10. somente então avaliar merge final da PR #30.
+1. **P1 Core:** fechar o segundo ramo de reachability: ferramentas/protocolo precisam ficar acessíveis sem reintroduzir `Workflow`/`Roteiro` como escolhas concorrentes no topo da experiência;
+2. concluir terceira leitura da PR #43 após rebase e decidir handshake de `INV-CLIN-003` com escopo explicitamente limitado a código/composição;
+3. pedir/receber adversarial de Quality sobre o lifecycle corrigido e garantir que o novo protetor falha se a ponte `form activity → Encounter storage` for removida;
+4. reduzir fricção operacional/keyboard-first após estabilizar o caminho canônico;
+5. testes reais de interação desktop/mobile;
+6. evidência real de PWA instalado/offline;
+7. provar equivalência de `fix/p0-fabricated-negatives` antes de poda;
+8. concluir homologação clínica contínua da PR #30;
+9. somente então avaliar merge final da PR #30.
 
 ## Restrições
 
