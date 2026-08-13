@@ -23,34 +23,30 @@ Antes de escrever código ou documentação:
 3. ler os três arquivos em `docs/coordination/active/`;
 4. ler `ROADMAP.md` e `docs/clinical/INVARIANT_REGISTRY.md`;
 5. identificar setor e owner antes de adquirir lease;
-6. não usar `docs/architecture/ACTIVE_WORK.md` nem `docs/audits/SHARED_AUDIT_LOG.md` como estado corrente — ambos são históricos/transicionais;
+6. não usar `docs/architecture/ACTIVE_WORK.md` nem `docs/audits/SHARED_AUDIT_LOG.md` como estado corrente;
 7. não interpretar CI verde como homologação ou prova absoluta de invariant;
-8. PR filha que exige segunda leitura só pode ser integrada após handshake explícito `INTEGRATION READY — <HEAD SHA>` do setor revisor.
+8. PR filha que exige segunda leitura só pode ser integrada após handshake `INTEGRATION READY — <HEAD SHA>`.
 
 ## Estado técnico verdadeiro — checkpoint atual
 
-- divisão operacional vigente: Joyce = Founder/Produto/Domínio Clínico; ChatGPT = Platform/Core; Claude = Quality/Verification;
-- PR #37 integrada à PR #30 em `a5a5ade`: gate executável de rastreabilidade invariant → teste;
-- PR #38 integrada à PR #30 em `3a23402`: `INV-DOC-001` ganhou proteção adversarial de estado operacional → documento;
-- PR #41 trouxe patrimônio útil de Quality para `INV-CLIN-003`, porém a segunda leitura identificou que os vetores stage×context calculavam plano/visibilidade e depois chamavam `renderEvolution(emptyForm(), {})`; portanto não atravessavam a composição real contexto → coordenador/estado → formulário → document engine;
-- a integração prematura da #41 foi reconciliada: testes úteis preservados, alegação reduzida. Estado correto continua **9 invariants integrais / 1 parcial (`INV-CLIN-003`)**;
-- `INV-CLIN-003` só pode virar integral quando existir protetor que atravesse a composição real, não apenas pontas isoladas;
-- `INV-GOV-001`: `checks.yml` possui guard externo antes da suíte para sentinelas críticos; presença/fiação mínima são verificadas. Proteção externa de branch não deve ser presumida sem evidência;
-- protocolo de integração endurecido após #41: CI verde, `mergeable=true`, lease fechado ou autorrevisão NÃO autorizam integração quando segunda leitura é exigida;
-- coordenação corrente usa lanes por setor e auditorias append-only em `docs/audits/entries/`;
-- PRs #33 e #35 fechadas como obsoletas; PR #36 permanece draft/pausada por instrução da Founder;
-- `develop` permanece mina arqueológica, não linha de implementação;
-- microfunções e patrimônio recuperado devem ser preservados por contrato/teste, nunca por cópia cega.
+- Joyce = Founder/Produto/Domínio Clínico; ChatGPT = Platform/Core; Claude = Quality/Verification;
+- PR #37 integrada à PR #30 em `a5a5ade`: gate invariant → teste;
+- PR #38 integrada à PR #30 em `3a23402`: proteção adversarial de `INV-DOC-001`;
+- PR #41 trouxe patrimônio útil, mas a segunda leitura encontrou falha de composição na alegação de `INV-CLIN-003 = FULL`; integração prematura foi reconciliada. Estado correto: **9 invariants integrais / 1 parcial (`INV-CLIN-003`)**;
+- `INV-GOV-001`: guard externo antes da suíte; presença/fiação mínima de sentinelas verificadas;
+- handshake de integração crítico vigente após incidente #41;
+- Founder lane registra achados de homologação já fornecidos e que não devem ser pedidos novamente;
+- nova regra de domínio registrada: **troponina é dependente de ensaio/kit + unidade + referência local; nenhum cutoff absoluto é universal**. Referência `0,0019` informada pela Founder para troponina ultrassensível no Meridional é dado de perfil/local, não default do produto;
+- `PROTOCOL_CONTRACT.md` agora proíbe cutoff assay-dependent hard-coded como universal e exige referência explícita para relação/interpretação;
+- TDD da regra de SCA: commit `909409b6` adicionou teste que exigia guidance assay-specific e falhou no `checks` (run 661); commit `6091a3f7` adicionou guidance no campo `troponinRatio` sem hard-code de `0,0019` e passou no `checks` (run 662). RED → GREEN confirmado no CI;
+- branch audit: `fix/pr30-priority-blockers` está 6 commits à frente/224 atrás, mas sem diff de arquivos contra a canônica — forte candidata à poda por equivalência; `fix/p0-fabricated-negatives` está 7 à frente/224 atrás e ainda mostra diferenças em templates/HDA/tests, portanto não apagar até provar equivalência semântica;
+- PRs #33 e #35 fechadas; PR #36 permanece draft/pausada; `develop` é mina arqueológica, não linha de implementação.
 
 ## Modelo epistemológico do time
 
-A Founder fornece a evidência de uso real na linguagem natural do plantão: comportamento observado, fricção, resultado inesperado, prioridade e semântica clínica. Ela não precisa traduzir isso para invariant, arquitetura ou teste.
+A Founder fornece evidência de uso real na linguagem natural do plantão. Quality transforma em reprodução, RED e testes. Platform/Core verifica causalidade/composição, implementa/reconcilia mudanças estruturais e impede que cobertura local seja promovida a garantia sistêmica sem evidência.
 
-Quality/Verification transforma observações e achados em reprodução, RED, testes de regressão/adversariais, mutation testing e delimitação do que a evidência realmente prova.
-
-Platform/Core verifica causalidade e composição arquitetural, implementa/reconcilia mudanças estruturais e impede que teste verde ou cobertura local sejam promovidos a garantia sistêmica sem evidência suficiente.
-
-Regra: **quem implementa uma garantia crítica não é seu único validador**. Autorrevisão não substitui contraditório técnico.
+Regra: **quem implementa uma garantia crítica não é seu único validador**.
 
 ## Trabalho aberto
 
@@ -59,14 +55,15 @@ Regra: **quem implementa uma garantia crítica não é seu único validador**. A
 3. reduzir fricção operacional/keyboard-first sem antecipar decisões clínicas da Founder;
 4. testes reais de interação desktop/mobile;
 5. evidência real de PWA instalado/offline;
-6. concluir homologação clínica da PR #30 e incorporar apenas decisões explicitamente aprovadas;
-7. somente então avaliar merge final da PR #30.
+6. provar equivalência de `fix/p0-fabricated-negatives` antes de poda;
+7. concluir homologação clínica contínua da PR #30 e incorporar decisões aprovadas;
+8. somente então avaliar merge final da PR #30.
 
 ## Restrições
 
-- não escrever em owner declarado ACTIVE por Quality/Verification;
+- não escrever em owner ACTIVE de Quality/Verification;
 - não alterar UX/semântica clínica sem decisão da Founder;
 - não mergear PR #30 antes da homologação;
-- mudanças puramente técnicas devem ser reversíveis, testáveis e auditadas;
+- mudanças técnicas devem ser reversíveis, testáveis e auditadas;
 - nenhuma suíte verde será tratada como prova absoluta de maturidade;
 - não apagar microfunções/patrimônio sem prova de equivalência ou decisão explícita.
