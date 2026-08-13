@@ -78,20 +78,38 @@ const PROTECTED_BY = Object.freeze({
   },
 
   'INV-CLIN-003': {
-    coverage: COVERAGE.PARTIAL,
+    // Reclassificado PARTIAL -> FULL em
+    // docs/audits/entries/2026-08-13T031500Z-quality-inv-clin-003-closed.md
+    // (identificador por timestamp+setor+slug, sem reservar número AUD- concorrente).
+    //
+    // A lacuna anterior era "cobertura por partes, não por exaustão do espaço de estados".
+    // `context-never-diagnoses.test.mjs` fecha exatamente isso: enumera o produto cartesiano
+    // completo protocolo × etapa × contexto declarativo (160 combinações hoje) e prova que
+    // nenhuma delas produz hipótese ou conduta no documento. A enumeração é derivada das
+    // declarações (WORKFLOW_STAGES, `protocols/`, regras de disclosure, catálogo de templates),
+    // com piso ancorado para que o espaço não encolha em silêncio.
+    coverage: COVERAGE.FULL,
     protectors: [
       // Protetor direto, ausente do mapeamento anterior e apontado pela segunda leitura.
       ['templates.test.mjs', 'templates do not inject diagnosis or conduct into the medical record'],
       ['context-coordination.test.mjs', 'template compatibility depends only on explicit protocol metadata, never on QP text'],
       ['protocol-engine.test.mjs', 'sections owned by the evolution form are not rendered by the protocol layer'],
-      ['protocol-engine.test.mjs', 'default context exposes only protocol owned fields and never invents values']
-    ],
-    gap: 'Os protetores provam que template não pré-preenche hipótese/conduta, que compatibilidade '
-      + 'não é inferida do texto da QP e que a camada de protocolo não injeta valores por default. '
-      + 'NÃO provam integralmente a propriedade completa do invariante: falta cobertura de que '
-      + 'progressive disclosure e seleção de contexto, ao longo de todas as etapas do Atendimento, '
-      + 'nunca produzam hipótese ou conduta no documento final. Cobertura por partes, não por '
-      + 'exaustão do espaço de estados.'
+      ['protocol-engine.test.mjs', 'default context exposes only protocol owned fields and never invents values'],
+      // Exaustão do espaço etapa × contexto — o que faltava para a propriedade completa.
+      ['context-never-diagnoses.test.mjs', 'no stage/context combination produces diagnosis or conduct in the final document'],
+      ['context-never-diagnoses.test.mjs', 'context values never leak into the document as clinical text'],
+      ['context-never-diagnoses.test.mjs', 'progressive disclosure changes only visibility, never field values'],
+      ['context-never-diagnoses.test.mjs', 'the render plan never exposes fields owned by the evolution form, in any stage'],
+      ['context-never-diagnoses.test.mjs', 'default context never carries diagnosis or conduct, in any stage'],
+      ['context-never-diagnoses.test.mjs', 'selecting any template, in any stage, never fills diagnosis or conduct'],
+      ['context-never-diagnoses.test.mjs', 'a full encounter traversal accumulating context never yields diagnosis or conduct'],
+      // Guardas da própria exaustão: sem elas o bloco acima passaria sobre um universo menor.
+      ['context-never-diagnoses.test.mjs', 'the enumerated stage space covers every declared workflow stage'],
+      ['context-never-diagnoses.test.mjs', 'every declared protocol is loaded into the enumerated space'],
+      ['context-never-diagnoses.test.mjs', 'the enumerated disclosure space never shrinks below its anchored floor'],
+      // Contraprova: impede que a propriedade passe por o renderizador ter parado de renderizar.
+      ['context-never-diagnoses.test.mjs', 'diagnosis and conduct still render when the physician actually types them']
+    ]
   },
 
   'INV-SCORE-001': {
@@ -159,6 +177,11 @@ const PROTECTED_BY = Object.freeze({
     protectors: [
       // Âncora EXTERNA: quebra se este arquivo for apagado.
       ['integration-static.test.mjs', 'the invariant coverage gate exists and is wired to the clinical registry'],
+      // Âncora de CI: o gate e a âncora acima se protegem mutuamente contra remoção
+      // individual, mas apagar OS DOIS na mesma mudança não faria nenhum dos dois rodar.
+      // Só o step de CI cobre esse caso — e este protetor impede que o step suma em
+      // silêncio. Fecha a issue #40.
+      ['workflow-security.test.mjs', 'the CI guard for critical safety sentinels cannot be removed silently'],
       // Propriedades verificadas aqui dentro.
       ['invariant-coverage.test.mjs', 'every invariant declared in the registry has a declared coverage decision'],
       ['invariant-coverage.test.mjs', 'every mapped protecting test still exists with the exact declared name']

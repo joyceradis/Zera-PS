@@ -34,6 +34,35 @@ test('preview tunnel binary is version-pinned and checksum-verified', () => {
   assert.match(preview, /sha256sum\s+-c/);
 });
 
+test('the CI guard for critical safety sentinels cannot be removed silently', () => {
+  // Fecha o último elo do INV-GOV-001 (issue #40).
+  //
+  // Apagar UM dos arquivos-sentinela já é detectado pela própria suíte, porque o gate e a
+  // âncora se protegem mutuamente: `invariant-coverage.test.mjs` lê os protetores declarados
+  // em `integration-static.test.mjs`, e este lê o gate de volta. Apagar OS DOIS de uma vez
+  // não é, porque nenhum dos dois testes chega a rodar — esse caso depende exclusivamente do
+  // step de CI. Sem esta asserção, remover o step reabriria o buraco em silêncio.
+  assert.match(
+    checks,
+    /Guard critical safety sentinels/,
+    'O step de CI que protege os arquivos-sentinela sumiu de checks.yml. Sem ele, apagar o ' +
+    'registry e o gate na mesma mudança não é detectado por nada.'
+  );
+  for (const sentinel of [
+    'docs/clinical/INVARIANT_REGISTRY\\.md',
+    'tests/invariant-coverage\\.test\\.mjs',
+    'tests/integration-static\\.test\\.mjs'
+  ]) {
+    assert.match(
+      checks,
+      new RegExp(sentinel),
+      `O arquivo-sentinela "${sentinel}" saiu da lista protegida pelo CI.`
+    );
+  }
+  // O step precisa reprovar o job, não apenas registrar aviso.
+  assert.match(checks, /exit 1/, 'O guard deixou de reprovar o job quando um sentinela some.');
+});
+
 test('GitHub Actions dependencies are pinned to immutable commit SHAs', () => {
   assert.match(checks, new RegExp(`actions/checkout@${CHECKOUT_SHA}`));
   assert.match(checks, new RegExp(`actions/setup-node@${SETUP_NODE_SHA}`));
