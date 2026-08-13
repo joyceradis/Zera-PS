@@ -78,7 +78,7 @@ const PROTECTED_BY = Object.freeze({
   },
 
   'INV-CLIN-003': {
-    coverage: COVERAGE.PARTIAL,
+    coverage: COVERAGE.FULL,
     protectors: [
       ['templates.test.mjs', 'templates do not inject diagnosis or conduct into the medical record'],
       ['context-coordination.test.mjs', 'template compatibility depends only on explicit protocol metadata, never on QP text'],
@@ -94,9 +94,25 @@ const PROTECTED_BY = Object.freeze({
       ['context-never-diagnoses.test.mjs', 'the enumerated stage space covers every declared workflow stage'],
       ['context-never-diagnoses.test.mjs', 'every declared protocol is loaded into the enumerated space'],
       ['context-never-diagnoses.test.mjs', 'the enumerated disclosure space never shrinks below its anchored floor'],
-      ['context-never-diagnoses.test.mjs', 'diagnosis and conduct still render when the physician actually types them']
-    ],
-    gap: 'Os protetores locais cobrem o espaço declarativo de stage/context e provam que protocol-engine e document-engine, isoladamente, não fabricam hipótese/conduta. Porém os vetores atuais calculam plan/visible/context e depois chamam renderEvolution(emptyForm(), {}) sem transportar esse estado pela fronteira real de coordenação. Falta um protetor que atravesse a composição existente contexto/progressive disclosure → coordenador real → estado/formulário entregue ao document engine → documento final. Até essa ponte ser testada, a cobertura permanece PARTIAL.'
+      ['context-never-diagnoses.test.mjs', 'diagnosis and conduct still render when the physician actually types them'],
+
+      // Ponte de composição — o que a revisão bloqueante de `7a947f4` exigia e que os
+      // protetores acima, sozinhos, não entregavam. Os vetores de enumeração calculavam
+      // plan/visible/context e depois renderizavam `emptyForm()`, sem transportar o estado
+      // produzido pelo contexto até o document engine.
+      //
+      // `context-composition-bridge.test.mjs` entrega ao document engine o par
+      // (form, clinicalState) PRODUZIDO pelos escritores reais — template, intake livre,
+      // composers de HDA e funções de confirmação de proveniência — e traz âncora
+      // anti-trivialidade que reprova se esse formulário voltar a chegar vazio.
+      ['context-composition-bridge.test.mjs', 'the composed form handed to the document engine is populated, never empty'],
+      ['context-composition-bridge.test.mjs', 'every template, composed through the real boundary, yields no diagnosis or conduct'],
+      ['context-composition-bridge.test.mjs', 'every progressive-disclosure flag subset, composed into the HDA, yields no diagnosis'],
+      ['context-composition-bridge.test.mjs', 'a full encounter traversal, with composed form and state, yields no diagnosis or conduct'],
+      ['context-composition-bridge.test.mjs', 'the structured HDA composer never asserts a finding that was not explicitly marked'],
+      ['context-composition-bridge.test.mjs', 'the application source has no write path from context into diagnosis or conduct fields'],
+      ['context-composition-bridge.test.mjs', 'the same composed pipeline still renders diagnosis and conduct when the physician types them']
+    ]
   },
 
   'INV-SCORE-001': {
