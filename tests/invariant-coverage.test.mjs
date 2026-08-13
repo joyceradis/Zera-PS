@@ -113,16 +113,17 @@ const PROTECTED_BY = Object.freeze({
   },
 
   'INV-DOC-001': {
-    coverage: COVERAGE.PARTIAL,
+    coverage: COVERAGE.FULL,
     protectors: [
       ['document-tool-application.test.mjs', 'calculable but unapplied tool stays out of the clinical document'],
-      ['reassessment-document.test.mjs', 'scores section disappears when no score is applied and calculable']
-    ],
-    gap: 'Os protetores cobrem apenas UMA face do invariante: ferramenta calculável mas não aplicada '
-      + 'não entra no documento. O invariante é mais amplo e inclui pendências (pendingItems), '
-      + 'motivos de incompletude, avisos de workflow e demais estados internos do Atendimento. '
-      + 'NÃO existe hoje teste que prove que uma pendência registrada não alcança o texto clínico '
-      + 'final — verificado por busca em toda a suíte. Esta é lacuna real, não limitação de redação.'
+      ['reassessment-document.test.mjs', 'scores section disappears when no score is applied and calculable'],
+      // Fecham a lacuna que esta entrada declarava como PARTIAL: pendências,
+      // motivos de incompletude e estado interno de workflow também não vazam.
+      ['document-operational-state.test.mjs', 'an applied score publishes only its score and interpretation, never the operational fields carried alongside'],
+      ['document-operational-state.test.mjs', 'the reassessment renderer ignores encounter fields it was never authorized to publish'],
+      ['document-operational-state.test.mjs', 'the evolution renderer ignores encounter fields it was never authorized to publish'],
+      ['document-operational-state.test.mjs', 'a pending item whose label reads like clinical text still never reaches the document']
+    ]
   },
 
   'INV-TEMP-001': {
