@@ -1,40 +1,48 @@
 # Zera PS — Active Work
 
-Fonte canônica para evitar colisão de escrita entre agentes.
+> **FROZEN / HISTÓRICO — NÃO REGISTRAR NOVOS LEASES AQUI.**
+>
+> A coordenação vigente foi migrada para lanes por setor em `docs/coordination/active/` para eliminar colisões de escrita entre agentes. Este arquivo preserva o histórico dos ciclos anteriores e permanece apenas para rastreabilidade de PRs/commits antigos.
+>
+> Estado atual:
+> - Founder → `docs/coordination/active/founder.md`
+> - Platform/Core → `docs/coordination/active/platform-core.md`
+> - Quality/Verification → `docs/coordination/active/quality-verification.md`
+> - auditorias/checkpoints novos → `docs/audits/entries/`
 
-Antes de alterar owner compartilhado, sincronize a branch-alvo e registre um lease aqui. Ao concluir, publique checkpoint e marque CLOSED.
-
-## Leases ativos
+## Histórico do ledger anterior
 
 | Agente | Branch / PR | Owner / arquivos | Objetivo | SHA inicial | Status | Founder necessária? |
 | --- | --- | --- | --- | --- | --- | --- |
-| Founder | PR #30 | superfície clínica | Homologação clínica manual e relatório de domínio | — | ACTIVE | — |
-| Lead Engineering | `chore/housekeeping-product-convergence` / #30 | governança multiagente, documentação canônica e reconciliação | Consolidar shared audit log, invariant registry e coordenação; sem alterar comportamento clínico em homologação | `f588a05` | ACTIVE | não |
-| Auditor independente (Claude) | `audit/invariant-coverage-gate` / PR #37 | `tests/invariant-coverage.test.mjs` + 1 teste aditivo em `tests/integration-static.test.mjs` (âncora externa) | Endereçar as 3 fragilidades da segunda leitura de Lead Engineering | `7936afc` | **CLOSED** — `AUD-2026-08-13-007`, 3/3 achados corrigidos, cobertura reclassificada para 8 integral / 2 parcial, suíte 238/238. PR #37 devolvida para terceira leitura; owner liberado | não |
-| Auditor independente (Claude) | `audit/maturity-report-publication` / PR #36 | `docs/audits/MATURITY_AUDIT_2026-08-12.md` + entrada aditiva no log + índice | Publicar auditoria independente de maturidade | `3577383` | PAUSADA (draft, por instrução da Founder) | não |
-| Quality/Verification (Claude) | `audit/inv-clin-003-stage-context-gate` → `chore/housekeeping-product-convergence` | `tests/context-never-diagnoses.test.mjs` (novo) + entrada `INV-CLIN-003` em `tests/invariant-coverage.test.mjs` + entrada append-only | Fechar a lacuna de exaustão do `INV-CLIN-003` conforme decisão de Platform/Core na issue #39 | `087a520` | **CLOSED** — propriedade se sustenta, 11 vetores, 160 combinações, 8 mutações verificadas, cobertura 10 integral / 0 parcial, suíte 255/255. Owner liberado | não |
+| Founder | PR #30 | superfície clínica | Homologação clínica manual e relatório de domínio | — | ACTIVE no momento da migração | — |
+| Lead Engineering | `chore/housekeeping-product-convergence` / #30 | governança multiagente, documentação canônica e reconciliação | Consolidar shared audit log, invariant registry e coordenação; sem alterar comportamento clínico em homologação | `f588a05` | migrado para lane Platform/Core | não |
+| Auditor independente (Claude) | `audit/invariant-coverage-gate` / PR #37 | `tests/invariant-coverage.test.mjs` + `tests/integration-static.test.mjs` | Endereçar fragilidades do gate de invariantes | `7936afc` | CLOSED / integrada | não |
+| Auditor independente (Claude) | `audit/maturity-report-publication` / PR #36 | documentação de auditoria | Publicar auditoria independente de maturidade | `3577383` | PAUSADA (draft) | não |
 
-### Aviso de integração — PRs #36 e #37 colidem neste arquivo
+### Incidente que motivou a migração
 
-Ambas partem de `3577383` e editam esta tabela e o `SHARED_AUDIT_LOG.md` no mesmo ponto. O conflito é **puramente aditivo**: nenhuma das duas altera linha escrita por outro agente. Ao integrar a segunda, manter os dois blocos. Detalhe e receita em `AUD-2026-08-13-006`.
+PRs concorrentes passaram a editar esta mesma tabela e `docs/audits/SHARED_AUDIT_LOG.md`, produzindo conflito textual em arquivos cuja finalidade era justamente coordenar trabalho concorrente. A resolução adotada foi estrutural:
 
-### Escopo declarado do lease `audit/inv-clin-003-stage-context-gate`
+```text
+um arquivo compartilhado de leases
+→ substituído por
+um arquivo de estado por setor
 
-Construída empilhada sobre a PR #38 para não editar `tests/invariant-coverage.test.mjs` em paralelo com ela e recriar a colisão de `AUD-2026-08-13-006`. A #38 foi integrada por Platform/Core em `3a23402` durante a construção; a branch foi rebaseada sobre `087a520` sem conflito e a contagem 10/0 vale agora diretamente sobre a canônica.
+um ledger compartilhado de auditorias
+→ substituído por
+uma entrada append-only por checkpoint
+```
 
-Owner tocado: `tests/` apenas. Nenhum arquivo de `assets/`, `src/`, `protocols/` ou `app.html` foi modificado — zero alteração de semântica clínica ou UX. `docs/clinical/INVARIANT_REGISTRY.md` continua lido, não modificado.
+Assim, agentes distintos podem atualizar seu próprio estado sem disputar o mesmo ponto de inserção.
 
-### Escopo declarado do lease `audit/invariant-coverage-gate`
+## Regras vigentes
 
-Este lease **não** toca `docs/clinical/INVARIANT_REGISTRY.md`, que pertence ao owner `documentação canônica` de Lead Engineering e está `ACTIVE`. O gate lê o registry como fonte de verdade e mantém o mapeamento invariante→teste dentro do próprio arquivo de teste, para não escrever em owner alheio.
-
-Não altera semântica clínica nem UX em homologação: nenhum arquivo de `assets/`, `src/`, `protocols/` ou `app.html` é modificado.
-
-## Regras rápidas
-
-- `ACTIVE` no mesmo owner bloqueia write concorrente; o outro agente pode revisar/auditar.
-- `AVAILABLE` não reserva owner.
-- Mudança de owner exige atualizar esta tabela.
-- P0 urgente na `main` segue protocolo de hotfix e reconciliação da PR #30.
+- **não escrever novos leases neste arquivo**;
+- setor vem antes do lease;
+- cada setor escreve somente em `docs/coordination/active/<setor>.md`;
+- auditorias/checkpoints novos usam arquivo próprio em `docs/audits/entries/`;
+- owner ativo de outro setor bloqueia write concorrente; revisão/auditoria continua permitida;
+- P0 urgente na `main` segue protocolo de hotfix + reconciliação da PR #30;
 - PR #30 não pode ser mergeada antes da homologação clínica manual da Founder.
-- Ao terminar um bloco, registrar SHA/testes no `SHARED_AUDIT_LOG.md` e fechar o lease.
+
+Para o protocolo atual, consultar `docs/architecture/AGENT_COORDINATION.md` e `docs/coordination/README.md`.
