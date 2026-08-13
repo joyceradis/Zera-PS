@@ -50,6 +50,28 @@ Auditorias extensas podem ter arquivo próprio em `docs/audits/`; este log apont
 - **Status:** `OPEN` para reconciliação completa com PR #30 e homologação da Founder.
 - **Founder:** sim somente para classificar fricção clínica/UX; não para lacunas técnicas objetivas.
 
+### AUD-2026-08-13-004 — `INV-GOV-001` convertido de regra escrita em gate executável
+
+- **Origem:** auditor independente (Claude).
+- **Severidade:** lacuna real de garantia (não é bug de comportamento).
+- **Branch / PR / base / SHA:** `audit/invariant-coverage-gate` → PR filha da #30; base `3577383`.
+- **Achado:** o registry declarava 10 invariantes críticos, mas **nenhum teste da suíte referenciava qualquer invariante por id**. A ligação "invariante → teste que o protege" existia apenas em prosa. Foi exatamente por isso que a proteção de `INV-CLIN-001` pôde ser apagada junto com a regressão que ela impedia (`AUD-2026-08-13-001`) sem que 158 testes verdes acusassem nada.
+- **Evidência:** `grep -rl "INV-" tests/` retornava zero ocorrências no SHA `3577383`.
+- **Ação:** `tests/invariant-coverage.test.mjs` — lê o registry como fonte de verdade e falha quando (a) um invariante declarado não tem protetor mapeado, (b) um arquivo de teste protetor desaparece, (c) um teste protetor é removido ou renomeado, (d) o mapeamento aponta para invariante que o registry não declara mais.
+- **Verificação adversarial:** os quatro modos de falha foram reproduzidos em cópia isolada do repositório e **todos reprovaram corretamente**, incluindo a reprodução literal do P0 real (renomear `legacy syndrome templates never prewrite clinical negatives`). Um gate que só passa não é gate; este foi verificado falhando.
+- **Cobertura resultante:** 10/10 invariantes do registry com protetor rastreável. 26 testes protetores mapeados.
+- **Invariants:** implementa `INV-GOV-001`. Nenhum invariante alterado; nenhuma semântica clínica tocada.
+- **Owner:** `tests/invariant-coverage.test.mjs` apenas. `INVARIANT_REGISTRY.md` foi **lido, não modificado** — pertence ao owner `documentação canônica`, `ACTIVE` com Lead Engineering. O mapeamento vive dentro do teste por essa razão.
+- **Testes:** `npm run verify` — 234/234, 0 falhas (231 anteriores + 3 do gate).
+- **Status:** `CLOSED` para a implementação; `IN REVIEW` quanto ao mapeamento em si, que merece conferência de Lead Engineering.
+- **Founder:** não necessária. Zero alteração de semântica clínica ou UX em homologação.
+
+### Ponto para segunda leitura de Lead Engineering
+
+O critério de inclusão que adotei foi: *um teste só é listado como protetor se falhar quando a propriedade do invariante for violada*. Testes que apenas exercitam o módulo relacionado, sem asserção sobre a propriedade, foram deixados de fora deliberadamente. Esse julgamento é meu e é o ponto mais contestável desta entrega — se algum mapeamento estiver frouxo, o gate passa a dar falsa segurança, que é precisamente o problema que ele existe para eliminar.
+
+Se Lead Engineering preferir que o mapeamento viva no próprio `INVARIANT_REGISTRY.md` (owner dele) em vez de dentro do teste, a migração é mecânica e não altera o comportamento do gate.
+
 ## Próximas entradas esperadas
 
 1. auditor independente publica/referencia seu relatório de maturidade completo;
