@@ -25,6 +25,19 @@ function createEncounter({ workflowId = null, now = new Date().toISOString(), ad
   };
 }
 
+function ensureEncounterStarted(encounter, options = {}) {
+  if (encounter) return encounter;
+  return createEncounter(options);
+}
+
+function attachWorkflow(encounter, workflowId) {
+  if (!workflowId) return encounter;
+  if (!encounter) return createEncounter({ workflowId });
+  if (!encounter.workflowId) return { ...encounter, workflowId };
+  if (encounter.workflowId === workflowId) return encounter;
+  throw new RangeError(`Encounter already has workflow: ${encounter.workflowId}`);
+}
+
 function transitionEncounter(encounter, stage, now = new Date().toISOString()) {
   if (!VALID_STAGES.has(stage)) throw new RangeError(`Unknown workflow stage: ${stage}`);
   if (encounter.currentStage === stage) return encounter;
@@ -159,6 +172,8 @@ function structuredCloneSafe(value) {
 export {
   WORKFLOW_STAGES,
   createEncounter,
+  ensureEncounterStarted,
+  attachWorkflow,
   transitionEncounter,
   updateEncounterContext,
   updateAdmissionSnapshot,
