@@ -6,7 +6,8 @@ const CONTEXT_DECISIONS = Object.freeze({
 
 const CONTEXT_EVENTS = Object.freeze({
   TEMPLATE_SELECTION_REQUEST: 'zera:template-selection-request',
-  WORKFLOW_SELECTION_REQUEST: 'zera:workflow-selection-request'
+  WORKFLOW_SELECTION_REQUEST: 'zera:workflow-selection-request',
+  DOCUMENTATION_RESTORED: 'zera:documentation-restored'
 });
 
 function isTemplateWorkflowCompatible(templateSelection, workflowId) {
