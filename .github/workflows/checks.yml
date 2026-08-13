@@ -23,24 +23,36 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+
+          fail() {
+            echo "::error title=Critical safety sentinel invalid::$1"
+            exit 1
+          }
+
           required=(
             "docs/clinical/INVARIANT_REGISTRY.md"
             "tests/invariant-coverage.test.mjs"
             "tests/integration-static.test.mjs"
           )
 
-          missing=0
           for path in "${required[@]}"; do
-            if [[ ! -f "$path" ]]; then
-              echo "::error title=Critical safety sentinel missing::$path"
-              missing=1
-            fi
+            [[ -s "$path" ]] || fail "$path is missing or empty"
           done
 
-          if [[ "$missing" -ne 0 ]]; then
-            echo "Critical safety sentinels must not be removed silently."
-            exit 1
-          fi
+          # File existence alone is not enough: an emptied/weakened sentinel would
+          # otherwise satisfy this outer guard. These checks intentionally verify
+          # only the minimum wiring that must exist before the Node suite is trusted
+          # to validate the richer semantics.
+          grep -q 'INV-GOV-001' docs/clinical/INVARIANT_REGISTRY.md \
+            || fail 'registry no longer declares INV-GOV-001'
+          grep -q 'INV-CLIN-001' docs/clinical/INVARIANT_REGISTRY.md \
+            || fail 'registry no longer declares INV-CLIN-001'
+          grep -q 'INVARIANT_REGISTRY\.md' tests/invariant-coverage.test.mjs \
+            || fail 'invariant gate is no longer wired to the registry'
+          grep -q "'INV-GOV-001'" tests/invariant-coverage.test.mjs \
+            || fail 'invariant gate no longer maps INV-GOV-001'
+          grep -q 'the invariant coverage gate exists and is wired to the clinical registry' tests/integration-static.test.mjs \
+            || fail 'external anchor for invariant gate is missing'
 
       - name: Setup Node
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
