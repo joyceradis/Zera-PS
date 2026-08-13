@@ -1,6 +1,7 @@
 # Registro de dívida técnica — Zera PS
 
-Data: 2026-08-12
+Data: 2026-08-12  
+Atualização canônica: 2026-08-13
 
 Status: ativo durante a homologação clínica da PR #30.
 
@@ -49,6 +50,12 @@ Cada item é avaliado por:
 | TD-13 | fallback offline de navegação podia responder `app.html` fora do origin do Zera | médio | `service-worker.js` | **CLOSED** | fallback agora exige `navigate` + `sameOrigin`; teste RED→GREEN protege contrato |
 | TD-14 | PWA podia regredir para caminhos absolutos e quebrar sob subpath do GitHub Pages | médio | manifest + registro SW | **CLOSED / CHARACTERIZED** | testes exigem `./app.html`, scope relativo, ícones relativos e registro `./service-worker.js` |
 | TD-15 | `getDrafts()` legado converte falha/corrupção em `[]`, podendo mascarar rascunhos existentes | alto | `assets/app.js` + storage | **HOLD / FIX BEFORE MERGE** | corrigir com teste RED quando a alteração puder ser feita sem perturbar a superfície clínica em homologação; jamais sobrescrever dados após leitura falha |
+| TD-16 | suíte verde podia permanecer verde após remoção do próprio teste protetor | alto | Quality + CI/CD | **PARTIALLY CLOSED** | gate invariante→teste + âncora externa integrados; sentinelas no workflow; required status check externo ainda precisa ser verificado/configurado |
+| TD-17 | ledger único de coordenação fazia agentes colidirem no arquivo criado para evitar colisão | médio | governança | **CLOSED** | leases por setor + auditorias append-only eliminam write concorrente normal |
+| TD-18 | coverage de invariantes podia ser superestimada sem gap explícito | alto | Quality | **CLOSED / GUARDED** | gate exige `FULL/PARTIAL`; gaps parciais são nomeados e visíveis |
+| TD-19 | `INV-CLIN-003` ainda não possui cobertura integral no escopo mapeado | médio | Quality | **OPEN / ISSUE #39** | enumerar stages × contextos declarativos até projeção documental; RED arquitetural vira handoff para Core |
+| TD-20 | falha externa `github-advanced-security` produz ruído recorrente de CI | baixo/médio | Quality / CI observability | **OPEN** | caracterizar sem silenciar falha real; separar infraestrutura externa de sinal do código |
+| TD-21 | PR #30 está divergida da ancestralidade atual da `main` | médio | Platform/Core | **OPEN / CONTROLLED** | reconciliação explícita sem merge cego durante homologação; diferenças clínicas só com decisão da Founder |
 
 ## Hardening concluído neste ciclo
 
@@ -110,6 +117,37 @@ Foi adicionada caracterização automática de instalação em subpath, necessá
 
 Isso impede uma futura refatoração de caminhos de funcionar na raiz e quebrar em `/Zera-PS/`.
 
+### Segurança clínico-documental e invariantes
+
+Após o P0 das negativas automáticas, a proteção deixou de depender apenas da existência casual de testes:
+
+```text
+INVARIANT_REGISTRY
+→ mapeamento invariante→testes protetores
+→ coverage FULL/PARTIAL explícita
+→ gap obrigatório quando PARTIAL
+→ âncora externa do gate
+→ workflow verifica sentinelas críticos
+```
+
+`INV-DOC-001` recebeu cobertura adversarial específica para provar que pendências, mensagens de incompletude e estado interno de workflow não vazam para o prontuário. O único invariant ainda parcial é `INV-CLIN-003`, rastreado em issue própria.
+
+### Coordenação multiagente
+
+O primeiro desenho usava `ACTIVE_WORK.md` e `SHARED_AUDIT_LOG.md` como superfícies de escrita compartilhada e reproduziu a própria classe de colisão que pretendia impedir.
+
+Contrato atual:
+
+```text
+setor
+→ arquivo de estado próprio em docs/coordination/active/
+
+auditoria/checkpoint
+→ arquivo append-only próprio em docs/audits/entries/
+```
+
+Os arquivos antigos permanecem apenas como histórico/transição para PRs iniciadas antes da migração.
+
 ### Achado preservado: rascunhos legados
 
 A auditoria encontrou em `assets/app.js`:
@@ -125,20 +163,15 @@ Isso conflita com o contrato de integridade já adotado: corrupção ou falha de
 
 Foi criado um teste RED para provar o defeito, mas a correção exige alteração do fluxo legado de `assets/app.js` e do estado visual de Rascunhos. Como essa superfície está dentro da PR em homologação, o teste experimental foi retirado do head para não deixar CI vermelho nem modificar silenciosamente a UX. O achado permanece registrado como **FIX BEFORE MERGE**, não como dívida esquecida.
 
-## Gate automatizado verde mais recente de código
+## Gate automatizado
 
-GitHub Actions `checks`, run `31580294487`:
+Não manter contagem histórica fixa neste documento: a suíte cresce durante a convergência. O gate válido é o `checks` do HEAD relevante + evidência reproduzível do bloco em sua PR/auditoria.
 
-```text
-npm run verify
-227 tests
-227 pass
-0 fail
-```
+Regra: `CI verde` não equivale a homologação assistencial e não transforma coverage declarada em prova absoluta.
 
 ## Itens deliberadamente não atacados durante a homologação
 
-Não serão refatorados agora:
+Não serão refatorados silenciosamente agora:
 
 - ordem e densidade de cards clínicos;
 - gatilhos da QP;
