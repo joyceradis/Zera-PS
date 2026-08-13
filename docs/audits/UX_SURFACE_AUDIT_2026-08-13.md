@@ -64,10 +64,15 @@ Essa dobra é a origem causal direta de quatro dos oito achados desta auditoria.
 
 | Nível | Definição |
 | --- | --- |
-| **S1** | Produz afirmação clínica não confirmada em documento assinado ou de uso externo |
+| **S1** | Produz afirmação clínica não confirmada em documento assinado ou de uso externo, **ou destrói de forma irreversível registro clínico já produzido pelo usuário** |
 | **S2** | Funcionalidade especificada indisponível ou incorreta no fluxo real de uso |
 | **S3** | Degradação de qualidade documental ou de fluxo, sem fabricação de conteúdo |
 | **S4** | Dívida estrutural sem efeito observável pelo usuário |
+
+**Nota sobre a escala.** A definição de S1 foi estendida na segunda rodada desta auditoria para
+abranger destruição irreversível de registro. A extensão decorre do achado UX-09 e está declarada
+aqui para que a mudança de critério não fique implícita. A justificativa é que perda irreversível
+do texto clínico durante o plantão tem impacto operacional equivalente ao de conteúdo fabricado.
 
 ---
 
@@ -294,6 +299,95 @@ Nenhuma ação foi tomada. A decisão é de domínio.
 
 ---
 
+### UX-09 — Sobrescrita irreversível da edição manual do documento final
+
+**Severidade:** S1
+**Local:** `app.html:163`; `assets/app.js:458-463`, `:713`
+**Owner da correção:** Platform/Core
+**Origem:** observação direta da Founder em uso real. **Não havia sido detectada pela primeira
+rodada desta auditoria** — ver seção 12.
+
+`#evolution-output` é `textarea` editável, sem `readonly`. O documento final é, por desenho, um
+campo de trabalho: o médico gera, revisa e ajusta ali.
+
+Cadeia:
+
+```text
+1. edição manual no documento final dispara autosave()
+   assets/app.js:713   $('evolution-output').addEventListener('input', autosave)
+   → o texto editado passa a ser o conteúdo persistido
+
+2. "Atualizar evolução" sobrescreve sem condição e sem confirmação
+   assets/app.js:461   $('evolution-output').value = text;
+   → nenhuma comparação com o conteúdo atual, nenhum aviso
+
+3. autosave() imediatamente a seguir persiste a sobrescrita
+   assets/app.js:463
+   → a versão editada também é destruída no armazenamento
+
+⇒ não há desfazer, histórico ou restauração
+⇒ recuperação possível apenas por rascunho salvo manualmente ANTES do evento
+```
+
+**O que torna isto um defeito e não uma escolha de desenho:** o mecanismo de proteção já existe
+no repositório e foi aplicado a **quatro** ações menos destrutivas:
+
+| Ação | Proteção | Local |
+| --- | --- | --- |
+| Limpar campos | `confirm()` | `assets/app.js:559` |
+| Puxar dados para justificativa de internação | `confirm()` quando há conteúdo | `assets/app.js:640` |
+| Trocar de roteiro | `decideTemplateReplacement` + `confirm()` | `assets/app.js:417-421` |
+| Organizar laboratório | **desfazer real** — "Restaurar texto colado" | `src/product-convergence.js:420-445` |
+| **Atualizar evolução** | **nenhuma** | `assets/app.js:458-463` |
+
+A ação com maior potencial de perda é a única sem guarda. `hasFormContentBeyondTemplate`
+(`src/context-coordination.js:90`) já implementa exatamente a distinção necessária — conteúdo real
+versus conteúdo gerado — e não é consultada neste caminho.
+
+**Agravante de disposição.** `Atualizar evolução`, `Copiar evolução completa`, `Salvar rascunho` e
+`Limpar` ocupam a mesma fileira de ações (`app.html:164`), sem separação entre operação rotineira
+e operação destrutiva. O rótulo "Atualizar" não comunica sobrescrita.
+
+---
+
+### UX-10 — Superfície sem estado inicial, sem rótulo de orientação e sem indicação de posição
+
+**Severidade:** S2
+**Local:** `src/product-convergence.js:118-129`, `:235-285`; `assets/app.js:462-463`
+**Owner da correção:** Platform/Core, mediante especificação da Founder
+**Origem:** observação direta da Founder — *"fiquei perdida na interface, onde clicar e por quê"*
+
+Quatro condições concorrentes, todas verificáveis no código:
+
+1. **A superfície abre sem título.** `hideLegacyContextSelectors` oculta
+   `#view-evolucao .form-panel > .section-heading` (`src/product-convergence.js:128`), que era o
+   único cabeçalho de topo do painel ("ROTEIROS DE DOCUMENTAÇÃO / Comece por um roteiro"). Após a
+   convergência, a tela inicia sem enunciado de onde começar. Os cabeçalhos remanescentes são de
+   seções internas — HISTÓRIA, HPP, EXAME FÍSICO, INVESTIGAÇÃO E PLANO, JUSTIFICATIVA — nenhum
+   deles orienta a primeira ação.
+
+2. **Nenhuma ação vem pré-selecionada.** `createEncounterContinuationWorkspace`
+   (`src/product-convergence.js:254-279`) cria quatro botões — Reavaliar atendimento, Internação,
+   Alta, Ferramentas — com todos os painéis `hidden = true` e `aria-pressed = 'false'`. O usuário
+   vê quatro botões, nenhum ativo, e nenhuma descrição do que cada um abre antes de clicar.
+
+3. **Não há indicação de etapa ou progresso.** O componente que cumpriria esse papel é o cartão de
+   workflow, ocultado pela mesma função — ver UX-03. A superfície não informa em que ponto do
+   atendimento o usuário está.
+
+4. **O indicador de estado tem quatro valores sem legenda, e um deles é inalcançável.**
+   `#save-status` assume `NÃO SALVO`, `AUTOSSALVO`, `GERADO` e `SALVO`. A distinção entre
+   `AUTOSSALVO` e `SALVO` não é explicada em lugar algum. `GERADO` é atribuído em
+   `assets/app.js:462` e imediatamente substituído por `AUTOSSALVO` na chamada de `autosave()` da
+   linha seguinte — é estado morto, nunca visível ao usuário.
+
+Os itens 1 a 3 decorrem da mesma decisão de ocultação analisada em UX-03. O item 4 é independente.
+
+Este achado não é reproduzível por execução de motor: sustenta-se na leitura da montagem do DOM e
+na observação de uso da Founder. Está classificado como caracterizado, não como demonstrado.
+
+---
+
 ## 7. Matriz de verificação dos achados de homologação
 
 Verificação item a item contra o código, conforme a instrução registrada em
@@ -324,24 +418,35 @@ lista."*
 | UX-05 | — | Sem cobertura |
 | UX-06 | — | Sem cobertura |
 | UX-07 | — | Sem cobertura |
+| UX-09 | — | **Sem cobertura.** Nenhum teste verifica proteção do documento final contra sobrescrita |
+| UX-10 | — | Sem cobertura; parcialmente não testável sem harness de interação |
 
-A ausência de protetor para UX-01 e UX-02 é o achado metodológico mais relevante desta seção: são
-os dois defeitos de maior impacto documental e nenhum teste da suíte os detectaria se fossem
-introduzidos hoje.
+Sete dos dez achados não têm protetor algum. Entre eles estão os três de maior severidade
+(UX-01, UX-09 e UX-03). Nenhum seria detectado pela suíte se fosse introduzido hoje.
+
+Isso delimita o significado da contagem 267/267: a suíte protege propriedades de motores puros e
+de composição entre módulos. Ela não observa a superfície de uso, e por construção não observaria
+nenhum dos defeitos que o usuário efetivamente encontra.
 
 ## 9. Disposição proposta
 
 Ordenada por severidade, não por esforço.
 
-1. **UX-01** — decisão de redação pela Founder sobre a moldura da justificativa; em seguida,
+1. **UX-09** — guarda contra sobrescrita do documento final. É o item de maior risco operacional
+   imediato: destrói trabalho já feito, durante o plantão, sem recuperação. O mecanismo necessário
+   já existe no repositório (`hasFormContentBeyondTemplate`) e basta ser consultado neste caminho.
+   Não depende de decisão de domínio.
+2. **UX-01** — decisão de redação pela Founder sobre a moldura da justificativa; em seguida,
    correção do mecanismo e protetor que reprove emissão de predicado clínico não derivado de
    entrada. Enquanto a decisão não vier, o defeito permanece ativo em documento de uso externo.
-2. **UX-03** — reconciliação arquitetural entre a ocultação da camada temporal e a existência do
+3. **UX-03** — reconciliação arquitetural entre a ocultação da camada temporal e a existência do
    Resumo do Plantão. Issue #44 aberta.
-3. **UX-02** — correção da duplicação QP/HDA e protetor correspondente.
-4. **UX-05** — decisão da Founder sobre o texto do aviso.
-5. **UX-06**, **UX-07** — dívida estrutural, sem urgência.
-6. **UX-04** — depende de especificação de produto.
+4. **UX-10** — restituição de estado inicial, rótulo de orientação e indicação de posição.
+   Sobrepõe-se parcialmente a UX-03 e deve ser tratado junto com ele.
+5. **UX-02** — correção da duplicação QP/HDA e protetor correspondente.
+6. **UX-05** — decisão da Founder sobre o texto do aviso.
+7. **UX-06**, **UX-07** — dívida estrutural, sem urgência.
+8. **UX-04** — depende de especificação de produto.
 
 Nenhum destes itens está dentro do owner de Quality/Verification para correção autônoma. Todos
 foram caracterizados com evidência executável ou saída literal, e estão prontos para handoff.
@@ -362,3 +467,30 @@ adequação clínica, alcance pelo usuário nem comportamento em uso real. O ach
 demonstração concreta dessa distinção dentro deste próprio repositório.
 
 O gate de homologação permanece aberto e pertence à Founder.
+
+## 12. Falha de método na primeira rodada
+
+Os achados UX-09 e UX-10 foram incorporados após observação direta da Founder em uso real. **A
+primeira rodada desta auditoria não os detectou**, e o motivo é estrutural, não acidental.
+
+O método aplicado — leitura de código somada à execução de motores puros com entradas
+representativas — é adequado para verificar o que o sistema **produz**. É cego para o que o
+sistema **permite que o usuário perca** e para o que o sistema **deixa de comunicar**. Nenhuma
+quantidade de execução de `renderEvolution` revelaria que o botão que a invoca destrói o texto
+editado, porque a função faz exatamente o que deve fazer; o defeito está em quem a chama e sob
+que condição.
+
+Consequência para o processo, e não apenas para este relatório:
+
+- a declaração de limites da seção 3 estava correta e mesmo assim foi insuficiente, porque
+  descrevia o que não fora testado sem afirmar que **classes inteiras de defeito** ficavam fora do
+  alcance;
+- auditoria sem harness de interação não deve ser apresentada como cobertura da superfície de uso.
+  Este relatório passa a declarar que cobre a **produção documental** da superfície, não a sua
+  **operação**;
+- observação da Founder em uso real não é complemento à auditoria técnica neste domínio: é a única
+  fonte disponível para uma classe de defeito que o ferramental atual não alcança. O contrato de
+  interface entre setores já previa isso; a primeira rodada não o honrou na prática.
+
+Registrado aqui, e não apenas corrigido em silêncio, porque o erro é de método e reaparece na
+próxima auditoria se não ficar escrito.
