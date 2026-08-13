@@ -121,6 +121,7 @@ const SCA_PROTOCOL = Object.freeze({
       min: 0,
       step: 0.01,
       placeholder: 'EX.: 0.8, 1.5, 4',
+      help: 'USE O LIMITE SUPERIOR DE REFERÊNCIA DO ENSAIO/LABORATÓRIO INFORMADO NO LAUDO. NÃO PRESUMA CUTOFF UNIVERSAL.',
       visibleWhen: TROPONIN_AVAILABLE
     },
     {
