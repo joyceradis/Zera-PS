@@ -2,20 +2,30 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   HDA_FACT_STATE,
+  FINDING_LABELS,
   emptyDiarrheaHdaState,
   defaultDiarrheaHdaState,
   composeDiarrheaHda,
   synchronizeGeneratedHda
 } from '../src/hda-composer.js';
 
-test('diarrhea selection opens an integral HDA instead of a one-line shell', () => {
+test('diarrhea selection opens an integral HDA without fabricated negatives', () => {
   const text = composeDiarrheaHda(defaultDiarrheaHdaState());
 
   assert.match(text, /HÁ \[TEMPO\]/);
   assert.match(text, /\[NÚMERO\] EPISÓDIOS/);
   assert.match(text, /FEZES \[CONSISTÊNCIA\]/);
-  assert.match(text, /NEGA PRESENÇA DE SANGUE, MUCO OU PUS NAS FEZES/);
-  assert.ok(text.length >= 250);
+  assert.doesNotMatch(text, /\bNEGA\b/);
+});
+
+test('default diarrhea findings all start unknown', () => {
+  const state = defaultDiarrheaHdaState();
+  const keys = Object.keys(FINDING_LABELS);
+
+  assert.equal(Object.keys(state.findings).length, keys.length);
+  for (const key of keys) {
+    assert.equal(state.findings[key], HDA_FACT_STATE.UNKNOWN, `${key} must start unknown`);
+  }
 });
 
 test('diarrhea HDA renders chronology and characterization as one complete paragraph', () => {
