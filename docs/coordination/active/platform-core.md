@@ -19,12 +19,13 @@ Arquitetura canônica, modelagem de estado, document engine, workflow/temporalid
 - novos leases migrados para `docs/coordination/active/<setor>.md`;
 - novas auditorias migradas para entradas append-only em `docs/audits/entries/`;
 - PR #37 revisada em três ciclos e integrada à PR #30 em `a5a5ade` — PR #30 não foi mergeada em `main`;
-- PR #38 sob revisão; Quality rebaseou uma vez após #37 e deve manter diff restrito a testes + lane + entrada append-only;
+- PR #38 revisada e integrada à PR #30 em `3a23402`; `INV-DOC-001` possui proteção adversarial de estado operacional → documento;
 - PRs obsoletas #33 e #35 fechadas; #36 permanece pausada/draft;
 - divergência `main` ↔ PR #30 registrada sem merge cego;
-- issue #39 classificada como próximo bloco de Quality: espaço declarativo stage×context é enumerável por teste; qualquer RED que exija Core vira handoff;
-- issue #40 classificada como Platform/Core: `checks` agora verifica sentinelas críticos antes de `npm run verify`; segunda leitura adversarial por Quality ainda pendente;
-- descrição da PR #30 atualizada para remover baseline/test-count obsoleto e refletir cache `zera-ps-v15` + governança atual.
+- issue #39 / PR #41: segunda leitura encontrou lacuna semântica na alegação de cobertura integral. Os 160 vetores calculam `stage/context/plan`, mas a projeção chama `renderEvolution(emptyForm(), {})` sem transportar esse estado; portanto não exercitam a ponte real contexto → estado/formulário → documento. PR #41 permanece sem integração e `INV-CLIN-003` deve continuar PARTIAL até existir teste da composição real ou handoff arquitetural;
+- issue #40 classificada como Platform/Core: `checks` verifica sentinelas críticos antes de `npm run verify`; proteção externa continua limitada pelo nível de configuração do repositório e requer segunda leitura adversarial;
+- descrição da PR #30 atualizada para remover baseline/test-count obsoleto e refletir cache `zera-ps-v15` + governança atual;
+- gate `checks` da linha canônica confirmado verde no run `31658609189` para o checkpoint `087a520`.
 
 ## Restrições
 
