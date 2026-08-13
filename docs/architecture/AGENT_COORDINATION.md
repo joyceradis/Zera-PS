@@ -97,7 +97,7 @@ Novos leases usam **um arquivo por setor**, evitando múltiplos agentes editarem
 - `docs/coordination/active/platform-core.md`
 - `docs/coordination/active/quality-verification.md`
 
-`docs/architecture/ACTIVE_WORK.md` fica como snapshot histórico/transicional para PRs anteriores à migração (#36/#37). **Não registrar novos leases nele.**
+`docs/architecture/ACTIVE_WORK.md` está **FROZEN / HISTÓRICO**. Não registrar novos leases, checkpoints ou estado corrente nele. PR antiga que ainda o carregue no diff deve descartar esse write no rebase e usar a lane do próprio setor.
 
 Antes de escrever:
 
@@ -113,7 +113,7 @@ Dois agentes não escrevem simultaneamente no mesmo owner. Enquanto um escreve, 
 
 ## Auditorias sem colisão
 
-`docs/audits/SHARED_AUDIT_LOG.md` é índice histórico/transicional, não mais um arquivo de write concorrente.
+`docs/audits/SHARED_AUDIT_LOG.md` é **histórico/transicional**, não arquivo de write concorrente.
 
 Novas auditorias/checkpoints relevantes usam um arquivo por entrada em:
 
@@ -126,8 +126,6 @@ YYYY-MM-DDTHHMMSSZ-<sector>-<slug>.md
 ```
 
 Isso elimina disputa por contador `AUD-*` e conflito por ponto único de inserção. Platform/Core pode atualizar/recompor o índice em lote depois, sem bloquear Quality.
-
-PRs #36/#37 são anteriores a esta regra e devem ser reconciliadas preservando todo o conteúdo relevante.
 
 ## Invariantes
 
@@ -146,6 +144,21 @@ Regras mínimas:
 - métrica/informação clínica não pode ser fabricada.
 
 Teste protetor de invariant é patrimônio. Remoção/enfraquecimento exige segunda leitura explícita. Coverage declarada deve distinguir cobertura integral no escopo mapeado de cobertura parcial com gap nomeado; não usar suíte verde como prova absoluta.
+
+### Regra adicional para cobertura de composição
+
+Um invariant que atravessa múltiplas camadas só pode ser classificado como cobertura integral quando ao menos um protetor atravessa a **composição real** entre essas camadas. Testes isolados de duas pontas não provam automaticamente a ponte entre elas.
+
+Exemplo:
+
+```text
+contexto/progressive disclosure
+→ coordenador real
+→ estado/formulário entregue ao document engine
+→ documento final
+```
+
+Calcular um `renderPlan` e depois renderizar um formulário vazio independente não prova que o contexto não possa contaminar a projeção documental em um glue intermediário.
 
 ## Branches
 
@@ -202,7 +215,11 @@ A frase `mesclando` sem PR e base explícitos é comunicação inválida.
 - PR #30 aberta/draft, linha canônica e bloqueada para merge até homologação clínica.
 - P0 de negativas clínicas automáticas corrigido/reconciliado; o incidente demonstrou que teste verde não basta.
 - divisão vigente: Joyce = Founder/Produto/Domínio; ChatGPT = Platform/Core; Claude = Quality/Verification.
-- PR #36: auditoria de maturidade, draft/pausada para integração coordenada.
-- PR #37: gate de invariantes tecnicamente aceito na terceira leitura; pendente sincronização/rebase sobre o HEAD atual da linha canônica antes da integração.
+- PR #37: gate de invariantes revisado em três ciclos e integrado à PR #30 em `a5a5ade`.
+- PR #38: proteção adversarial de `INV-DOC-001` integrada à PR #30 em `3a23402`; estado operacional → documento segue allow-list no escopo testado.
+- PR #41: Quality propôs fechar `INV-CLIN-003`; segunda leitura de Platform/Core bloqueou integração porque os vetores calculavam stage/context/plan, mas a chamada documental usava `renderEvolution(emptyForm(), {})` sem atravessar a ponte real contexto → documento. Deve permanecer `PARTIAL` até existir protetor da composição real ou handoff arquitetural.
+- issue #40 / `INV-GOV-001`: guard externo de CI implementado em `checks.yml` antes da suíte; presença + fiação mínima dos sentinelas são verificadas. Branch protection externa não foi confirmada pela integração e não deve ser presumida.
+- `ACTIVE_WORK.md` congelado; coordenação vigente usa lanes por setor.
+- PR #36: auditoria de maturidade, draft/pausada por instrução da Founder.
 - `develop`: somente mina arqueológica, não linha de implementação.
-- gates ainda abertos: keyboard-first, remoção de fricções concorrentes, testes de interação real, PWA/offline real e homologação clínica.
+- gates ainda abertos: `INV-CLIN-003`, keyboard-first, remoção de fricções concorrentes, testes de interação real, PWA/offline real e homologação clínica.
