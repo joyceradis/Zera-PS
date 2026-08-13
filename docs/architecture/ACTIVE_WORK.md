@@ -10,7 +10,11 @@ Antes de alterar owner compartilhado, sincronize a branch-alvo e registre um lea
 | --- | --- | --- | --- | --- | --- | --- |
 | Founder | PR #30 | superfície clínica | Homologação clínica manual e relatório de domínio | — | ACTIVE | — |
 | Lead Engineering | `chore/housekeeping-product-convergence` / #30 | governança multiagente, documentação canônica e reconciliação | Consolidar shared audit log, invariant registry e coordenação; sem alterar comportamento clínico em homologação | `f588a05` | ACTIVE | não |
-| Auditor independente | declarar antes do próximo write | declarar owner | Auditoria/correção técnica conforme escopo | sincronizar antes do write | AVAILABLE | somente se cruzar domínio |
+| Auditor independente (Claude) | `audit/maturity-report-publication` → PR filha da #30 | `docs/audits/MATURITY_AUDIT_2026-08-12.md` (novo) + entrada aditiva em `docs/audits/SHARED_AUDIT_LOG.md` + esta linha | Publicar relatório de maturidade independente no repositório e registrá-lo no log compartilhado | `3577383` | ACTIVE | não |
+
+### Sobreposição declarada — 2026-08-12
+
+O lease do auditor independente toca `docs/audits/SHARED_AUDIT_LOG.md`, que está dentro do owner declarado por Lead Engineering (`documentação canônica`). A escrita foi mantida **estritamente aditiva** (uma entrada nova, nenhuma linha existente alterada ou removida), porque o próprio log declara essa entrada como esperada em "Próximas entradas esperadas". Registrado aqui em vez de assumido: se Lead Engineering considerar que o log deve ser append-only exclusivo do owner, basta reverter a entrada e reindexar a partir do arquivo de auditoria, que é autocontido.
 
 ## Regras rápidas
 
