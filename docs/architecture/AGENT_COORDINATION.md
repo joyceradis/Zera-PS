@@ -10,6 +10,7 @@ Contrato canônico de governança enquanto mais de um agente atua no repositóri
 4. CI verde prova que os testes presentes passaram; não prova que invariantes críticos continuam suficientemente protegidos.
 5. PR #30 (`chore/housekeeping-product-convergence`) é a linha canônica de convergência e não pode ser mergeada antes da homologação clínica manual da Founder.
 6. Nenhum agente altera silenciosamente UX clínica, semântica clínica ou comportamento em homologação.
+7. PR filha submetida a segunda leitura **não pode ser integrada enquanto existir revisão bloqueante pendente**. Como as sessões operam sob a mesma identidade GitHub e o mecanismo nativo de `REQUEST_CHANGES` pode não ser tecnicamente aplicável, o gate operacional é explícito: integração só após comentário do setor integrador contendo `INTEGRATION READY` para o HEAD revisado.
 
 ## Divisão operacional
 
@@ -88,6 +89,28 @@ FOUNDER
 ```
 
 Autorrevisão não substitui segunda leitura quando a mudança toca segurança clínica, estado, documento, microfunções ou garantias críticas.
+
+### Handshake de integração
+
+Para PR filha que exige segunda leitura:
+
+```text
+AUTOR publica checkpoint + HEAD SHA
+→ REVISOR lê diff/evidência
+→ se houver gap: comentário BLOCKED + motivo
+→ autor corrige/rebaseia e publica novo HEAD
+→ revisor confirma o HEAD atual
+→ comentário literal: INTEGRATION READY — <HEAD SHA>
+→ somente então merge na branch-alvo
+```
+
+Regras:
+
+- `INTEGRATION READY` vale **somente para o SHA citado**; push/rebase posterior invalida o handshake;
+- `CI verde`, `mergeable=true`, lease fechado ou autorrevisão **não substituem** esse handshake;
+- comentário `BLOCKED`, `não integrar`, `aguarda segunda leitura` ou equivalente mantém a PR sem merge;
+- quem integra deve conferir que o HEAD atual é o mesmo SHA liberado;
+- este gate é processual enquanto a configuração externa de branch protection não puder ser comprovada/enforced pela integração.
 
 ## Estado operacional sem colisão
 
@@ -217,7 +240,7 @@ A frase `mesclando` sem PR e base explícitos é comunicação inválida.
 - divisão vigente: Joyce = Founder/Produto/Domínio; ChatGPT = Platform/Core; Claude = Quality/Verification.
 - PR #37: gate de invariantes revisado em três ciclos e integrado à PR #30 em `a5a5ade`.
 - PR #38: proteção adversarial de `INV-DOC-001` integrada à PR #30 em `3a23402`; estado operacional → documento segue allow-list no escopo testado.
-- PR #41: Quality propôs fechar `INV-CLIN-003`; segunda leitura de Platform/Core bloqueou integração porque os vetores calculavam stage/context/plan, mas a chamada documental usava `renderEvolution(emptyForm(), {})` sem atravessar a ponte real contexto → documento. Deve permanecer `PARTIAL` até existir protetor da composição real ou handoff arquitetural.
+- PR #41: integrada prematuramente enquanto havia revisão bloqueante; a declaração `INV-CLIN-003 = FULL` foi revertida para `PARTIAL` em `7a947f44` sem remover os testes úteis. Incidente registrado em `docs/audits/entries/2026-08-13T020500Z-platform-pr41-premature-integration-reconciled.md`.
 - issue #40 / `INV-GOV-001`: guard externo de CI implementado em `checks.yml` antes da suíte; presença + fiação mínima dos sentinelas são verificadas. Branch protection externa não foi confirmada pela integração e não deve ser presumida.
 - `ACTIVE_WORK.md` congelado; coordenação vigente usa lanes por setor.
 - PR #36: auditoria de maturidade, draft/pausada por instrução da Founder.
