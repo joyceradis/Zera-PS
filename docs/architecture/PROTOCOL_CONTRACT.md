@@ -16,14 +16,14 @@ Um protocolo **não** executa diagnóstico, conduta, DOM ou decisão clínica. C
 
 ```js
 {
-  id: 'sca',                       // minúsculas, iniciado por letra, único no registry
-  version: '2.0.0',                // MAJOR.MINOR.PATCH
-  label: 'DOR TORÁCICA / SUSPEITA DE SCA',   // texto exibido ao usuário
-  stages: [...],                   // subconjunto das etapas do workflow temporal
+  id: 'sca',
+  version: '2.0.0',
+  label: 'DOR TORÁCICA / SUSPEITA DE SCA',
+  stages: [...],
   fields: [...],
   sections: [...],
-  tools: [...],                    // opcional
-  temporalResults: [...]           // opcional
+  tools: [...],
+  temporalResults: [...]
 }
 ```
 
@@ -44,6 +44,30 @@ Um protocolo **não** executa diagnóstico, conduta, DOM ou decisão clínica. C
 | `visibleWhen` | não | regra `{ field, equals }` |
 
 Campos `evolution_form` são **referências** a campos já pertencentes ao formulário de evolução (QP, HDA, conduta). O protocolo os declara para documentar a relação, mas não os renderiza nem os lê para o contexto operacional — conteúdo documental não é copiado para o estado de workflow.
+
+### Valores laboratoriais e referências dependentes do ensaio
+
+Protocolos não podem embutir um cutoff laboratorial como se fosse universal quando o valor de referência depende de **ensaio/kit, unidade, população ou laboratório**.
+
+Regra canônica:
+
+```text
+valor medido + unidade + referência válida do ensaio/laboratório
+→ relação/interpretação permitida
+
+referência ausente ou ensaio desconhecido
+→ relação/interpretação permanece NÃO INFORMADA
+```
+
+Exemplo crítico: **troponina**. O HEART utiliza relação com o limite superior de referência, não um valor absoluto universal. Um número local (por exemplo, referência informada pela Founder para troponina ultrassensível no Meridional) pertence a um eventual perfil institucional/configuração do ensaio e **não pode virar default global do protocolo SCA**.
+
+Portanto:
+
+- resultado bruto pode ser armazenado como texto/valor + unidade;
+- relação com o limite superior só é aceita quando explicitamente informada ou calculada a partir de referência explicitamente conhecida;
+- ausência de referência nunca vira `normal`, `positivo`, `1×LSN` ou qualquer classificação presumida;
+- troca de hospital/kit/unidade não pode reutilizar silenciosamente a referência anterior;
+- configuração institucional futura deve ser versionada e identificável, separada da lógica clínica genérica.
 
 ### Seções (`sections[]`)
 
