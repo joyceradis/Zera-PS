@@ -6,7 +6,6 @@ import {
   ensureEncounterStarted,
   attachWorkflow
 } from '../src/workflow-engine.js';
-import { CONTEXT_EVENTS } from '../src/context-coordination.js';
 
 test('clinical activity can start a protocol-agnostic encounter without inventing a workflow', () => {
   const encounter = ensureEncounterStarted(null, {
@@ -44,17 +43,11 @@ test('attaching a different workflow over an existing workflow is rejected', () 
   assert.throws(() => attachWorkflow(current, 'outro'), /already has workflow/i);
 });
 
-test('converged UI wires clinical activity and clear events to the temporal encounter lifecycle', async () => {
-  const [appSource, temporalSource] = await Promise.all([
-    readFile(new URL('../assets/app.js', import.meta.url), 'utf8'),
-    readFile(new URL('../src/temporal-ui.js', import.meta.url), 'utf8')
-  ]);
+test('temporal owner starts encounters from clinical form activity and clears them on form reset', async () => {
+  const temporalSource = await readFile(new URL('../src/temporal-ui.js', import.meta.url), 'utf8');
 
-  assert.equal(CONTEXT_EVENTS.ENCOUNTER_ACTIVITY, 'zera:encounter-activity');
-  assert.equal(CONTEXT_EVENTS.ENCOUNTER_CLEARED, 'zera:encounter-cleared');
-  assert.match(appSource, /CONTEXT_EVENTS\.ENCOUNTER_ACTIVITY/);
-  assert.match(appSource, /CONTEXT_EVENTS\.ENCOUNTER_CLEARED/);
-  assert.match(temporalSource, /CONTEXT_EVENTS\.ENCOUNTER_ACTIVITY/);
-  assert.match(temporalSource, /CONTEXT_EVENTS\.ENCOUNTER_CLEARED/);
   assert.match(temporalSource, /ensureEncounterStarted/);
+  assert.match(temporalSource, /function handleClinicalActivity/);
+  assert.match(temporalSource, /\$\('evolution-form'\)\?\.addEventListener\('input', handleClinicalActivity\)/);
+  assert.match(temporalSource, /\$\('evolution-form'\)\?\.addEventListener\('reset', handleDocumentationReset\)/);
 });
