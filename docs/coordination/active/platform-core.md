@@ -9,75 +9,95 @@ Arquitetura canônica, modelagem de estado, document engine, workflow/temporalid
 ## Estado atual
 
 - **Linha canônica:** `chore/housekeeping-product-convergence` / PR #30.
-- **Owner ativo:** Platform/Core — CI/CD estrutural, documentação canônica, integração e reconciliação.
-- **Objetivo:** manter a PR #30 estável e auditável sem alterar silenciosamente UX/semântica clínica em homologação.
-- **Status:** ACTIVE.
-- **PR #30:** DRAFT / NÃO MERGEAR EM `main` antes da homologação clínica explícita da Founder.
+- **PR #30:** OPEN + DRAFT + NÃO MERGEAR em `main` antes da homologação clínica explícita da Founder.
+- **Checkpoint detalhado da sessão:** `docs/audits/entries/2026-08-13T053000Z-platform-session-handoff.md`.
+- **Último HEAD Core com correção funcional verificada antes do checkpoint documental:** `45e7341d13444accfbe74d49d5b323e46935c2db`.
+- **Status do setor ao encerrar a sessão:** checkpoint publicado; retomada deve começar pela leitura do estado atual e não por nova arqueologia.
 
-## Handoff obrigatório para qualquer agente novo
-
-Antes de escrever código ou documentação:
+## Handoff obrigatório para agente novo
 
 1. sincronizar `chore/housekeeping-product-convergence`;
 2. ler `docs/architecture/AGENT_COORDINATION.md`;
-3. ler os três arquivos em `docs/coordination/active/`;
+3. ler as três lanes em `docs/coordination/active/`;
 4. ler `ROADMAP.md` e `docs/clinical/INVARIANT_REGISTRY.md`;
-5. identificar setor e owner antes de adquirir lease;
-6. não usar `docs/architecture/ACTIVE_WORK.md` nem `docs/audits/SHARED_AUDIT_LOG.md` como estado corrente;
-7. não interpretar CI verde como homologação ou prova absoluta de invariant;
-8. PR filha que exige segunda leitura só pode ser integrada após handshake `INTEGRATION READY — <HEAD SHA>`.
+5. ler `docs/audits/entries/2026-08-13T053000Z-platform-session-handoff.md`;
+6. abrir PR/issues citadas no próprio setor;
+7. só então adquirir lease.
 
-## Estado técnico verdadeiro — checkpoint atual
+Não usar `ACTIVE_WORK.md`/`SHARED_AUDIT_LOG.md` históricos como estado corrente. Não pedir à Founder que reconte a história técnica.
 
-- Joyce = Founder/Produto/Domínio Clínico; ChatGPT = Platform/Core; Claude = Quality/Verification;
-- PR #37 integrada à PR #30 em `a5a5ade`: gate invariant → teste;
-- PR #38 integrada à PR #30 em `3a23402`: proteção adversarial de `INV-DOC-001`;
-- PR #41 trouxe patrimônio útil, mas a segunda leitura encontrou falha de composição na alegação de `INV-CLIN-003 = FULL`; integração prematura foi reconciliada;
-- **PR #43 está DRAFT e BLOQUEADA no HEAD `eac1b05f`.** A ponte de composição de Quality ficou materialmente melhor, porém precisa rebasear sobre a canônica, atualizar achados que já foram corrigidos e separar lifecycle corrigido do gap ainda real de protocolo dinâmico. Sem novo HEAD + segunda leitura + handshake, não integrar;
-- P0 justificativa de exame: RED `915c1c58` / run 669; GREEN `db1d5347` / run 670. Predicados automáticos de urgência/gravidade foram removidos. Issue #45 encerrada com evidência;
-- overwrite de documento final: proteção de texto gerado/manual implantada; edição manual não pode mais ser substituída silenciosamente por `Atualizar evolução`. Issue #47 encerrada com protetores;
-- restore de rascunho: bridge de sincronização pós-restauração impede `#qp-free` obsoleto de destruir QP/HDA restauradas. Issue #49 encerrada com protetor;
-- reachability/lifecycle: atividade clínica real no `#evolution-form` cria Encounter protocol-agnostic via `ensureEncounterStarted`, atualiza admission snapshot, persiste `zera-ps:encounter:v3` e permite anexar workflow posteriormente sem trocar identidade. O falso `ATENDIDOS: 0` por inexistência de Encounter foi tratado na origem;
-- **reachability foi refinada em dois ramos:** scores estáticos continuam alcançáveis em `Atendimento → Ferramentas`; a convergência move o conteúdo real de `view-scores` e preserva CRB-65/qSOFA/CURB-65. Protetor dedicado em `tests/static-score-reachability.test.mjs`, commit `2d7ef018`, CI run 688 verde. O gap restante da issue #44 é especificamente o motor declarativo de protocolo (`workflow-protocol-fields`, progressive disclosure, stage/pending e ferramentas protocol-bound como HEART), não “todas as ferramentas”;
-- PWA: novos bridges entraram no APP_SHELL e cache avançou para v16; o primeiro RED expôs teste de geração de cache desatualizado e o checkpoint posterior voltou verde (run 687);
-- troponina: interpretação depende de ensaio/kit + unidade + referência do laboratório. `0,0019` é referência local informada para troponina ultrassensível no Meridional, nunca cutoff universal. Existe protetor explícito contra universalização;
-- `INV-CLIN-003` permanece oficialmente **9 FULL / 1 PARTIAL** até PR #43 rebaseada + segunda leitura + handshake válido;
-- `INV-GOV-001`: camada interna de CI foi concluída e issue #40 encerrada no escopo interno. Guard pré-suíte + âncora mútua + `workflow-security` protegem erosão isolada. O risco externo foi separado para **issue #50**;
-- **governança externa comprovadamente ausente:** API GitHub retornou `protected:false` e enforcement de required checks `off` tanto em `main` quanto em `chore/housekeeping-product-convergence`. Portanto handshake ainda é processual, não enforcement de repositório. #50 rastreia branch protection/ruleset antes de produção e idealmente antes do merge final da PR #30;
-- branch audit refeito em `docs/audits/entries/2026-08-13T040000Z-platform-branch-prune-recheck.md`: existem 7 branches. `fix/pr30-priority-blockers` tem `files: []` contra a canônica; `fix/p0-fabricated-negatives` foi semanticamente classificada como implementação obsoleta que reintroduz placeholders `[CONFIRMAR AUSÊNCIA...]` rejeitados pela direção atual. Ambas estão **SAFE TO PRUNE**, mas o conector atual não expõe delete-ref; não simular exclusão com force update;
-- preservar: `main`, PR #30, PR #43, PR #36 pausada e `develop` como mina arqueológica;
-- QP×HDA redundantes (#46) são problema documental demonstrado, mas a solução pertence ao domínio da Founder; não corrigir silenciosamente;
-- orientação inicial/fricção (#48) é achado caracterizado a partir do uso da Founder + DOM, ainda sem harness real de interação. Não redesenhar unilateralmente;
-- keyboard-first continua ausente e é P1 após estabilização de reachability/UX canônica.
+## Estado técnico verdadeiro
 
-## Modelo epistemológico do time
+- Joyce = Founder/Produto/Domínio Clínico; ChatGPT = Platform/Core; Claude = Quality/Verification.
+- #45 FECHADA: justificativa de alto custo não fabrica mais urgência/gravidade não confirmadas.
+- #47 FECHADA: edição manual do documento final não pode ser destruída silenciosamente por `Atualizar evolução`.
+- #49 FECHADA: restauração de rascunho ressincroniza o intake visível antes de novo input.
+- #51 FECHADA: `#generate-reassessment` tem owner único no coordenador temporal. RED `ef085ead...`; GREEN `45e7341d...`; `checks` run 696 = success.
+- lifecycle/produtividade: atividade clínica real inicia Encounter protocol-agnostic e persiste `zera-ps:encounter:v3`; o falso `ATENDIDOS: 0` por inexistência de Encounter foi tratado na origem.
+- #44 permanece ABERTA apenas no ramo de protocolo dinâmico/progressive disclosure/ferramentas protocol-bound. Scores estáticos CRB-65/qSOFA/CURB-65 já estão alcançáveis em `Atendimento → Ferramentas`.
+- não desocultar `.workflow-card` para resolver #44; isso reintroduz Workflow/Roteiro como produto concorrente.
+- troponina: assay-dependent. Valor + unidade + referência do ensaio/laboratório. `0,0019` no Meridional é perfil local, não cutoff universal.
+- PWA app shell/hardening em v16; ainda falta prova instalada/offline real.
+- storage: ausente ≠ corrompido ≠ indisponível; I/O compartilhado preservado.
+- `INV-CLIN-003` permanece oficialmente **9 FULL / 1 PARTIAL** até PR #43 rebaseada, evidência atualizada, segunda leitura e handshake válido.
+- #50 ABERTA: branch protection/required checks externos não estão enforced; handshake ainda é disciplina processual.
+- PR #30 chegou a aparecer fechada sem merge durante a sessão e foi restaurada para OPEN + DRAFT. Não presumir autoria/causa; lifecycle da PR canônica não é housekeeping.
+- branches `fix/pr30-priority-blockers` e `fix/p0-fabricated-negatives` seguem SAFE TO PRUNE, mas sem delete-ref seguro disponível; não usar force update para simular deleção.
 
-A Founder fornece evidência de uso real na linguagem natural do plantão. Quality transforma em reprodução, RED, testes e delimitação do que a evidência prova. Platform/Core verifica causalidade/composição, implementa/reconcilia mudanças estruturais e impede que cobertura local seja promovida a garantia sistêmica sem evidência.
+## Correção metodológica importante da homologação
 
-Regra: **quem implementa uma garantia crítica não é seu único validador**.
+O screenshot final da Founder mostra `joyceradis.github.io/Zera-PS/...`, ou seja, a publicação GitHub Pages da linha publicada/main, **não** o preview efêmero da PR #30.
 
-## Trabalho aberto — ordem atual
+Portanto:
 
-1. **P1 Core + Produto:** definir e implementar reachability do protocolo dinâmico sem reintroduzir `Workflow`/`Roteiro` como escolhas concorrentes; preservar simultaneamente as microfunções estáticas já alcançáveis em Ferramentas;
-2. aguardar/revisar novo HEAD da PR #43; exigir rebase, evidência atual e novo contraditório antes de qualquer `INTEGRATION READY`;
-3. **P1 Governança:** fechar #50 com branch protection/ruleset externo quando a infraestrutura permitir; não declarar enforcement inexistente;
-4. **P1 UX/domain:** #46 (QP×HDA) e #48 (orientação/estado inicial) dependem de decisão explícita da Founder antes da implementação semântica;
-5. reduzir fricção operacional/keyboard-first após estabilizar o caminho canônico;
-6. testes reais de interação desktop/mobile;
-7. evidência real de PWA instalado/offline;
-8. remover refs `fix/pr30-priority-blockers` e `fix/p0-fabricated-negatives` apenas quando existir operação de delete-ref segura;
-9. concluir homologação clínica contínua da PR #30;
-10. somente então avaliar merge final da PR #30.
+- observações de UX/fricção continuam válidas como evidência de produto;
+- achados já reproduzidos e corrigidos não são invalidados;
+- porém isso não constitui homologação do HEAD atual da PR #30;
+- o gate final exige novo preview da PR #30 identificado por HEAD e homologação explícita desse preview.
+
+## PR #43 / Quality — estado de integração
+
+PR #43 continua DRAFT e **não possui handshake válido para integração**.
+
+Quality deve:
+
+1. rebasear sobre a canônica atual;
+2. atualizar evidências para reconhecer #45/#47/#49/#51 resolvidas;
+3. atualizar pins de reachability que esperavam lifecycle quebrado;
+4. preservar âncora anti-trivialidade, contraprova positiva e mutation testing;
+5. separar composição de código × reachability de produto × homologação manual;
+6. publicar novo HEAD + suíte/evidência fresca;
+7. aguardar nova segunda leitura de Platform/Core.
+
+Sem `INTEGRATION READY — <HEAD SHA>` para o HEAD revisado, não integrar.
+
+## Decisões ainda reservadas à Founder
+
+- #46 — semântica QP × HDA;
+- #48 — orientação inicial, hierarquia/estado da superfície e fricção cognitiva;
+- qualquer escolha cognitiva necessária para a porta canônica do protocolo dinâmico;
+- aceite final para piloto.
+
+## Próxima ordem de trabalho
+
+1. Quality rebaseia/atualiza #43.
+2. Platform/Core faz nova segunda leitura e decide honestamente `INV-CLIN-003`.
+3. Platform/Core + Produto resolvem ou deferem #44 sem criar segundo produto.
+4. Founder decide #46/#48 quando retomar.
+5. Core/Quality tratam fricção/keyboard-first com proteção.
+6. interação real desktop/mobile.
+7. PWA instalado/offline real.
+8. #50 branch protection/ruleset externo ou risco explicitamente aceito para piloto.
+9. novo preview da PR #30 identificado pelo HEAD final.
+10. Founder homologa esse preview.
+11. só então avaliar PR #30 → `main` e V1 candidata a piloto.
 
 ## Restrições
 
-- não escrever em owner ACTIVE de Quality/Verification;
+- não escrever na lane ACTIVE de Quality;
 - não alterar UX/semântica clínica sem decisão da Founder;
 - não mergear PR #30 antes da homologação;
-- mudanças técnicas devem ser reversíveis, testáveis e auditadas;
-- nenhuma suíte verde será tratada como prova absoluta de maturidade;
-- não apagar microfunções/patrimônio sem prova de equivalência ou decisão explícita;
-- não corrigir reachability simplesmente desocultando `.workflow-card`;
-- não confundir scores estáticos já preservados com ferramentas protocol-bound ainda sem alcance;
-- não usar `force update` para simular deleção de branch;
-- não fechar gap externo de governança enquanto branch protection/ruleset real continuar ausente.
+- não tratar CI verde como homologação;
+- não apagar patrimônio/microfunção sem prova de equivalência;
+- não confundir código implementado com capacidade reachable;
+- não fechar governança externa enquanto proteção real estiver ausente.
