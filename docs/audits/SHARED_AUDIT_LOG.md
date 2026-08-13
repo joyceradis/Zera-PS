@@ -86,6 +86,36 @@ Auditorias extensas podem ter arquivo próprio em `docs/audits/`; este log apont
 - **Founder:** não.
 - **Proposta para Lead Engineering (não implementada):** enquanto o ledger for um Markdown único, esse conflito reaparecerá a cada dois blocos concorrentes. Um formato append-only por arquivo (`docs/audits/entries/AUD-*.md` indexados) eliminaria a classe inteira. Decisão é do owner de `documentação canônica`; não a executei por não ser meu owner.
 
+### AUD-2026-08-13-007 — Correção das 3 fragilidades apontadas na segunda leitura
+
+- **Origem:** segunda leitura de Lead Engineering sobre a PR #37; correção pelo auditor independente.
+- **Severidade:** as três procedem. Nenhuma foi contestada.
+- **Branch / base / SHA:** `audit/invariant-coverage-gate`, base `3577383`.
+
+**Achado 1 — `INV-GOV-001` circularmente protegido.** Procedente. Se o arquivo do gate fosse apagado, nada denunciava a própria ausência.
+
+- **Correção:** âncora externa em `tests/integration-static.test.mjs :: 'the invariant coverage gate exists and is wired to the clinical registry'`, mapeada como protetora do `INV-GOV-001`. Os dois arquivos passam a se proteger mutuamente: apagar qualquer um quebra a suíte pelo outro. Um teste novo (`INV-GOV-001 is anchored outside this file...`) impede que a âncora seja removida do mapeamento, restaurando a circularidade em silêncio.
+- **Evidência:** com o gate apagado, `npm run verify` retorna exit code `1`.
+- **Limite residual declarado:** apagar os **dois** arquivos derrota o mecanismo. Nenhum gate interno à suíte protege contra a remoção da própria suíte — isso é revisão/branch protection, não teste. Registrado no cabeçalho do gate em vez de omitido.
+
+**Achado 2 — `INV-CLIN-003` com cobertura superestimada.** Procedente. Os protetores mapeados cobriam defaults e compatibilidade, não a propriedade completa.
+
+- **Correção:** acrescentado o protetor **direto** que eu havia deixado de mapear (`templates.test.mjs :: 'templates do not inject diagnosis or conduct into the medical record'`) e mais um de `protocol-engine`. Ainda assim, reclassificado como `PARTIAL` com lacuna nomeada: falta provar que progressive disclosure e seleção de contexto, ao longo de **todas** as etapas do Atendimento, nunca produzam hipótese ou conduta no documento final.
+
+**Achado 3 — `INV-DOC-001` com cobertura superestimada.** Procedente. Os protetores cobriam apenas "score não aplicado não vaza".
+
+- **Correção:** reclassificado como `PARTIAL`. Lacuna confirmada por busca em toda a suíte: **não existe** teste que prove que pendência (`pendingItems`), motivo de incompletude ou aviso de workflow não alcança o texto clínico final.
+- **Nota:** esta é lacuna real de cobertura, não de redação. Fechá-la exige teste novo sobre o document engine — bloco técnico candidato, não executado aqui.
+
+**Correção estrutural de fundo.** Os achados 2 e 3 são instâncias de um defeito de desenho do próprio gate: ele **podia** superestimar cobertura sem que nada acusasse. Cada invariante agora declara `coverage: FULL | PARTIAL`; `PARTIAL` exige `gap` descrito, `FULL` proíbe `gap`, e as lacunas são impressas na saída da suíte. Um gate que superestima cobertura converte lacuna conhecida em falsa segurança — pior que gate nenhum.
+
+- **Cobertura real declarada:** **8 integral / 2 parcial** de 10. A versão anterior afirmava 10/10.
+- **Verificação adversarial:** 5 cenários reproduzidos em cópia isolada, todos reprovando corretamente — apagar o gate; apagar a âncora; declarar `PARTIAL` sem lacuna; remover a âncora do mapeamento; marcar `INV-DOC-001` como `FULL` mantendo a lacuna.
+- **Testes:** `npm run verify` — 238/238, 0 falhas.
+- **Owner:** `tests/invariant-coverage.test.mjs` + 1 teste aditivo em `tests/integration-static.test.mjs` (âncora). `INVARIANT_REGISTRY.md` continua **lido, não modificado**.
+- **Status:** `IN REVIEW` — devolvido a Lead Engineering para terceira leitura.
+- **Founder:** não. Zero alteração de semântica clínica ou UX.
+
 ### Ponto para segunda leitura de Lead Engineering
 
 O critério de inclusão que adotei foi: *um teste só é listado como protetor se falhar quando a propriedade do invariante for violada*. Testes que apenas exercitam o módulo relacionado, sem asserção sobre a propriedade, foram deixados de fora deliberadamente. Esse julgamento é meu e é o ponto mais contestável desta entrega — se algum mapeamento estiver frouxo, o gate passa a dar falsa segurança, que é precisamente o problema que ele existe para eliminar.
