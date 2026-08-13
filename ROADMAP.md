@@ -35,17 +35,17 @@ Nenhuma funcionalidade é avanço se economizar texto, mas aumentar cliques, nav
 - `Homologado` = comportamento foi validado na experiência real definida pela Founder.
 - `Maduro` = evidência compatível com uso real, não apenas leitura de código.
 
-## Estado executivo — reclassificado após auditoria independente
+## Estado executivo atual
 
 | Área | Estado | Gate principal |
 | --- | --- | --- |
 | Segurança clínica — desenho | Forte / implementado | Estado/proveniência explícitos e invariantes nomeados |
-| Segurança clínica — garantia efetiva | **Em desenvolvimento** | Registry + gate rastreável + segunda leitura + interação real |
-| Invariant coverage | **9 integrais / 1 parcial** | `INV-CLIN-003` segue parcial e rastreado em issue; integral = no escopo mapeado |
+| Segurança clínica — garantia efetiva | **Em desenvolvimento** | Registry + gate rastreável + contraditório técnico + interação real |
+| Invariant coverage | **9 integrais / 1 parcial** | `INV-CLIN-003` permanece parcial até teste da composição real |
 | Workflow temporal | Implementado; homologação aberta | Reavaliação única deve preservar admissão e funcionar sem caminhos concorrentes |
 | Progressive disclosure | Infraestrutura implementada | Validar que reduz, e não aumenta, carga cognitiva |
 | Ferramentas clínicas | Implementadas parcialmente | `available ≠ applicable ≠ calculable ≠ applied` + contexto real |
-| Documento temporal | Implementado; proteção fortalecida | `INV-DOC-001` verificado adversarialmente: estado operacional não vaza |
+| Documento temporal | Implementado; proteção fortalecida | `INV-DOC-001` verificado adversarialmente |
 | Persistência/histórico | Parcial | Sem perda/reinterpretação; multi-Atendimento ainda futuro |
 | UX operacional / keyboard-first | **Lacuna real** | atalhos, remoção de `confirm()` nativo e eliminação de caminhos/seletores concorrentes |
 | Testes de lógica | Ativos e rastreados | Não equivalem a interação real |
@@ -57,61 +57,70 @@ Nenhuma funcionalidade é avanço se economizar texto, mas aumentar cliques, nav
 
 ## Coordenação multiagente — modelo vigente
 
-Documentos canônicos:
+Bootstrap obrigatório de qualquer agente novo:
 
-- [`docs/architecture/AGENT_COORDINATION.md`](docs/architecture/AGENT_COORDINATION.md)
-- [`docs/coordination/README.md`](docs/coordination/README.md)
-- [`docs/coordination/active/`](docs/coordination/active/)
-- [`docs/audits/entries/`](docs/audits/entries/)
-- [`docs/clinical/INVARIANT_REGISTRY.md`](docs/clinical/INVARIANT_REGISTRY.md)
+1. `docs/architecture/AGENT_COORDINATION.md`;
+2. `docs/coordination/active/founder.md`;
+3. `docs/coordination/active/platform-core.md`;
+4. `docs/coordination/active/quality-verification.md`;
+5. este `ROADMAP.md`;
+6. `docs/clinical/INVARIANT_REGISTRY.md`;
+7. PRs/issues citadas na lane do próprio setor.
 
-`docs/architecture/ACTIVE_WORK.md` e `docs/audits/SHARED_AUDIT_LOG.md` permanecem como artefatos históricos/transicionais para trabalho iniciado antes da migração; **não são mais superfícies de write concorrente**.
+Nenhum agente novo deve pedir à Founder que reconte o estado técnico.
 
 ```text
 JOYCE — FOUNDER / PRODUTO / DOMÍNIO CLÍNICO
 → prática real do PS, prioridade, linguagem, fluxo cognitivo e homologação
-→ não atua como mensageira entre agentes
+→ pode relatar comportamento em linguagem natural: "fiz X, ocorreu Y, esperava Z"
+→ não atua como mensageira nem precisa traduzir o relato para engenharia
 
 CHATGPT — PLATFORM / CORE ENGINEERING
 → arquitetura, estado, document engine, workflow, storage, PWA, CI/CD,
   integração, segurança técnica, ownership, housekeeping e roadmap
+→ valida causalidade/composição e reconcilia mudanças estruturais
 
 CLAUDE — QUALITY / VERIFICATION ENGINEERING
 → auditoria independente, regressão, invariantes, testes adversariais,
-  investigação de bugs, compatibilidade, interação, segurança e CI observability
+  reprodução de bugs, mutation testing, interação, segurança e CI observability
+→ transforma observações/achados em evidência testável e delimita o que ela prova
 ```
+
+Regra epistemológica: **quem implementa uma garantia crítica não é seu único validador**. Um teste sofisticado pode estar correto e ainda sustentar uma conclusão maior do que aquilo que efetivamente exercitou. Segunda leitura deve verificar não apenas mecanismo, mas a ponte de composição real.
 
 Regra de fronteira:
 
 - setor vem antes do lease;
 - cada setor registra estado apenas no próprio arquivo em `docs/coordination/active/`;
-- auditorias novas usam uma entrada append-only própria, evitando disputa por um ledger único;
+- auditorias novas usam uma entrada append-only própria;
 - Quality pode corrigir bug técnico localizado do próprio escopo, mas não refatora Core por iniciativa própria;
-- se Quality encontra RED que exige arquitetura, faz handoff para Platform/Core;
-- se qualquer frente exige decisão de fluxo/semântica clínica, retorna à Founder;
+- RED arquitetural faz handoff para Platform/Core;
+- decisão de fluxo/semântica clínica retorna à Founder;
+- PR filha sujeita a segunda leitura só pode ser integrada após `INTEGRATION READY — <HEAD SHA>` do setor revisor;
 - PR #30 é a linha canônica de convergência e **não será mergeada antes da homologação manual da Founder**.
 
-## Âncora — 2026-08-13
+## Âncora — checkpoint corrente
 
 - P0 de negativas clínicas pré-escritas foi confirmado, corrigido e reconciliado;
 - o incidente demonstrou que suíte verde não basta: um teste protetor havia sido removido junto com a regressão;
-- `INVARIANT_REGISTRY.md` registra propriedades críticas independentemente da implementação;
-- PR #37 foi revisada em três ciclos e integrada à linha canônica, criando gate executável de rastreabilidade invariante→teste;
-- `INV-GOV-001` ganhou âncora externa e limite residual explícito; o workflow `checks` passou a verificar sentinelas críticos antes da suíte;
-- PR #38 foi integrada à linha canônica após teste adversarial de `INV-DOC-001`; cobertura declarada evoluiu para 9 integral / 1 parcial;
-- `INV-CLIN-003` é o único invariant ainda parcial e já está classificado como bloco de Quality enumerável por stage×contexto; qualquer RED arquitetural volta para Platform/Core;
-- coordenação migrou de ledger compartilhado para lanes por setor + auditorias append-only;
-- PRs obsoletas #33 e #35 foram fechadas; #36 permanece pausada/draft para reconciliação documental posterior;
+- PR #37 criou gate executável de rastreabilidade invariant→teste e foi integrada à PR #30 após três leituras;
+- PR #38 fortaleceu `INV-DOC-001` com adversarial testing e foi integrada;
+- PR #41 produziu testes úteis para `INV-CLIN-003`, mas a segunda leitura demonstrou que os vetores não atravessavam contexto → estado/formulário → document engine. A integração prematura foi reconciliada e a cobertura voltou ao estado correto: **9 integral / 1 parcial**;
+- após #41, integração de PR filha crítica exige handshake explícito `INTEGRATION READY — <HEAD SHA>`; CI verde/mergeable/lease fechado não substituem segunda leitura;
+- `INV-GOV-001` possui guard externo no workflow `checks` antes da suíte; presença e fiação mínima dos sentinelas são verificadas;
+- coordenação usa lanes por setor + auditorias append-only; `ACTIVE_WORK.md` e `SHARED_AUDIT_LOG.md` são históricos/transicionais;
+- PRs #33 e #35 estão fechadas; #36 permanece pausada/draft;
 - PR #30 continua aberta/draft para homologação clínica;
-- keyboard-first, `confirm()` nativos, seletores/caminhos concorrentes, testes de interação real e PWA/offline real permanecem trabalho aberto;
-- expansão clínica fica subordinada a segurança demonstrável + redução de fricção operacional.
+- `develop` permanece mina arqueológica, não linha de implementação;
+- keyboard-first, diálogos nativos, caminhos concorrentes, interação real e PWA/offline real permanecem trabalho aberto;
+- expansão clínica continua subordinada a segurança demonstrável + redução de fricção operacional.
 
 ## Prioridade atual
 
 ```text
 P0 — preservar invariantes críticos e impedir fabricação clínica
 ↓
-P1 — fechar o único gap parcial conhecido (INV-CLIN-003) sem alterar domínio silenciosamente
+P1 — fechar corretamente INV-CLIN-003 ou manter PARTIAL com gap explícito
 ↓
 P1 — convergir para UM fluxo de Atendimento e UMA reavaliação temporal
 ↓
