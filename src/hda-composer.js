@@ -41,12 +41,10 @@ function emptyDiarrheaHdaState() {
 }
 
 function defaultDiarrheaHdaState() {
-  const state = emptyDiarrheaHdaState();
-  state.draft = true;
-  for (const key of ['fever', 'blood', 'mucus', 'pus', 'intensePain', 'oralIntolerance', 'oliguria', 'syncopeHypotension']) {
-    state.findings[key] = HDA_FACT_STATE.DENIED;
-  }
-  return state;
+  // Estado inicial ao abrir o roteiro: todo achado começa "unknown" (não informado),
+  // igual a emptyDiarrheaHdaState(). Nenhuma negativa é presumida antes de a médica
+  // marcar explicitamente "Negado" em cada seletor — não informado ≠ negado (invariante 2).
+  return { ...emptyDiarrheaHdaState(), draft: true };
 }
 
 function joinClinicalList(items = [], conjunction = 'E') {

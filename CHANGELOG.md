@@ -2,7 +2,18 @@
 
 Registro de marcos relevantes do Zera PS. Commits e pull requests permanecem como fonte detalhada de implementação.
 
-## 2026-08-09
+## 2026-08-12
+
+### fix: roteiros e compositor sindrômico não fabricam mais negativas de alarme
+
+Auditoria integral solicitada pela usuária encontrou regressão P0: os 5 roteiros de documentação escreviam negativas clínicas pré-confirmadas ao serem selecionados (ex.: `NEGA INÍCIO SÚBITO, TRAUMA, FEBRE, RIGIDEZ DE NUCA...` na Cefaleia), sem que a médica tivesse investigado nada. O teste que impedia exatamente isso (`syndrome templates do not preconfirm clinical negatives`) foi removido no mesmo commit que introduziu a regressão (`5233ad7`, 2026-08-09).
+
+- os 5 `hdaDraft` estáticos (`rinossinusite`, `cefaleia`, `sindrome-diarreica`, `sindrome-gripal`, `pac`) trocam a negativa pré-escrita por um placeholder editável `[CONFIRMAR AUSÊNCIA DE: ...]`, na mesma convenção já usada para `[TEMPO]`/`[SINTOMAS ASSOCIADOS]` — a estrutura clínica (quais sinais de alarme perguntar) é preservada; o fato de já terem sido negados não é;
+- `defaultDiarrheaHdaState()` (`src/hda-composer.js`) deixa de pré-marcar 8 de 12 achados como `DENIED` — todo achado inicia `unknown`, igual a `emptyDiarrheaHdaState()`; a médica confirma cada um pelos seletores já existentes na interface (Presente/Negado/Não informado), que já disparavam a recomposição do texto — nenhuma mudança de UI foi necessária, só o estado inicial;
+- teste de trava restaurado e reforçado: nenhum roteiro pode afirmar `NEGA` fora de um placeholder `[...]` — a versão anterior checava a string inteira e foi por isso trivial de contornar; a nova verifica o texto após remover os placeholders;
+- 3 testes novos/reescritos cobrindo o contrato diretamente (`tests/templates.test.mjs`, `tests/hda-composer.test.mjs`).
+
+npm run verify: 160 testes, 160 aprovados, 0 falhas.
 
 ### fix: roteiro abre com HDA clínica integral
 

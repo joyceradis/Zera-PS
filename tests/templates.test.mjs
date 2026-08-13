@@ -14,6 +14,21 @@ test('every documentation route opens with an integral editable HDA draft', () =
   }
 });
 
+function withoutEditablePlaceholders(text) {
+  return text.replace(/\[[^\]]*\]/g, '');
+}
+
+test('syndrome templates never assert a clinical negative outside an editable placeholder', () => {
+  for (const template of TEMPLATES) {
+    const stripped = withoutEditablePlaceholders(template.hdaDraft).toUpperCase();
+    assert.equal(
+      stripped.includes('NEGA'),
+      false,
+      `${template.id} asserts "NEGA ..." as a completed fact instead of an editable [CONFIRMAR ...] placeholder — a roteiro must never pre-answer a red flag the physician has not actually investigated`
+    );
+  }
+});
+
 test('templates do not inject diagnosis or conduct into the medical record', () => {
   for (const template of TEMPLATES) {
     assert.equal('hipoteses' in template, false, `${template.id} should not prefill hypotheses`);
