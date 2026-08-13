@@ -743,7 +743,6 @@ function bindEvents() {
   $('apply-generated-hda')?.addEventListener('click', () => synchronizeDiarrheaHda({ force: true }));
   $('evolution-output').addEventListener('input', autosave);
 
-  $('generate-reassessment').addEventListener('click', generateReassessment);
   $('generate-admission').addEventListener('click', generateAdmission);
   $('generate-discharge').addEventListener('click', generateDischarge);
   $$('[data-copy-target]').forEach((button) => button.addEventListener('click', () => copyTextFrom(button.dataset.copyTarget)));
