@@ -8,14 +8,21 @@ import {
   synchronizeGeneratedHda
 } from '../src/hda-composer.js';
 
-test('diarrhea selection opens an integral HDA instead of a one-line shell', () => {
+test('diarrhea selection opens an integral HDA shell with editable placeholders and no answered findings', () => {
   const text = composeDiarrheaHda(defaultDiarrheaHdaState());
 
   assert.match(text, /HÁ \[TEMPO\]/);
   assert.match(text, /\[NÚMERO\] EPISÓDIOS/);
   assert.match(text, /FEZES \[CONSISTÊNCIA\]/);
-  assert.match(text, /NEGA PRESENÇA DE SANGUE, MUCO OU PUS NAS FEZES/);
-  assert.ok(text.length >= 250);
+  assert.doesNotMatch(text, /NEGA/);
+  assert.doesNotMatch(text, /REFERE/);
+});
+
+test('every finding starts unknown — the roteiro never pre-denies a red flag before the physician answers it', () => {
+  const state = defaultDiarrheaHdaState();
+  for (const [key, value] of Object.entries(state.findings)) {
+    assert.equal(value, HDA_FACT_STATE.UNKNOWN, `${key} should start unknown, not denied`);
+  }
 });
 
 test('diarrhea HDA renders chronology and characterization as one complete paragraph', () => {
