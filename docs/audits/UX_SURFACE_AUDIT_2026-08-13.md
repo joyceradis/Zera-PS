@@ -58,7 +58,8 @@ Dezessete pontos de ocultação foram identificados no módulo. Os elementos ori
 no documento com o atributo `hidden`; não são removidos, e parte deles conserva listeners
 registrados por `assets/app.js`.
 
-Essa dobra é a origem causal direta de quatro dos oito achados desta auditoria.
+Essa dobra é a origem causal direta de seis dos catorze achados desta auditoria (UX-02, UX-03,
+UX-05, UX-07, UX-10 e UX-12).
 
 ## 5. Escala de severidade
 
@@ -388,6 +389,153 @@ na observação de uso da Founder. Está classificado como caracterizado, não c
 
 ---
 
+### UX-11 — Abrir um rascunho dessincroniza o campo de texto livre; a tecla seguinte destrói o rascunho
+
+**Severidade:** S1
+**Local:** `src/product-convergence.js:134`, `:150-153`, `:166-172`, `:208`; `assets/app.js:536`
+**Owner da correção:** Platform/Core
+
+O campo visível de queixa e contexto (`#qp-free`) é criado **uma única vez**, em
+`createZeroFrictionIntake`. A função retorna imediatamente em qualquer reentrada
+(`src/product-convergence.js:134`) e semeia o valor inicial a partir dos campos ocultos no momento
+da criação (`:153`). **Nada o ressincroniza depois.**
+
+Restaurar autosave na carga funciona, porque `loadAutosave` (`assets/app.js:680`) executa antes da
+convergência e o campo é semeado já com o conteúdo correto.
+
+Abrir um rascunho, não:
+
+```text
+1. usuário abre um rascunho em Rascunhos
+   assets/app.js:536   restoreForm(snapshot.form)
+   → escreve nos campos OCULTOS #qp e #hda
+   → não há recarga de página: activateView('evolucao') apenas troca a visão
+   → #qp-free continua exibindo o conteúdo anterior, ou vazio
+
+2. estado inconsistente e silencioso
+   → o documento é gerado a partir de #qp/#hda (corretos)
+   → a tela mostra #qp-free (errado)
+   → nada sinaliza a divergência
+
+3. qualquer tecla digitada no campo visível dispara a sincronização
+   src/product-convergence.js:166-172   syncDocumentState()
+   → qpInput.value = free.value
+   → hdaInput.value = composeHdaFromQp(free.value, flags)
+   → a QP e a HDA do rascunho restaurado são substituídas pelo conteúdo obsoleto
+
+4. o evento de input propagado dispara autosave
+   → a substituição é persistida
+```
+
+Resultado: **abrir um rascunho e digitar destrói a QP e a HDA daquele rascunho.** Rascunho existe
+justamente para retomar um paciente; este é o percurso em que o defeito ocorre.
+
+Mesma família do UX-09 — um escritor sobrescreve conteúdo clínico existente sem consultar seu
+estado — e mesma correção conceitual.
+
+---
+
+### UX-12 — "Reavaliar atendimento" abre o painel mas não inicia a reavaliação temporal
+
+**Severidade:** S2
+**Local:** `src/product-convergence.js:261-263`; `src/temporal-ui.js:328`, `:410`
+**Owner da correção:** Platform/Core
+**Relação:** decorre de UX-03 / issue #44
+
+O botão executa duas ações em sequência:
+
+```js
+if (action.id === 'reavaliacao') document.getElementById('reassess-encounter')?.click();
+openEncounterPanel(action.id);
+```
+
+O clique encaminhado atinge `handleStartReassessment`, que retorna na primeira linha por não
+existir encounter (`src/temporal-ui.js:328`) — consequência direta de UX-03. O painel abre de
+qualquer forma.
+
+O usuário obtém um formulário funcional e um documento de reavaliação. Não obtém: captura de
+snapshot de admissão, registro da reavaliação no encounter, nem o evento
+`zera:reassessment-started`.
+
+**Falha parcial silenciosa:** a ação aparenta ter funcionado. Metade dela não executou, e não há
+sinalização.
+
+---
+
+### UX-13 — Rascunhos são descartados em silêncio a partir do 31º
+
+**Severidade:** S3
+**Local:** `assets/app.js:309`, `:506`
+**Owner da correção:** Platform/Core
+
+```js
+storage.saveDrafts(drafts.slice(0, 30));
+```
+
+O 31º rascunho salvo descarta o mais antigo, sem aviso, sem confirmação e sem registro. Em plantão
+de alto volume o limite é alcançável, e o descarte atinge exatamente os atendimentos mais antigos
+— os que o usuário tem menos chance de perceber que perdeu.
+
+Truncamento silencioso é indistinguível, para o usuário, de dado que nunca existiu.
+
+---
+
+### UX-14 — `INV-STOR-001` vale no motor e não vale no ponto de chamada
+
+**Severidade:** S3
+**Local:** `assets/app.js:493-511` versus `assets/storage-io.js`
+**Owner da correção:** Platform/Core
+
+O invariante `INV-STOR-001` — falha de persistência não equivale a ausência de dado — está
+declarado `FULL`, protegido por três testes, **todos em `storage-io.test.mjs`**, incluindo
+`storage writes never fail silently`. A propriedade é verdadeira: `writeStorageItem` lança
+`StoragePersistenceError`.
+
+No ponto de chamada, não é:
+
+| Caminho | Tratamento |
+| --- | --- |
+| `autosave()` (`assets/app.js:219-227`) | `try/catch`, degrada para `NÃO SALVO` |
+| `loadAutosave()` (`assets/app.js:680`) | `try/catch`, degrada para `NÃO SALVO` |
+| **`saveDraft()` (`assets/app.js:493`)** | **nenhum** |
+
+Em `saveDraft`, a exceção interrompe a execução antes de `renderDrafts()`, antes de
+`save-status = 'SALVO'` e antes da mensagem de confirmação. O usuário clica em "Salvar rascunho" e
+**nada acontece na tela** — sem confirmação e sem erro.
+
+O invariante é honrado pelo motor e perdido na borda. Nenhum protetor cobre a borda.
+
+---
+
+## 6.1 Padrão sistêmico
+
+Os catorze achados desta auditoria não são independentes. Todos têm a mesma forma:
+
+```text
+o motor está correto e protegido por teste
+   ↓
+o ponto de chamada que liga o motor ao usuário não está
+```
+
+| Achado | Motor correto | Borda não coberta |
+| --- | --- | --- |
+| UX-01 | `renderEvolution` não fabrica; `[COMPLETAR: ...]` funciona | a moldura da justificativa afirma urgência |
+| UX-03 | `summarizeProductivity` calcula certo | nada produz o encounter que ele consome |
+| UX-09 | `renderEvolution` gera o texto correto | quem a chama destrói a edição manual |
+| UX-11 | `restoreForm` restaura corretamente | o campo visível não é ressincronizado |
+| UX-12 | `handleStartReassessment` protege-se corretamente | o chamador ignora que ela não executou |
+| UX-14 | `writeStorageItem` lança, nunca falha em silêncio | `saveDraft` não captura |
+
+O mesmo se aplica ao `INV-CLIN-003`: a propriedade é verdadeira no código e o espaço que ela
+protege está fora do alcance do usuário (UX-03).
+
+**Conclusão metodológica.** A suíte deste repositório é forte na camada de motores e ausente na
+camada de bordas. Não é questão de quantidade de testes — 267 casos não moveriam nenhum destes
+achados. É questão de **onde** a fronteira de verificação foi colocada. Toda cobertura declarada
+neste projeto deve ser lida como propriedade de motor até que exista evidência de borda.
+
+---
+
 ## 7. Matriz de verificação dos achados de homologação
 
 Verificação item a item contra o código, conforme a instrução registrada em
@@ -420,9 +568,13 @@ lista."*
 | UX-07 | — | Sem cobertura |
 | UX-09 | — | **Sem cobertura.** Nenhum teste verifica proteção do documento final contra sobrescrita |
 | UX-10 | — | Sem cobertura; parcialmente não testável sem harness de interação |
+| UX-11 | — | **Sem cobertura.** Nenhum teste verifica sincronia entre campo visível e campos espelhados |
+| UX-12 | — | Sem cobertura |
+| UX-13 | — | Sem cobertura |
+| UX-14 | — | Motor coberto (`storage-io.test.mjs`); **borda não coberta** |
 
-Sete dos dez achados não têm protetor algum. Entre eles estão os três de maior severidade
-(UX-01, UX-09 e UX-03). Nenhum seria detectado pela suíte se fosse introduzido hoje.
+Onze dos catorze achados não têm protetor algum. Entre eles estão os quatro de maior severidade
+(UX-01, UX-09, UX-11 e UX-03). Nenhum seria detectado pela suíte se fosse introduzido hoje.
 
 Isso delimita o significado da contagem 267/267: a suíte protege propriedades de motores puros e
 de composição entre módulos. Ela não observa a superfície de uso, e por construção não observaria
@@ -432,10 +584,13 @@ nenhum dos defeitos que o usuário efetivamente encontra.
 
 Ordenada por severidade, não por esforço.
 
-1. **UX-09** — guarda contra sobrescrita do documento final. É o item de maior risco operacional
+1. **UX-09 e UX-11 em conjunto** — guarda contra sobrescrita de conteúdo clínico existente. São
+   o mesmo defeito conceitual em dois pontos de chamada: um escritor substitui conteúdo do usuário
+   sem consultar seu estado. Maior risco operacional imediato: destroem trabalho já feito, durante
+   o plantão, sem recuperação. É o item de maior risco operacional
    imediato: destrói trabalho já feito, durante o plantão, sem recuperação. O mecanismo necessário
-   já existe no repositório (`hasFormContentBeyondTemplate`) e basta ser consultado neste caminho.
-   Não depende de decisão de domínio.
+   O mecanismo necessário já existe no repositório (`hasFormContentBeyondTemplate`) e basta ser
+   consultado nesses caminhos. Não dependem de decisão de domínio.
 2. **UX-01** — decisão de redação pela Founder sobre a moldura da justificativa; em seguida,
    correção do mecanismo e protetor que reprove emissão de predicado clínico não derivado de
    entrada. Enquanto a decisão não vier, o defeito permanece ativo em documento de uso externo.
@@ -445,8 +600,11 @@ Ordenada por severidade, não por esforço.
    Sobrepõe-se parcialmente a UX-03 e deve ser tratado junto com ele.
 5. **UX-02** — correção da duplicação QP/HDA e protetor correspondente.
 6. **UX-05** — decisão da Founder sobre o texto do aviso.
-7. **UX-06**, **UX-07** — dívida estrutural, sem urgência.
-8. **UX-04** — depende de especificação de produto.
+7. **UX-12** — resolvido junto com UX-03; enquanto isso, a ação não deve aparentar sucesso.
+8. **UX-14** — captura de falha em `saveDraft`, alinhando a borda ao invariante já declarado.
+9. **UX-13** — sinalizar o descarte no 31º rascunho, ou elevar/remover o limite.
+10. **UX-06**, **UX-07** — dívida estrutural, sem urgência.
+11. **UX-04** — depende de especificação de produto.
 
 Nenhum destes itens está dentro do owner de Quality/Verification para correção autônoma. Todos
 foram caracterizados com evidência executável ou saída literal, e estão prontos para handoff.
