@@ -36,7 +36,8 @@ Responsável por:
 - recuperar microfunções perdidas sem transplantar comportamento inseguro;
 - impedir que uma feature quebre outra;
 - auditar antes e depois de mudanças relevantes;
-- bloquear tecnicamente uma mudança quando não houver evidência suficiente.
+- bloquear tecnicamente uma mudança quando não houver evidência suficiente;
+- reconciliar hotfixes e trabalho concorrente com a linha canônica de convergência.
 
 Lead Engineering pode decidir e executar autonomamente mudanças não clínicas, reversíveis e testáveis.
 
@@ -49,7 +50,8 @@ Responsável por:
 - auditar o código sem pressupor que a suíte verde implica segurança completa;
 - procurar regressões, testes removidos, invariantes não protegidos e patrimônio não mesclado;
 - apresentar evidência reproduzível;
-- contradizer a implementação atual quando a evidência exigir.
+- contradizer a implementação atual quando a evidência exigir;
+- implementar correções técnicas quando o escopo estiver claramente definido e não depender de decisão clínica nova.
 
 O auditor não altera sozinho a doutrina clínica do produto. Achados são validados contra o repositório real antes de incorporação.
 
@@ -57,17 +59,18 @@ O auditor não altera sozinho a doutrina clínica do produto. Achados são valid
 
 ```text
 DECISÃO PURAMENTE TÉCNICA
-→ Lead Engineering decide
+→ agente técnico pode caracterizar e implementar
 → teste/contrato
 → alteração
 → verificação
 → auditoria pós
+→ Lead Engineering reconcilia com a linha canônica
 
 DECISÃO COM IMPACTO CLÍNICO OU OPERACIONAL
-→ Lead Engineering caracteriza problema e alternativas
+→ problema e alternativas são caracterizados
 → Founder decide o domínio
-→ Lead Engineering implementa
-→ auditor independente pode revisar
+→ implementação técnica
+→ auditoria independente pode revisar
 
 DÚVIDA SE É TÉCNICA OU CLÍNICA
 → tratar como clínica
@@ -78,12 +81,89 @@ DÚVIDA SE É TÉCNICA OU CLÍNICA
 
 1. PR #30 é a linha canônica de convergência enquanto estiver em homologação.
 2. A `main` recebe apenas hotfix isolado quando existir risco real que não pode aguardar a homologação da PR #30.
-3. Hotfix na `main` deve ser mínimo, ter teste de regressão e ser reconciliado documentalmente com a PR #30.
+3. Hotfix na `main` deve ser mínimo, ter teste de regressão e ser reconciliado imediatamente com a PR #30.
 4. Nenhum agente cria arquitetura paralela para a mesma responsabilidade sem registrar owner e motivo.
 5. Nenhum agente remove teste de segurança para fazer a suíte passar.
 6. Nenhum agente transforma auditoria histórica em especificação vigente sem reconciliar com documentos canônicos.
 7. Nenhum agente faz merge da PR #30 antes da homologação clínica manual da Founder.
-8. Microfunção existente é patrimônio até prova de obsolescência ou insegurança; primeiro recuperar/characterize, depois remover.
+8. Microfunção existente é patrimônio até prova de obsolescência ou insegurança; primeiro recuperar/caracterizar, depois remover.
+9. Dois agentes não escrevem simultaneamente no mesmo owner sem coordenação explícita. Enquanto um agente altera um owner, o outro assume papel de auditor/reviewer naquele owner.
+10. Antes de qualquer write, o agente deve sincronizar o HEAD da branch-alvo e identificar a base real. Depois do write, deve informar branch, PR, base e SHA exatos.
+11. A frase `mesclando` é proibida sem escopo explícito. A comunicação deve usar: `mesclando PR #<n> → <base>` ou `não mesclando; apenas commitando em <branch>`.
+12. Autorrevisão não substitui reconciliação multiagente quando a mudança toca segurança clínica, estado, documento, microfunções ou owners compartilhados.
+
+## Protocolo de branches
+
+### Trabalho da convergência
+
+```text
+base lógica: main
+linha canônica: chore/housekeeping-product-convergence
+PR: #30 → main
+merge: BLOQUEADO até homologação da Founder
+```
+
+Mudanças que pertencem ao produto convergente devem entrar na PR #30 diretamente ou por PR filha apontando para a branch da PR #30. Não criar uma terceira linha de produto.
+
+### Hotfix P0 na main
+
+```text
+main
+↓
+hotfix/<problema>
+↓
+PR isolada → main
+↓
+RED reproduzível
+↓
+correção mínima
+↓
+GREEN
+↓
+merge do hotfix
+↓
+RECONCILIAR IMEDIATAMENTE com PR #30
+```
+
+`merge na main` nunca significa que a PR #30 herdou automaticamente a correção. A reconciliação precisa ser comprovada por diff/teste.
+
+## Lease de ownership
+
+Durante mudanças concorrentes, cada bloco deve declarar implicitamente um owner de escrita:
+
+```text
+AGENTE A — WRITE LEASE
+src/hda-composer.js + testes associados
+
+AGENTE B
+→ não escreve nesses owners
+→ pode auditar/revisar
+→ trabalha em owner ortogonal
+```
+
+O lease termina quando o agente publica um checkpoint coerente com SHA e testes. Isso evita sobrescrita, non-fast-forward e correções concorrentes divergentes.
+
+## Formato obrigatório de checkpoint técnico
+
+Todo agente que concluir um bloco relevante deve reportar:
+
+```text
+OBJETIVO:
+BRANCH:
+PR:
+BASE:
+HEAD SHA:
+ARQUIVOS/OWNERS ALTERADOS:
+TESTES:
+MERGE:
+- não realizado
+ou
+- PR #N → main/branch, SHA ...
+PENDÊNCIA DE RECONCILIAÇÃO:
+IMPACTO CLÍNICO:
+```
+
+A Founder não precisa acompanhar esses campos; eles existem para coordenação entre agentes.
 
 ## Invariantes compartilhados
 
@@ -100,9 +180,9 @@ DÚVIDA SE É TÉCNICA OU CLÍNICA
 
 ## Estado ancorado em 2026-08-13
 
-- `main`: hotfix de segurança clínico-documental #32 mesclado; negativas automáticas removidas dos cinco roteiros legados; trava de regressão restaurada.
+- `main`: hotfixes #32 e #34 corrigem negativas automáticas dos templates e do compositor da síndrome diarreica.
 - PR #30: aberta, draft e bloqueada para merge até homologação clínica manual da Founder.
-- PR #30: proteção adicional de invariant clínico adicionada; suíte verificada em 230/230 testes.
+- PR #30: proteção adicional de invariant clínico presente; hotfix do compositor deve permanecer reconciliado na linha canônica.
 - `develop`: preservada somente como mina arqueológica; não é linha de implementação.
 
 ## Próximo gate
@@ -114,14 +194,15 @@ FOUNDER
 
 LEAD ENGINEERING
 → manter chão técnico estável
-→ reconciliar qualquer hotfix da main com a PR #30
+→ reconciliar hotfixes da main com a PR #30
+→ auditar blocos do auditor independente
 → não alterar silenciosamente UX/fluxo/texto clínico em homologação
-→ preparar correções após o relatório
 
 AUDITOR INDEPENDENTE
-→ segunda leitura de regressão/invariantes
-→ evidência reproduzível
-→ sem criar linha paralela de produto
+→ implementar/auditar blocos claramente técnicos
+→ checkpoint com branch/base/SHA
+→ sem merge da PR #30
+→ sem linha paralela de produto
 ```
 
 Após homologação: correções da PR #30 → nova verificação automatizada → novo preview → homologação final → somente então merge.
