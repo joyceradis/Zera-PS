@@ -4,7 +4,9 @@ Este documento é canônico para coordenação quando mais de um agente atua no 
 
 ## Princípio
 
-Nenhum agente é autoridade isolada sobre o produto. O Zera PS separa autoridade de domínio, autoridade técnica e auditoria independente para reduzir regressão, ambiguidade e mudanças silenciosas.
+Nenhum agente é autoridade isolada sobre o produto. O GitHub é a fonte única de verdade operacional. O Zera PS separa autoridade de domínio, autoridade técnica e auditoria independente para reduzir regressão, ambiguidade, trabalho duplicado e mudanças silenciosas.
+
+CI verde prova somente que os testes existentes passaram. Não prova que invariantes importantes continuam protegidos. Testes que protegem invariantes críticos são patrimônio do produto e sua remoção/modificação exige revisão explícita.
 
 ## Papéis
 
@@ -22,7 +24,7 @@ Responsável por definir:
 - quando uma solução tecnicamente elegante é ruim na prática;
 - homologação clínica manual da superfície antes de merge de mudanças com impacto assistencial.
 
-A Founder não precisa decidir arquitetura, branch hygiene, CI/CD, PWA, storage, ownership ou refatoração puramente técnica.
+A Founder não precisa decidir arquitetura, branch hygiene, CI/CD, PWA, storage, ownership ou refatoração puramente técnica, nem atuar como mensageira entre agentes.
 
 ### Lead Engineering
 
@@ -37,7 +39,8 @@ Responsável por:
 - impedir que uma feature quebre outra;
 - auditar antes e depois de mudanças relevantes;
 - bloquear tecnicamente uma mudança quando não houver evidência suficiente;
-- reconciliar hotfixes e trabalho concorrente com a linha canônica de convergência.
+- reconciliar hotfixes e trabalho concorrente com a linha canônica de convergência;
+- integrar achados de auditoria independente sem tratar suíte verde como prova suficiente de maturidade.
 
 Lead Engineering pode decidir e executar autonomamente mudanças não clínicas, reversíveis e testáveis.
 
@@ -51,9 +54,10 @@ Responsável por:
 - procurar regressões, testes removidos, invariantes não protegidos e patrimônio não mesclado;
 - apresentar evidência reproduzível;
 - contradizer a implementação atual quando a evidência exigir;
-- implementar correções técnicas quando o escopo estiver claramente definido e não depender de decisão clínica nova.
+- implementar correções técnicas quando o escopo estiver claramente definido e não depender de decisão clínica nova;
+- publicar auditorias relevantes no repositório para leitura direta pelos demais agentes.
 
-O auditor não altera sozinho a doutrina clínica do produto. Achados são validados contra o repositório real antes de incorporação.
+O auditor não altera sozinho a doutrina clínica do produto.
 
 ## Matriz de autoridade
 
@@ -77,20 +81,36 @@ DÚVIDA SE É TÉCNICA OU CLÍNICA
 → não assumir
 ```
 
+## Fonte única de verdade multiagente
+
+O repositório substitui a Founder como canal de transporte de contexto entre agentes.
+
+Artefatos canônicos:
+
+- `docs/audits/SHARED_AUDIT_LOG.md`: índice cronológico de auditorias, achados e reconciliações;
+- `docs/architecture/ACTIVE_WORK.md`: leases de escrita e trabalho técnico em andamento;
+- `docs/clinical/INVARIANT_REGISTRY.md`: invariantes críticos, proteção automatizada e owner;
+- `docs/architecture/AGENT_COORDINATION.md`: este contrato de governança.
+
+Auditoria relevante deve ser registrada no GitHub. O outro agente deve lê-la do repositório, não depender de retransmissão manual pela Founder.
+
 ## Regra para trabalho concorrente
 
 1. PR #30 é a linha canônica de convergência enquanto estiver em homologação.
 2. A `main` recebe apenas hotfix isolado quando existir risco real que não pode aguardar a homologação da PR #30.
 3. Hotfix na `main` deve ser mínimo, ter teste de regressão e ser reconciliado imediatamente com a PR #30.
 4. Nenhum agente cria arquitetura paralela para a mesma responsabilidade sem registrar owner e motivo.
-5. Nenhum agente remove teste de segurança para fazer a suíte passar.
-6. Nenhum agente transforma auditoria histórica em especificação vigente sem reconciliar com documentos canônicos.
-7. Nenhum agente faz merge da PR #30 antes da homologação clínica manual da Founder.
-8. Microfunção existente é patrimônio até prova de obsolescência ou insegurança; primeiro recuperar/caracterizar, depois remover.
-9. Dois agentes não escrevem simultaneamente no mesmo owner sem coordenação explícita. Enquanto um agente altera um owner, o outro assume papel de auditor/reviewer naquele owner.
-10. Antes de qualquer write, o agente deve sincronizar o HEAD da branch-alvo e identificar a base real. Depois do write, deve informar branch, PR, base e SHA exatos.
-11. A frase `mesclando` é proibida sem escopo explícito. A comunicação deve usar: `mesclando PR #<n> → <base>` ou `não mesclando; apenas commitando em <branch>`.
-12. Autorrevisão não substitui reconciliação multiagente quando a mudança toca segurança clínica, estado, documento, microfunções ou owners compartilhados.
+5. Nenhum agente remove ou enfraquece teste de invariant crítico para fazer a suíte passar.
+6. Alteração/remoção de teste que protege invariant crítico exige atualização explícita do `INVARIANT_REGISTRY.md` e segunda leitura.
+7. Nenhum agente transforma auditoria histórica em especificação vigente sem reconciliar com documentos canônicos.
+8. Nenhum agente faz merge da PR #30 antes da homologação clínica manual da Founder.
+9. Microfunção existente é patrimônio até prova de obsolescência ou insegurança; primeiro recuperar/caracterizar, depois remover.
+10. Dois agentes não escrevem simultaneamente no mesmo owner sem coordenação explícita. Enquanto um agente altera um owner, o outro assume papel de auditor/reviewer naquele owner.
+11. Antes de qualquer write, o agente deve sincronizar o HEAD da branch-alvo, identificar a base real e verificar `ACTIVE_WORK.md`.
+12. Depois do write, deve informar branch, PR, base, SHA, owners alterados e testes.
+13. A frase `mesclando` é proibida sem escopo explícito. Usar `mesclando PR #<n> → <base>` ou `não mesclando; apenas commitando em <branch>`.
+14. Autorrevisão não substitui reconciliação multiagente quando a mudança toca segurança clínica, estado, documento, microfunções ou owners compartilhados.
+15. Suite verde não autoriza marcar fase como madura sem evidência compatível com o gate declarado.
 
 ## Protocolo de branches
 
@@ -120,6 +140,8 @@ correção mínima
 ↓
 GREEN
 ↓
+segunda leitura quando tocar invariant crítico
+↓
 merge do hotfix
 ↓
 RECONCILIAR IMEDIATAMENTE com PR #30
@@ -129,11 +151,15 @@ RECONCILIAR IMEDIATAMENTE com PR #30
 
 ## Lease de ownership
 
-Durante mudanças concorrentes, cada bloco deve declarar implicitamente um owner de escrita:
+Todo bloco concorrente deve ser registrado em `docs/architecture/ACTIVE_WORK.md` antes do write.
 
 ```text
 AGENTE A — WRITE LEASE
-src/hda-composer.js + testes associados
+owner: src/hda-composer.js + testes associados
+branch/PR: ...
+objetivo: ...
+SHA inicial: ...
+status: ACTIVE
 
 AGENTE B
 → não escreve nesses owners
@@ -141,20 +167,20 @@ AGENTE B
 → trabalha em owner ortogonal
 ```
 
-O lease termina quando o agente publica um checkpoint coerente com SHA e testes. Isso evita sobrescrita, non-fast-forward e correções concorrentes divergentes.
+O lease termina quando o agente publica checkpoint coerente com SHA e testes e atualiza o status para CLOSED.
 
 ## Formato obrigatório de checkpoint técnico
 
-Todo agente que concluir um bloco relevante deve reportar:
-
 ```text
 OBJETIVO:
+AGENTE:
 BRANCH:
 PR:
 BASE:
 HEAD SHA:
 ARQUIVOS/OWNERS ALTERADOS:
 TESTES:
+INVARIANTS TOCADOS:
 MERGE:
 - não realizado
 ou
@@ -166,6 +192,8 @@ IMPACTO CLÍNICO:
 A Founder não precisa acompanhar esses campos; eles existem para coordenação entre agentes.
 
 ## Invariantes compartilhados
+
+O registry canônico vive em `docs/clinical/INVARIANT_REGISTRY.md`. No mínimo:
 
 - ausência de confirmação nunca vira afirmação clínica;
 - template não equivale a achado confirmado;
@@ -180,29 +208,31 @@ A Founder não precisa acompanhar esses campos; eles existem para coordenação 
 
 ## Estado ancorado em 2026-08-13
 
-- `main`: hotfixes #32 e #34 corrigem negativas automáticas dos templates e do compositor da síndrome diarreica.
+- `main`: P0 das negativas automáticas corrigido; auditoria independente demonstrou que a proteção efetiva precisa ser tratada separadamente do desenho de segurança.
 - PR #30: aberta, draft e bloqueada para merge até homologação clínica manual da Founder.
-- PR #30: proteção adicional de invariant clínico presente; hotfix do compositor deve permanecer reconciliado na linha canônica.
+- PR #30: linha canônica de convergência e reconciliação de hotfixes.
 - `develop`: preservada somente como mina arqueológica; não é linha de implementação.
+- maturidade: segurança por desenho é mais forte que a garantia efetiva; keyboard-first, testes de interação real, PWA/offline real e revisão independente contínua permanecem gates abertos.
 
 ## Próximo gate
 
 ```text
 FOUNDER
 → finalizar relatório/homologação clínica da PR #30
-→ classificar feedback por impacto e prioridade
+→ decidir somente questões reais de domínio/UX clínico
 
 LEAD ENGINEERING
 → manter chão técnico estável
-→ reconciliar hotfixes da main com a PR #30
-→ auditar blocos do auditor independente
+→ coordenar leases e reconciliação
+→ transformar achados auditáveis em backlog/gates
 → não alterar silenciosamente UX/fluxo/texto clínico em homologação
 
 AUDITOR INDEPENDENTE
-→ implementar/auditar blocos claramente técnicos
+→ publicar auditorias no GitHub
+→ trabalhar em leases explícitos
 → checkpoint com branch/base/SHA
 → sem merge da PR #30
 → sem linha paralela de produto
 ```
 
-Após homologação: correções da PR #30 → nova verificação automatizada → novo preview → homologação final → somente então merge.
+Após homologação: correções da PR #30 → verificação automatizada + interação real → novo preview → homologação final → somente então merge.
