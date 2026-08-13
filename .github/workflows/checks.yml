@@ -18,9 +18,34 @@ jobs:
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           persist-credentials: false
+
+      - name: Guard critical safety sentinels
+        shell: bash
+        run: |
+          set -euo pipefail
+          required=(
+            "docs/clinical/INVARIANT_REGISTRY.md"
+            "tests/invariant-coverage.test.mjs"
+            "tests/integration-static.test.mjs"
+          )
+
+          missing=0
+          for path in "${required[@]}"; do
+            if [[ ! -f "$path" ]]; then
+              echo "::error title=Critical safety sentinel missing::$path"
+              missing=1
+            fi
+          done
+
+          if [[ "$missing" -ne 0 ]]; then
+            echo "Critical safety sentinels must not be removed silently."
+            exit 1
+          fi
+
       - name: Setup Node
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version: '24'
+
       - name: Verify
         run: npm run verify
