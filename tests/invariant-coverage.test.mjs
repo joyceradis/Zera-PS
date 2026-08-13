@@ -78,24 +78,12 @@ const PROTECTED_BY = Object.freeze({
   },
 
   'INV-CLIN-003': {
-    // Reclassificado PARTIAL -> FULL em
-    // docs/audits/entries/2026-08-13T031500Z-quality-inv-clin-003-closed.md
-    // (identificador por timestamp+setor+slug, sem reservar número AUD- concorrente).
-    //
-    // A lacuna anterior era "cobertura por partes, não por exaustão do espaço de estados".
-    // `context-never-diagnoses.test.mjs` fecha exatamente isso: enumera o produto cartesiano
-    // completo protocolo × etapa × contexto declarativo (160 combinações hoje) e prova que
-    // nenhuma delas produz hipótese ou conduta no documento. A enumeração é derivada das
-    // declarações (WORKFLOW_STAGES, `protocols/`, regras de disclosure, catálogo de templates),
-    // com piso ancorado para que o espaço não encolha em silêncio.
-    coverage: COVERAGE.FULL,
+    coverage: COVERAGE.PARTIAL,
     protectors: [
-      // Protetor direto, ausente do mapeamento anterior e apontado pela segunda leitura.
       ['templates.test.mjs', 'templates do not inject diagnosis or conduct into the medical record'],
       ['context-coordination.test.mjs', 'template compatibility depends only on explicit protocol metadata, never on QP text'],
       ['protocol-engine.test.mjs', 'sections owned by the evolution form are not rendered by the protocol layer'],
       ['protocol-engine.test.mjs', 'default context exposes only protocol owned fields and never invents values'],
-      // Exaustão do espaço etapa × contexto — o que faltava para a propriedade completa.
       ['context-never-diagnoses.test.mjs', 'no stage/context combination produces diagnosis or conduct in the final document'],
       ['context-never-diagnoses.test.mjs', 'context values never leak into the document as clinical text'],
       ['context-never-diagnoses.test.mjs', 'progressive disclosure changes only visibility, never field values'],
@@ -103,13 +91,12 @@ const PROTECTED_BY = Object.freeze({
       ['context-never-diagnoses.test.mjs', 'default context never carries diagnosis or conduct, in any stage'],
       ['context-never-diagnoses.test.mjs', 'selecting any template, in any stage, never fills diagnosis or conduct'],
       ['context-never-diagnoses.test.mjs', 'a full encounter traversal accumulating context never yields diagnosis or conduct'],
-      // Guardas da própria exaustão: sem elas o bloco acima passaria sobre um universo menor.
       ['context-never-diagnoses.test.mjs', 'the enumerated stage space covers every declared workflow stage'],
       ['context-never-diagnoses.test.mjs', 'every declared protocol is loaded into the enumerated space'],
       ['context-never-diagnoses.test.mjs', 'the enumerated disclosure space never shrinks below its anchored floor'],
-      // Contraprova: impede que a propriedade passe por o renderizador ter parado de renderizar.
       ['context-never-diagnoses.test.mjs', 'diagnosis and conduct still render when the physician actually types them']
-    ]
+    ],
+    gap: 'Os protetores locais cobrem o espaço declarativo de stage/context e provam que protocol-engine e document-engine, isoladamente, não fabricam hipótese/conduta. Porém os vetores atuais calculam plan/visible/context e depois chamam renderEvolution(emptyForm(), {}) sem transportar esse estado pela fronteira real de coordenação. Falta um protetor que atravesse a composição existente contexto/progressive disclosure → coordenador real → estado/formulário entregue ao document engine → documento final. Até essa ponte ser testada, a cobertura permanece PARTIAL.'
   },
 
   'INV-SCORE-001': {
@@ -135,8 +122,6 @@ const PROTECTED_BY = Object.freeze({
     protectors: [
       ['document-tool-application.test.mjs', 'calculable but unapplied tool stays out of the clinical document'],
       ['reassessment-document.test.mjs', 'scores section disappears when no score is applied and calculable'],
-      // Fecham a lacuna que esta entrada declarava como PARTIAL: pendências,
-      // motivos de incompletude e estado interno de workflow também não vazam.
       ['document-operational-state.test.mjs', 'an applied score publishes only its score and interpretation, never the operational fields carried alongside'],
       ['document-operational-state.test.mjs', 'the reassessment renderer ignores encounter fields it was never authorized to publish'],
       ['document-operational-state.test.mjs', 'the evolution renderer ignores encounter fields it was never authorized to publish'],
@@ -175,14 +160,8 @@ const PROTECTED_BY = Object.freeze({
   'INV-GOV-001': {
     coverage: COVERAGE.FULL,
     protectors: [
-      // Âncora EXTERNA: quebra se este arquivo for apagado.
       ['integration-static.test.mjs', 'the invariant coverage gate exists and is wired to the clinical registry'],
-      // Âncora de CI: o gate e a âncora acima se protegem mutuamente contra remoção
-      // individual, mas apagar OS DOIS na mesma mudança não faria nenhum dos dois rodar.
-      // Só o step de CI cobre esse caso — e este protetor impede que o step suma em
-      // silêncio. Fecha a issue #40.
       ['workflow-security.test.mjs', 'the CI guard for critical safety sentinels cannot be removed silently'],
-      // Propriedades verificadas aqui dentro.
       ['invariant-coverage.test.mjs', 'every invariant declared in the registry has a declared coverage decision'],
       ['invariant-coverage.test.mjs', 'every mapped protecting test still exists with the exact declared name']
     ]
@@ -314,8 +293,6 @@ test('declared coverage gaps are surfaced, never silent', () => {
     .filter(([, entry]) => entry.coverage === COVERAGE.PARTIAL)
     .map(([invariant, entry]) => `${invariant}: ${entry.gap}`);
 
-  // Este teste não reprova por existirem lacunas — lacuna declarada é honestidade,
-  // não defeito. Ele existe para que nenhuma lacuna atravesse a suíte em silêncio.
   for (const line of partial) {
     console.log(`[COBERTURA PARCIAL DECLARADA] ${line}`);
   }
