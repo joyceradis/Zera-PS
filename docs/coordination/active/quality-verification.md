@@ -8,10 +8,10 @@ Auditoria independente, testes de regressão, invariant coverage, testes adversa
 
 ## Estado atual
 
-- **PR #37:** `audit/invariant-coverage-gate` → PR #30; implementação tecnicamente aceita na terceira leitura; branch precisa sincronizar/rebasear sobre o HEAD atual da linha canônica para remover conflito documental aditivo.
+- **PR #37:** `audit/invariant-coverage-gate` → PR #30; implementação tecnicamente aceita na terceira leitura. **Rebase feito** sobre `1b8f785`, sem conflito; suíte 238/238, cobertura 8 integral / 2 parcial.
 - **PR #36:** auditoria de maturidade; PAUSADA em draft por instrução da Founder até integração coordenada.
-- **Lease:** nenhum ACTIVE neste snapshot; adquirir neste arquivo antes do próximo write.
-- **Próximo bloco autorizado após #37 sincronizada:** teste para fechar/characterizar o gap de `INV-DOC-001`; se o teste revelar bug de core/document engine, registrar RED e fazer handoff para Platform/Core em vez de corrigir arquitetura.
+- **Lease ACTIVE:** `audit/invariant-coverage-gate` (rebase + reclassificação) e `audit/inv-doc-001-gap-test` / PR #38. Owner: `tests/invariant-coverage.test.mjs`, `tests/document-operational-state.test.mjs`, `tests/integration-static.test.mjs` (âncora). Base `1b8f785`.
+- **Gap `INV-DOC-001`: FECHADO.** PR #38 — a propriedade **se sustenta**, não há vazamento; os renderizadores operam por allow-list. Era cobertura ausente, não bug: nenhum handoff de core necessário. 6 vetores adversariais, 2 mutações do document engine confirmadas detectadas. `INV-DOC-001` reclassificado `PARTIAL` → `FULL` no gate.
 - **github-advanced-security:** pertence ao setor, mas permanece aguardando conclusão do bloco anterior; não silenciar falha real apenas para deixar CI verde.
 
 ## Restrições

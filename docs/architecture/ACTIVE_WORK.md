@@ -10,7 +10,18 @@ Antes de alterar owner compartilhado, sincronize a branch-alvo e registre um lea
 | --- | --- | --- | --- | --- | --- | --- |
 | Founder | PR #30 | superfície clínica | Homologação clínica manual e relatório de domínio | — | ACTIVE | — |
 | Lead Engineering | `chore/housekeeping-product-convergence` / #30 | governança multiagente, documentação canônica e reconciliação | Consolidar shared audit log, invariant registry e coordenação; sem alterar comportamento clínico em homologação | `f588a05` | ACTIVE | não |
-| Auditor independente | declarar antes do próximo write | declarar owner | Auditoria/correção técnica conforme escopo | sincronizar antes do write | AVAILABLE | somente se cruzar domínio |
+| Auditor independente (Claude) | `audit/invariant-coverage-gate` / PR #37 | `tests/invariant-coverage.test.mjs` + 1 teste aditivo em `tests/integration-static.test.mjs` (âncora externa) | Endereçar as 3 fragilidades da segunda leitura de Lead Engineering | `7936afc` | **CLOSED** — `AUD-2026-08-13-007`, 3/3 achados corrigidos, cobertura reclassificada para 8 integral / 2 parcial, suíte 238/238. PR #37 devolvida para terceira leitura; owner liberado | não |
+| Auditor independente (Claude) | `audit/maturity-report-publication` / PR #36 | `docs/audits/MATURITY_AUDIT_2026-08-12.md` + entrada aditiva no log + índice | Publicar auditoria independente de maturidade | `3577383` | PAUSADA (draft, por instrução da Founder) | não |
+
+### Aviso de integração — PRs #36 e #37 colidem neste arquivo
+
+Ambas partem de `3577383` e editam esta tabela e o `SHARED_AUDIT_LOG.md` no mesmo ponto. O conflito é **puramente aditivo**: nenhuma das duas altera linha escrita por outro agente. Ao integrar a segunda, manter os dois blocos. Detalhe e receita em `AUD-2026-08-13-006`.
+
+### Escopo declarado do lease `audit/invariant-coverage-gate`
+
+Este lease **não** toca `docs/clinical/INVARIANT_REGISTRY.md`, que pertence ao owner `documentação canônica` de Lead Engineering e está `ACTIVE`. O gate lê o registry como fonte de verdade e mantém o mapeamento invariante→teste dentro do próprio arquivo de teste, para não escrever em owner alheio.
+
+Não altera semântica clínica nem UX em homologação: nenhum arquivo de `assets/`, `src/`, `protocols/` ou `app.html` é modificado.
 
 ## Regras rápidas
 

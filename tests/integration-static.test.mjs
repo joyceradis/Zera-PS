@@ -99,3 +99,30 @@ test('legacy template engine remains recoverable without being the primary clini
   assert.match(legacyApp, /\$\('hda'\)\.value = template\.hdaDraft/);
   assert.match(legacyApp, /function readDiarrheaComposer[\s\S]*?draft:\s*true/);
 });
+
+// Âncora externa do INV-GOV-001 (AUD-2026-08-13-007).
+//
+// O gate de cobertura de invariantes não pode ser protegido apenas por si mesmo:
+// se tests/invariant-coverage.test.mjs for apagado, não sobra ninguém para
+// denunciar a própria ausência. Este teste é a outra metade do par — e o gate,
+// por sua vez, mapeia este arquivo como protetor do INV-GOV-001, de modo que
+// apagar qualquer um dos dois quebra a suíte pelo outro.
+test('the invariant coverage gate exists and is wired to the clinical registry', async () => {
+  const gate = await readFile('tests/invariant-coverage.test.mjs', 'utf8');
+
+  assert.match(
+    gate,
+    /INVARIANT_REGISTRY\.md/,
+    'o gate existe mas deixou de ler o registry — a rastreabilidade invariante→teste virou decorativa'
+  );
+  assert.match(
+    gate,
+    /PROTECTED_BY/,
+    'o gate existe mas perdeu o mapeamento invariante→protetor'
+  );
+  assert.match(
+    gate,
+    /coverage:\s*COVERAGE\.(FULL|PARTIAL)/,
+    'o gate existe mas deixou de declarar cobertura por invariante — cobertura parcial voltaria a passar como integral'
+  );
+});
