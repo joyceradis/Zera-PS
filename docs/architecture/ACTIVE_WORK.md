@@ -12,10 +12,17 @@ Antes de alterar owner compartilhado, sincronize a branch-alvo e registre um lea
 | Lead Engineering | `chore/housekeeping-product-convergence` / #30 | governança multiagente, documentação canônica e reconciliação | Consolidar shared audit log, invariant registry e coordenação; sem alterar comportamento clínico em homologação | `f588a05` | ACTIVE | não |
 | Auditor independente (Claude) | `audit/invariant-coverage-gate` / PR #37 | `tests/invariant-coverage.test.mjs` + 1 teste aditivo em `tests/integration-static.test.mjs` (âncora externa) | Endereçar as 3 fragilidades da segunda leitura de Lead Engineering | `7936afc` | **CLOSED** — `AUD-2026-08-13-007`, 3/3 achados corrigidos, cobertura reclassificada para 8 integral / 2 parcial, suíte 238/238. PR #37 devolvida para terceira leitura; owner liberado | não |
 | Auditor independente (Claude) | `audit/maturity-report-publication` / PR #36 | `docs/audits/MATURITY_AUDIT_2026-08-12.md` + entrada aditiva no log + índice | Publicar auditoria independente de maturidade | `3577383` | PAUSADA (draft, por instrução da Founder) | não |
+| Quality/Verification (Claude) | `audit/inv-clin-003-stage-context-gate` → `chore/housekeeping-product-convergence` | `tests/context-never-diagnoses.test.mjs` (novo) + entrada `INV-CLIN-003` em `tests/invariant-coverage.test.mjs` + entrada append-only | Fechar a lacuna de exaustão do `INV-CLIN-003` conforme decisão de Platform/Core na issue #39 | `087a520` | **CLOSED** — propriedade se sustenta, 11 vetores, 160 combinações, 8 mutações verificadas, cobertura 10 integral / 0 parcial, suíte 255/255. Owner liberado | não |
 
 ### Aviso de integração — PRs #36 e #37 colidem neste arquivo
 
 Ambas partem de `3577383` e editam esta tabela e o `SHARED_AUDIT_LOG.md` no mesmo ponto. O conflito é **puramente aditivo**: nenhuma das duas altera linha escrita por outro agente. Ao integrar a segunda, manter os dois blocos. Detalhe e receita em `AUD-2026-08-13-006`.
+
+### Escopo declarado do lease `audit/inv-clin-003-stage-context-gate`
+
+Construída empilhada sobre a PR #38 para não editar `tests/invariant-coverage.test.mjs` em paralelo com ela e recriar a colisão de `AUD-2026-08-13-006`. A #38 foi integrada por Platform/Core em `3a23402` durante a construção; a branch foi rebaseada sobre `087a520` sem conflito e a contagem 10/0 vale agora diretamente sobre a canônica.
+
+Owner tocado: `tests/` apenas. Nenhum arquivo de `assets/`, `src/`, `protocols/` ou `app.html` foi modificado — zero alteração de semântica clínica ou UX. `docs/clinical/INVARIANT_REGISTRY.md` continua lido, não modificado.
 
 ### Escopo declarado do lease `audit/invariant-coverage-gate`
 
