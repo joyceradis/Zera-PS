@@ -2,7 +2,17 @@
 
 Registro de marcos relevantes do Zera PS. Commits e pull requests permanecem como fonte detalhada de implementação.
 
-## 2026-08-09
+## 2026-08-12
+
+### fix: compositor da síndrome diarreica não fabrica mais negativas
+
+O hotfix anterior (`b098235`) removeu as negativas pré-escritas dos 5 `hdaDraft` estáticos, mas não tocou em `src/hda-composer.js` — e `sindrome-diarreica` é justamente o único roteiro cujo texto final vem sempre do compositor, nunca do `hdaDraft` estático (que é só a semente inicial de sincronização, sobrescrita na mesma chamada síncrona). Confirmado por execução: selecionar "Síndrome diarreica" continuava produzindo `NEGA PRESENÇA DE SANGUE, MUCO OU PUS NAS FEZES. NEGA FEBRE, DOR ABDOMINAL INTENSA...` mesmo depois do hotfix.
+
+- `defaultDiarrheaHdaState()` deixa de pré-marcar 8 de 12 achados como `DENIED` — todo achado inicia `unknown`, igual a `emptyDiarrheaHdaState()`;
+- os seletores Presente/Negado/Não informado já existentes na interface já disparavam a recomposição do texto a cada mudança — nenhuma alteração de UI foi necessária, só o estado inicial;
+- 2 testes reescritos/novos em `tests/hda-composer.test.mjs`.
+
+npm run verify: 160 testes, 160 aprovados, 0 falhas.
 
 ### fix: roteiro abre com HDA clínica integral
 
