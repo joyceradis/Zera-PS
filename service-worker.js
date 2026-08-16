@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'zera-ps-';
-const CACHE_NAME = 'zera-ps-v16';
+const CACHE_NAME = 'zera-ps-v17';
 
 const APP_SHELL = [
   './',
@@ -21,6 +21,7 @@ const APP_SHELL = [
   './src/app.js',
   './src/temporal-ui.js',
   './src/product-convergence.js',
+  './src/product-coherence.js',
   './src/productivity.js',
   './src/lab-parser.js',
   './src/clinical-intake.js',
