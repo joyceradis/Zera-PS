@@ -26,6 +26,26 @@ function baseClinicalState() {
   };
 }
 
+test('identical QP and HDA are rendered once as HDA instead of duplicating the same paragraph', () => {
+  const text = renderEvolution({ qp: 'DOR ABDOMINAL HÁ 6 HORAS', hda: 'DOR ABDOMINAL HÁ 6 HORAS' }, baseClinicalState());
+  assert.doesNotMatch(text, /# QP:/);
+  assert.match(text, /# HDA: DOR ABDOMINAL HÁ 6 HORAS/);
+  assert.equal((text.match(/DOR ABDOMINAL HÁ 6 HORAS/g) || []).length, 1);
+});
+
+test('QP-only documentation is preserved exactly once', () => {
+  const text = renderEvolution({ qp: 'CEFALEIA', hda: '' }, baseClinicalState());
+  assert.match(text, /# QP: CEFALEIA/);
+  assert.doesNotMatch(text, /# HDA:/);
+  assert.equal((text.match(/CEFALEIA/g) || []).length, 1);
+});
+
+test('distinct short QP and narrative HDA remain separate sections', () => {
+  const text = renderEvolution({ qp: 'DOR ABDOMINAL', hda: 'DOR ABDOMINAL EM FLANCO DIREITO HÁ 6 HORAS, ASSOCIADA A NÁUSEAS.' }, baseClinicalState());
+  assert.match(text, /# QP: DOR ABDOMINAL/);
+  assert.match(text, /# HDA: DOR ABDOMINAL EM FLANCO DIREITO HÁ 6 HORAS, ASSOCIADA A NÁUSEAS\./);
+});
+
 test('empty HPP fields never become NEGA', () => {
   const text = renderEvolution({ qp: 'DOR', hda: 'DOR HÁ 1 DIA' }, baseClinicalState());
   assert.equal(text.includes('ALERGIAS: NEGA'), false);
