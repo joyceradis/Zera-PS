@@ -45,9 +45,8 @@ function renderEvolution(raw = {}, clinicalState = {}) {
   // both hidden fields. Repeating it under two headings adds no information.
   // Preserve the full narrative as HDA; keep QP only when it is independently
   // documented as a distinct, usually shorter, statement.
-  if (qp && qp !== hda) pushSection(`# QP: ${qp}`);
+  if (qp && (!hda || qp !== hda)) pushSection(`# QP: ${qp}`);
   if (hda) pushSection(`# HDA: ${hda}`);
-  if (qp && !hda) pushSection(`# QP: ${qp}`);
 
   const hpp = clinicalState.hpp || {};
   const hppLines = [
