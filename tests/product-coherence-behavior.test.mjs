@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-function makeDocument(nodes = {}) {
+function makeDocument(nodes = {}, selectors = {}) {
   return {
     addEventListener() {},
-    querySelectorAll() { return []; },
+    querySelectorAll(selector) { return selectors[selector] || []; },
     getElementById(id) { return nodes[id] || null; }
   };
 }
@@ -51,6 +51,45 @@ test('Atendimento state follows real content and returns to new when content is 
   nodes.hda.value = '';
   mod.updateAtendimentoState();
   assert.equal(nodes['atendimento-state'].textContent, 'NOVO ATENDIMENTO');
+
+  delete globalThis.document;
+});
+
+test('reset clears reassessment, admission, discharge, panels and score state bridges', async () => {
+  const nodes = Object.fromEntries([
+    'reav-evolucao', 'reav-exames', 'reav-conduta', 'reassessment-output',
+    'int-diagnostico', 'int-justificativa', 'int-prescricao', 'admission-output',
+    'alta-diagnostico', 'alta-resumo', 'alta-medicacoes', 'alta-orientacoes', 'discharge-output'
+  ].map((id) => [id, { value: `OLD:${id}` }]));
+  nodes['int-destino'] = { selectedIndex: 2 };
+
+  let scoreChanges = 0;
+  const scoreSelect = { value: 'true', dispatchEvent() { scoreChanges += 1; } };
+  const glasgowSelect = { value: '5', dispatchEvent() { scoreChanges += 1; } };
+  const panel = { hidden: false };
+  let removedActive = 0;
+  let ariaPressed = 'true';
+  const action = {
+    classList: { remove(name) { if (name === 'active') removedActive += 1; } },
+    setAttribute(name, value) { if (name === 'aria-pressed') ariaPressed = value; }
+  };
+
+  globalThis.document = makeDocument(nodes, {
+    '[data-score-answer], [data-glasgow]': [scoreSelect, glasgowSelect],
+    '[data-encounter-panel]': [panel],
+    '[data-encounter-action]': [action]
+  });
+  const mod = await import(`../src/product-coherence.js?reset=${Date.now()}`);
+  mod.resetContinuationState();
+
+  for (const id of mod.CONTINUATION_TEXT_IDS) assert.equal(nodes[id].value, '', id);
+  assert.equal(nodes['int-destino'].selectedIndex, 0);
+  assert.equal(scoreSelect.value, '');
+  assert.equal(glasgowSelect.value, '');
+  assert.equal(scoreChanges, 2);
+  assert.equal(panel.hidden, true);
+  assert.equal(removedActive, 1);
+  assert.equal(ariaPressed, 'false');
 
   delete globalThis.document;
 });
