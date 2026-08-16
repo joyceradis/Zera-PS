@@ -12,8 +12,8 @@ test('temporal storage is not read eagerly at module evaluation', () => {
 
 test('temporal read and write failures are observable instead of throwing through UI handlers', () => {
   assert.match(source, /function loadEncounter\(\)[\s\S]*?try[\s\S]*?loadActiveEncounter\(\)[\s\S]*?catch[\s\S]*?reportEncounterStorageFailure/);
-  assert.match(source, /function persistEncounter\(\)[\s\S]*?try[\s\S]*?saveActiveEncounter\(encounter\)[\s\S]*?catch[\s\S]*?NÃO SALVO/);
-  assert.match(source, /function reportEncounterStorageFailure\([\s\S]*?showFeedback\([\s\S]*?console\.error/);
+  assert.match(source, /function persistEncounter\(\)[\s\S]*?try[\s\S]*?saveActiveEncounter\(encounter\)[\s\S]*?catch[\s\S]*?reportEncounterStorageFailure/);
+  assert.match(source, /function reportEncounterStorageFailure\([\s\S]*?textContent = 'NÃO SALVO'[\s\S]*?showFeedback\([\s\S]*?console\.error/);
 });
 
 test('destructive workflow reset is cancelled when persisted encounter cannot be cleared', () => {
