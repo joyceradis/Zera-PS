@@ -15,6 +15,11 @@ function appShellEntries() {
   return [...serviceWorker.matchAll(/'\.\/(.*?)'/g)].map((match) => match[1]).filter(Boolean);
 }
 
+function cacheGeneration() {
+  const match = serviceWorker.match(/const CACHE_NAME = 'zera-ps-v(\d+)'/);
+  return match ? Number(match[1]) : null;
+}
+
 test('application loads the root coordinator as an ES module', () => {
   assert.match(appHtml, /<script\s+type="module"\s+src="app\.js"><\/script>/);
   assert.match(rootApp, /src\/app\.js/);
@@ -61,14 +66,15 @@ test('PWA app shell is closed over local ES module imports', async () => {
   assert.deepEqual(missingImports, []);
 });
 
-test('PWA caches cycle 2 interaction modules and persistence IO under a new cache generation', () => {
+test('PWA caches current interaction modules and persistence IO under a versioned cache generation', () => {
   assert.match(serviceWorker, /\.\/src\/productivity\.js/);
   assert.match(serviceWorker, /\.\/src\/clinical-intake\.js/);
   assert.match(serviceWorker, /\.\/src\/text-formatters\.js/);
   assert.match(serviceWorker, /\.\/src\/generated-text-sync\.js/);
   assert.match(serviceWorker, /\.\/src\/intake-restore-bridge\.js/);
+  assert.match(serviceWorker, /\.\/src\/product-coherence\.js/);
   assert.match(serviceWorker, /\.\/assets\/storage-io\.js/);
-  assert.match(serviceWorker, /const CACHE_NAME = 'zera-ps-v16'/);
+  assert.ok(Number.isInteger(cacheGeneration()) && cacheGeneration() >= 17, 'cache generation must advance when the app shell changes');
 });
 
 test('PWA activation only prunes Zera PS caches and never foreign origin caches', () => {
