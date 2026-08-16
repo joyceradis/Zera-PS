@@ -20,6 +20,18 @@ test('reassessment keeps a neutral internal bridge after the legacy workflow car
   assert.match(source, /appendChild\(reassessmentBridge\)/);
 });
 
+test('reassessment action waits for the temporal owner to confirm a real encounter before opening its panel', async () => {
+  const source = await read('src/product-coherence.js');
+  assert.match(source, /data-encounter-action=["']reavaliacao["']/);
+  assert.match(source, /stopImmediatePropagation\(\)/);
+  assert.match(source, /reassess-encounter/);
+  assert.match(source, /addEventListener\(['"]click['"],[\s\S]*?true\)/);
+  assert.doesNotMatch(source, /openEncounterPanel\(['"]reavaliacao['"]\)/);
+
+  const convergence = await read('src/product-convergence.js');
+  assert.match(convergence, /addEventListener\(['"]zera:reassessment-started['"],[\s\S]*?openEncounterPanel\(['"]reavaliacao['"]\)/);
+});
+
 test('coherence pass runs after convergence and is part of the offline app shell', async () => {
   const entry = await read('src/app.js');
   const worker = await read('service-worker.js');
