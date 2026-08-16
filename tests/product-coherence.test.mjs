@@ -13,6 +13,24 @@ test('product shell retires the legacy workflow surface without deleting the tem
   assert.doesNotMatch(source, /SCA|HEART|troponin|diagn[oó]stico|conduta/i);
 });
 
+test('Atendimento gets an explicit starting point without inventing a linear workflow', async () => {
+  const source = await read('src/product-coherence.js');
+  assert.match(source, /atendimento-orientation/);
+  assert.match(source, /Atendimento atual/);
+  assert.match(source, /Comece pela queixa e pelo contexto clínico/);
+  assert.match(source, /Reavaliação, internação, alta e ferramentas são ações do mesmo atendimento/);
+  assert.match(source, /NOVO ATENDIMENTO/);
+  assert.match(source, /EM REGISTRO/);
+  assert.doesNotMatch(source, /ETAPA\s+\d|PASSO\s+\d|PROGRESSO|\d+\s*\/\s*\d+/i);
+});
+
+test('save status semantics are explained instead of relying on unexplained labels', async () => {
+  const source = await read('src/product-coherence.js');
+  assert.match(source, /atendimento-save-help/);
+  assert.match(source, /Autossalvo mantém o estado atual neste dispositivo/);
+  assert.match(source, /Salvar rascunho cria uma cópia separada/);
+});
+
 test('reassessment keeps a neutral internal bridge after the legacy workflow card is removed', async () => {
   const source = await read('src/product-coherence.js');
   assert.match(source, /temporal-action-bridge/);
