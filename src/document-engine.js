@@ -19,10 +19,12 @@ function injectScoresIntoEvolution(evolutionText = '', scores = []) {
   if (!scoreLines.length) return String(evolutionText);
   const lines = String(evolutionText).split('\n');
   const qpIndex = lines.findIndex((line) => line.trim().startsWith('# QP:'));
-  if (qpIndex < 0) return String(evolutionText);
-  let insertAt = qpIndex + 1;
+  const hdaIndex = lines.findIndex((line) => line.trim().startsWith('# HDA:'));
+  const anchorIndex = qpIndex >= 0 ? qpIndex : hdaIndex;
+  if (anchorIndex < 0) return String(evolutionText);
+  let insertAt = anchorIndex + 1;
   while (insertAt < lines.length && !lines[insertAt].trim()) insertAt += 1;
-  const before = lines.slice(0, qpIndex + 1);
+  const before = lines.slice(0, anchorIndex + 1);
   const after = lines.slice(insertAt);
   return [...before, '', ...scoreLines, '', ...after].join('\n');
 }
@@ -70,13 +72,15 @@ function renderTemporalReassessment({
 } = {}) {
   const output = ['## REAVALIAÇÃO PRONTO SOCORRO - HOSPITAL MERIDIONAL SERRA ##'];
   const normalizedQp = normalize(qp);
-  if (normalizedQp) output.push('', `# QP: "${normalizedQp}"`);
+  const normalizedHda = normalize(admissionHda);
+  const duplicateAdmissionNarrative = normalizedQp && normalizedHda && normalizedQp === normalizedHda;
+  if (normalizedQp && !duplicateAdmissionNarrative) output.push('', `# QP: "${normalizedQp}"`);
 
   const scoreLines = renderScores(scores);
   if (scoreLines.length) output.push('', ...scoreLines);
 
-  const normalizedHda = normalize(admissionHda);
   if (normalizedHda) output.push('', `# HDA (ADMISSÃO): ${normalizedHda}`);
+  else if (normalizedQp) output.push('', `# QP: "${normalizedQp}"`);
 
   const narrative = normalize(reassessmentNarrative);
   if (narrative) output.push('', `... EM TEMPO (REAVALIAÇÃO): ${narrative}`);
