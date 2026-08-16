@@ -6,6 +6,12 @@ const ATENDIMENTO_CONTENT_IDS = Object.freeze([
   'evolution-output'
 ]);
 
+const CONTINUATION_TEXT_IDS = Object.freeze([
+  'reav-evolucao', 'reav-exames', 'reav-conduta', 'reassessment-output',
+  'int-diagnostico', 'int-justificativa', 'int-prescricao', 'admission-output',
+  'alta-diagnostico', 'alta-resumo', 'alta-medicacoes', 'alta-orientacoes', 'discharge-output'
+]);
+
 function retireLegacyWorkflowSurface() {
   const workflowCard = document.querySelector('.workflow-card');
   const stageBadge = document.getElementById('workflow-stage');
@@ -42,8 +48,35 @@ function updateAtendimentoState() {
   state.textContent = hasCurrentDocumentation() ? 'EM REGISTRO' : 'NOVO ATENDIMENTO';
 }
 
-function queueAtendimentoStateRefresh() {
-  queueMicrotask(updateAtendimentoState);
+function resetContinuationState() {
+  for (const id of CONTINUATION_TEXT_IDS) {
+    const node = document.getElementById(id);
+    if (node) node.value = '';
+  }
+
+  const destination = document.getElementById('int-destino');
+  if (destination) destination.selectedIndex = 0;
+
+  // Static scores live outside evolution-form. Reset every control and dispatch
+  // its existing change handler so the internal score state cannot leak into the
+  // next patient even when the DOM and application state would otherwise diverge.
+  for (const select of document.querySelectorAll('[data-score-answer], [data-glasgow]')) {
+    select.value = '';
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+  for (const panel of document.querySelectorAll('[data-encounter-panel]')) panel.hidden = true;
+  for (const action of document.querySelectorAll('[data-encounter-action]')) {
+    action.classList.remove('active');
+    action.setAttribute('aria-pressed', 'false');
+  }
+}
+
+function queueAtendimentoReset() {
+  queueMicrotask(() => {
+    resetContinuationState();
+    updateAtendimentoState();
+  });
 }
 
 function createAtendimentoOrientation() {
@@ -84,7 +117,7 @@ function createAtendimentoOrientation() {
   free?.addEventListener('input', updateAtendimentoState);
   form?.addEventListener('input', updateAtendimentoState);
   form?.addEventListener('change', updateAtendimentoState);
-  form?.addEventListener('reset', queueAtendimentoStateRefresh);
+  form?.addEventListener('reset', queueAtendimentoReset);
   document.addEventListener('zera:documentation-restored', updateAtendimentoState);
   updateAtendimentoState();
 }
@@ -132,11 +165,13 @@ if (typeof document !== 'undefined') {
 
 export {
   ATENDIMENTO_CONTENT_IDS,
+  CONTINUATION_TEXT_IDS,
   retireLegacyWorkflowSurface,
   hasCurrentDocumentation,
   createAtendimentoOrientation,
   updateAtendimentoState,
-  queueAtendimentoStateRefresh,
+  resetContinuationState,
+  queueAtendimentoReset,
   explainSaveStatus,
   gateReassessmentAction,
   assertCanonicalProductSurface
