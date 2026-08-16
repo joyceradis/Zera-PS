@@ -42,6 +42,10 @@ function updateAtendimentoState() {
   state.textContent = hasCurrentDocumentation() ? 'EM REGISTRO' : 'NOVO ATENDIMENTO';
 }
 
+function queueAtendimentoStateRefresh() {
+  queueMicrotask(updateAtendimentoState);
+}
+
 function createAtendimentoOrientation() {
   const panel = document.querySelector('#view-evolucao .form-panel');
   if (!panel || document.getElementById('atendimento-orientation')) return;
@@ -51,6 +55,9 @@ function createAtendimentoOrientation() {
   orientation.className = 'notice-bar atendimento-orientation';
   orientation.setAttribute('aria-labelledby', 'atendimento-orientation-title');
 
+  const heading = document.createElement('div');
+  heading.className = 'section-heading compact';
+
   const title = document.createElement('strong');
   title.id = 'atendimento-orientation-title';
   title.textContent = 'Atendimento atual';
@@ -59,14 +66,17 @@ function createAtendimentoOrientation() {
   state.id = 'atendimento-state';
   state.className = 'save-status';
   state.textContent = 'NOVO ATENDIMENTO';
+  heading.append(title, state);
 
-  const start = document.createElement('span');
+  const start = document.createElement('p');
+  start.className = 'microcopy';
   start.textContent = 'Comece pela queixa e pelo contexto clínico. O restante do formulário organiza o mesmo registro.';
 
-  const continuation = document.createElement('span');
+  const continuation = document.createElement('p');
+  continuation.className = 'microcopy';
   continuation.textContent = 'Reavaliação, internação, alta e ferramentas são ações do mesmo atendimento — não etapas obrigatórias.';
 
-  orientation.append(title, state, start, continuation);
+  orientation.append(heading, start, continuation);
   panel.prepend(orientation);
 
   const free = document.getElementById('qp-free');
@@ -74,6 +84,7 @@ function createAtendimentoOrientation() {
   free?.addEventListener('input', updateAtendimentoState);
   form?.addEventListener('input', updateAtendimentoState);
   form?.addEventListener('change', updateAtendimentoState);
+  form?.addEventListener('reset', queueAtendimentoStateRefresh);
   document.addEventListener('zera:documentation-restored', updateAtendimentoState);
   updateAtendimentoState();
 }
@@ -83,7 +94,7 @@ function explainSaveStatus() {
   const heading = status?.closest('.section-heading');
   if (!status || !heading || document.getElementById('atendimento-save-help')) return;
 
-  const help = document.createElement('small');
+  const help = document.createElement('p');
   help.id = 'atendimento-save-help';
   help.className = 'microcopy';
   help.textContent = 'Autossalvo mantém o estado atual neste dispositivo. Salvar rascunho cria uma cópia separada para retomar depois.';
@@ -125,6 +136,7 @@ export {
   hasCurrentDocumentation,
   createAtendimentoOrientation,
   updateAtendimentoState,
+  queueAtendimentoStateRefresh,
   explainSaveStatus,
   gateReassessmentAction,
   assertCanonicalProductSurface

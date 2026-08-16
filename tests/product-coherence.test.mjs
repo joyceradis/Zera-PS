@@ -24,6 +24,15 @@ test('Atendimento gets an explicit starting point without inventing a linear wor
   assert.doesNotMatch(source, /ETAPA\s+\d|PASSO\s+\d|PROGRESSO|\d+\s*\/\s*\d+/i);
 });
 
+test('Atendimento orientation uses block copy and refreshes state after form reset', async () => {
+  const source = await read('src/product-coherence.js');
+  assert.match(source, /const start = document\.createElement\('p'\)/);
+  assert.match(source, /const continuation = document\.createElement\('p'\)/);
+  assert.match(source, /const help = document\.createElement\('p'\)/);
+  assert.match(source, /function queueAtendimentoStateRefresh\(\)[\s\S]*?queueMicrotask\(updateAtendimentoState\)/);
+  assert.match(source, /addEventListener\('reset', queueAtendimentoStateRefresh\)/);
+});
+
 test('Atendimento state ignores default values from auxiliary hidden controls', async () => {
   const source = await read('src/product-coherence.js');
   assert.match(source, /ATENDIMENTO_CONTENT_IDS/);
