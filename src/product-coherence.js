@@ -1,11 +1,16 @@
+const ATENDIMENTO_CONTENT_IDS = Object.freeze([
+  'qp-free', 'qp', 'hda',
+  'comorbidades', 'muc', 'alergias', 'habitos', 'cirurgias',
+  'estado-geral', 'acv', 'ar', 'abd', 'ext', 'neuro',
+  'laboratoriais', 'imagem', 'hipoteses', 'conduta', 'em-tempo',
+  'evolution-output'
+]);
+
 function retireLegacyWorkflowSurface() {
   const workflowCard = document.querySelector('.workflow-card');
   const stageBadge = document.getElementById('workflow-stage');
   const reassessmentBridge = document.getElementById('reassess-encounter');
 
-  // Reassessment is part of the encounter lifecycle, not a protocol selector.
-  // Preserve the existing temporal handler behind a neutral, non-product bridge
-  // before removing the obsolete single-protocol workflow surface.
   if (reassessmentBridge) {
     let bridgeHost = document.getElementById('temporal-action-bridge');
     if (!bridgeHost) {
@@ -20,8 +25,6 @@ function retireLegacyWorkflowSurface() {
 
   if (workflowCard) workflowCard.remove();
 
-  // The old badge reported protocol/workflow state (including "SEM CENÁRIO")
-  // although the canonical product is a protocol-agnostic Atendimento.
   if (stageBadge) {
     stageBadge.hidden = true;
     stageBadge.setAttribute('aria-hidden', 'true');
@@ -29,14 +32,8 @@ function retireLegacyWorkflowSurface() {
 }
 
 function hasCurrentDocumentation() {
-  const free = document.getElementById('qp-free');
-  if (String(free?.value || '').trim()) return true;
-  const form = document.getElementById('evolution-form');
-  if (!form) return false;
-  return [...form.querySelectorAll('input, textarea, select')].some((control) => {
-    if (control.type === 'checkbox' || control.type === 'radio') return control.checked;
-    return String(control.value || '').trim().length > 0;
-  });
+  return ATENDIMENTO_CONTENT_IDS.some((id) => String(document.getElementById(id)?.value || '').trim().length > 0)
+    || Boolean(document.getElementById('include-em-tempo')?.checked);
 }
 
 function updateAtendimentoState() {
@@ -97,12 +94,6 @@ function gateReassessmentAction(event) {
   const action = event.target?.closest?.('[data-encounter-action="reavaliacao"]');
   if (!action) return;
 
-  // product-convergence used to open the panel even when temporal-ui rejected
-  // reassessment because no encounter existed. Own this click first: the hidden
-  // temporal owner decides whether reassessment can start and emits
-  // zera:reassessment-started only on success. The existing convergence listener
-  // opens the panel from that event, so a failed start leaves the current surface
-  // untouched instead of showing a false reassessment state.
   event.preventDefault();
   event.stopImmediatePropagation();
   document.getElementById('reassess-encounter')?.click();
@@ -129,7 +120,9 @@ if (typeof document !== 'undefined') {
 }
 
 export {
+  ATENDIMENTO_CONTENT_IDS,
   retireLegacyWorkflowSurface,
+  hasCurrentDocumentation,
   createAtendimentoOrientation,
   updateAtendimentoState,
   explainSaveStatus,
