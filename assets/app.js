@@ -298,10 +298,32 @@ function documentHasContent() {
   )) || normalize($('evolution-output')?.value).length > 0;
 }
 
+function readDrafts() {
+  try {
+    return storage.loadDrafts();
+  } catch {
+    if ($('save-status')) $('save-status').textContent = 'NÃO SALVO';
+    showFeedback('Não foi possível ler os rascunhos deste dispositivo. Nenhum rascunho foi alterado.');
+    return null;
+  }
+}
+
+function persistDrafts(drafts, failureMessage = 'Não foi possível salvar os rascunhos neste dispositivo. Nenhum rascunho foi alterado.') {
+  try {
+    storage.saveDrafts(drafts);
+    return true;
+  } catch {
+    if ($('save-status')) $('save-status').textContent = 'NÃO SALVO';
+    showFeedback(failureMessage);
+    return false;
+  }
+}
+
 function archiveDocumentationForContextSwitch() {
   if (!documentHasContent()) return false;
   const snapshot = currentSnapshot();
-  const drafts = getDrafts();
+  const drafts = readDrafts();
+  if (!drafts) return null;
   drafts.unshift({
     id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
     title: `${normalize(snapshot.form.qp) || 'RASCUNHO SEM QP'} — TROCA DE CONTEXTO`,
@@ -309,7 +331,10 @@ function archiveDocumentationForContextSwitch() {
     reason: 'context_switch',
     snapshot
   });
-  storage.saveDrafts(drafts);
+  if (!persistDrafts(
+    drafts,
+    'Não foi possível preservar a documentação atual em Rascunhos. A troca de contexto foi cancelada e o conteúdo permanece na tela.'
+  )) return null;
   renderDrafts();
   return true;
 }
@@ -331,8 +356,10 @@ function resetDocumentationSurface() {
 
 function prepareFreshDocumentation() {
   const archived = archiveDocumentationForContextSwitch();
+  if (archived === null) return false;
   resetDocumentationSurface();
   if (archived) showFeedback('Documentação anterior preservada em Rascunhos. Novo contexto iniciado sem mistura.');
+  return true;
 }
 
 function restoreTemplateSelection(snapshot = {}) {
@@ -378,7 +405,10 @@ function handleWorkflowSelectionRequest(event) {
     return;
   }
   if (decision.resetDocument) {
-    prepareFreshDocumentation();
+    if (!prepareFreshDocumentation()) {
+      event.preventDefault();
+      return;
+    }
   } else if (decision.clearTemplate || (input.restoring && !input.selectionKnown)) {
     deactivateTemplate();
   }
@@ -432,7 +462,7 @@ function applyTemplate(id) {
   if (!activation.allowed) return;
 
   const resetDocument = activation.resetDocument || switchDecision.resetDocument;
-  if (resetDocument) prepareFreshDocumentation();
+  if (resetDocument && !prepareFreshDocumentation()) return;
   if ($('qp') && (resetDocument || isTemplateBoilerplateQp($('qp').value, previousTemplate))) {
     $('qp').value = template.qp || '';
   }
@@ -508,30 +538,24 @@ async function copyTextFrom(targetId, onFeedback = showFeedback) {
   onFeedback('Texto copiado.');
 }
 
-function getDrafts() {
-  try { return storage.loadDrafts(); } catch { return []; }
-}
-
 function saveDraft() {
   const snapshot = currentSnapshot();
   if (!snapshot.form.qp && !snapshot.form.hda && !snapshot.output) {
     showFeedback('Preencha ao menos a QP ou a HDA antes de salvar.');
     return;
   }
-  const drafts = getDrafts();
+  const drafts = readDrafts();
+  if (!drafts) return;
   drafts.unshift({
     id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
     title: normalize(snapshot.form.qp) || 'RASCUNHO SEM QP',
     createdAt: new Date().toISOString(),
     snapshot
   });
-  try {
-    storage.saveDrafts(drafts);
-  } catch {
-    $('save-status').textContent = 'NÃO SALVO';
-    showFeedback('Não foi possível salvar o rascunho neste dispositivo. O conteúdo atual foi preservado na tela.');
-    return;
-  }
+  if (!persistDrafts(
+    drafts,
+    'Não foi possível salvar o rascunho neste dispositivo. O conteúdo atual foi preservado na tela.'
+  )) return;
   renderDrafts();
   $('save-status').textContent = 'SALVO';
   showFeedback('Rascunho v2 salvo neste dispositivo.');
@@ -540,7 +564,8 @@ function saveDraft() {
 function renderDrafts() {
   const container = $('draft-list');
   if (!container) return;
-  const drafts = getDrafts();
+  const drafts = readDrafts();
+  if (!drafts) return;
   if (!drafts.length) {
     container.innerHTML = '<div class="empty-state">Nenhum rascunho salvo neste dispositivo.</div>';
     return;
@@ -551,7 +576,9 @@ function renderDrafts() {
 }
 
 function loadDraft(id) {
-  const draft = getDrafts().find((item) => item.id === id);
+  const drafts = readDrafts();
+  if (!drafts) return;
+  const draft = drafts.find((item) => item.id === id);
   if (!draft) return;
   const snapshot = draft.snapshot || draft.state;
   if (snapshot?.form) {
@@ -560,7 +587,7 @@ function loadDraft(id) {
       : { templateId: `draft:${id}`, protocolId: null };
     const activation = requestTemplateActivation(coordinationSelection);
     if (!activation.allowed) return;
-    if (activation.resetDocument) prepareFreshDocumentation();
+    if (activation.resetDocument && !prepareFreshDocumentation()) return;
     restoreForm(snapshot.form);
     clinicalState = snapshot.clinicalState || emptyClinicalState();
     restoreTemplateSelection(snapshot);
@@ -574,14 +601,18 @@ function loadDraft(id) {
 }
 
 function deleteDraft(id) {
-  storage.saveDrafts(getDrafts().filter((item) => item.id !== id));
+  const drafts = readDrafts();
+  if (!drafts) return;
+  if (!persistDrafts(drafts.filter((item) => item.id !== id), 'Não foi possível excluir o rascunho neste dispositivo.')) return;
   renderDrafts();
+  showFeedback('Rascunho excluído deste dispositivo.');
 }
 
 function clearAllDrafts() {
   if (!confirm('Apagar todos os rascunhos salvos neste dispositivo?')) return;
-  storage.saveDrafts([]);
+  if (!persistDrafts([], 'Não foi possível apagar os rascunhos neste dispositivo.')) return;
   renderDrafts();
+  showFeedback('Rascunhos apagados deste dispositivo.');
 }
 
 function clearForm() {
