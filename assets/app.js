@@ -309,7 +309,7 @@ function archiveDocumentationForContextSwitch() {
     reason: 'context_switch',
     snapshot
   });
-  storage.saveDrafts(drafts.slice(0, 30));
+  storage.saveDrafts(drafts);
   renderDrafts();
   return true;
 }
@@ -526,7 +526,7 @@ function saveDraft() {
     snapshot
   });
   try {
-    storage.saveDrafts(drafts.slice(0, 30));
+    storage.saveDrafts(drafts);
   } catch {
     $('save-status').textContent = 'NÃO SALVO';
     showFeedback('Não foi possível salvar o rascunho neste dispositivo. O conteúdo atual foi preservado na tela.');
