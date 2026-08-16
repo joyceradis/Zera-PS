@@ -38,24 +38,31 @@ DOCUMENTO REVISÁVEL E COPIÁVEL
 
 ## Estado atual
 
-O projeto possui fundação de segurança clínico-documental, testes automatizados, CI, persistência local, PWA e um primeiro contexto temporal de referência para **dor torácica / suspeita de SCA**. A convergência atual reorganiza a superfície em torno de uma única entidade de **Atendimento** sem apagar as implementações anteriores antes de comprovar equivalência de UX.
+O projeto possui fundação de segurança clínico-documental, testes automatizados, CI, persistência local, PWA e um primeiro motor temporal de referência para **dor torácica / suspeita de SCA**. A convergência atual reorganiza a superfície em torno de uma única entidade de **Atendimento** sem apagar implementações anteriores antes de comprovar equivalência de UX.
 
-Principais capacidades atuais:
+Capacidades hoje alcançáveis na superfície convergida:
 
 - evolução estruturada e texto final sempre editável;
 - roteiros existentes abrem HDA integral editável; a síndrome diarreica também possui compositor estruturado opcional;
 - texto livre continua disponível independentemente do roteiro/contexto;
+- atividade clínica real inicia um Encounter protocol-agnostic e alimenta o ciclo temporal do mesmo Atendimento;
 - reavaliação vinculada ao mesmo Atendimento e sem sobrescrever a admissão;
 - HPP com negativas apenas por ação explícita;
 - modelo de exame físico normal somente após confirmação médica;
-- contexto temporal declarativo, com progressive disclosure por cenário + etapa + estado;
-- pendências e resultados seriados no workflow de referência;
-- HEART com `disponível ≠ aplicável ≠ calculável ≠ aplicado/documentado`;
 - CRB-65, CURB-65, qSOFA e Glasgow sem falso resultado inicial;
 - organizador laboratorial recuperado do patrimônio histórico, com saída compacta no padrão do produto e sem fabricar analitos;
 - justificativas piloto derivadas de dados já confirmados;
-- autosave, rascunhos locais e funcionamento PWA offline-first;
+- autosave, rascunhos locais sem corte silencioso por quantidade e funcionamento PWA offline-first;
 - regressão automatizada e auditorias por marco.
+
+Capacidades implementadas internamente, mas **ainda sem alcance completo pela superfície convergida**:
+
+- progressive disclosure dependente de protocolo;
+- pendências, resultados seriados e contexto de etapa vinculados ao protocolo declarativo;
+- ferramentas protocol-bound, incluindo o percurso contextual do HEART;
+- seleção/apresentação canônica de contexto clínico sem reintroduzir `Workflow` como uma segunda porta de produto.
+
+Esse gap de reachability é acompanhado na issue **#44**. A existência do engine, de testes ou de código preservado não é apresentada como capacidade disponível ao usuário enquanto não houver porta canônica verificável.
 
 > O Zera PS permanece **MVP em validação**. CI verde não equivale a homologação assistencial.
 
@@ -75,7 +82,9 @@ Esses nomes são arquitetura interna, não etapas que a médica precisa gerencia
 
 ## Contexto clínico, não duas portas concorrentes
 
-A médica não deve escolher entre “roteiro” e “workflow”. A superfície canônica apresenta **Contexto clínico**; internamente o software decide se aquele contexto usa apenas um rascunho documental, compositor, protocolo temporal, score ou nenhuma camada estruturada adicional.
+A médica não deve escolher entre “roteiro” e “workflow”. **Esse é o contrato de produto; a superfície convergida ainda não implementa integralmente essa porta canônica de contexto.** O seletor legado de workflow permanece oculto de propósito para não ressuscitar dois produtos concorrentes, enquanto a reachability do motor protocolar é reconciliada na #44.
+
+A direção canônica permanece:
 
 ```text
 CONTEXTO CLÍNICO
@@ -84,7 +93,7 @@ CONTEXTO CLÍNICO
 → mesma Evolução / mesmo Atendimento
 ```
 
-Protocolos, engines, registry e templates permanecem conceitos internos de engenharia.
+Protocolos, engines, registry e templates permanecem conceitos internos de engenharia. Até a porta canônica existir e ser validada, o README distingue explicitamente **capacidade implementada** de **capacidade alcançável**.
 
 ## Laboratório compacto
 
