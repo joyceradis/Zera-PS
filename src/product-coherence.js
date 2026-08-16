@@ -28,6 +28,21 @@ function retireLegacyWorkflowSurface() {
   }
 }
 
+function gateReassessmentAction(event) {
+  const action = event.target?.closest?.('[data-encounter-action="reavaliacao"]');
+  if (!action) return;
+
+  // product-convergence used to open the panel even when temporal-ui rejected
+  // reassessment because no encounter existed. Own this click first: the hidden
+  // temporal owner decides whether reassessment can start and emits
+  // zera:reassessment-started only on success. The existing convergence listener
+  // opens the panel from that event, so a failed start leaves the current surface
+  // untouched instead of showing a false reassessment state.
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  document.getElementById('reassess-encounter')?.click();
+}
+
 function assertCanonicalProductSurface() {
   const visibleWorkflow = [...document.querySelectorAll('.workflow-card, #workflow-context, #workflow-scenario')]
     .find((node) => !node.hidden && node.getClientRects().length > 0);
@@ -38,6 +53,7 @@ function assertCanonicalProductSurface() {
 
 function initProductCoherence() {
   retireLegacyWorkflowSurface();
+  document.addEventListener('click', gateReassessmentAction, true);
   assertCanonicalProductSurface();
 }
 
@@ -45,4 +61,4 @@ if (typeof document !== 'undefined') {
   document.addEventListener('DOMContentLoaded', initProductCoherence);
 }
 
-export { retireLegacyWorkflowSurface, assertCanonicalProductSurface };
+export { retireLegacyWorkflowSurface, gateReassessmentAction, assertCanonicalProductSurface };
