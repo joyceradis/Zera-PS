@@ -14,6 +14,17 @@ test('reassessment preserves exact QP inline quoted format and admission HDA lab
   assert.match(text, /EM TEMPO \(REAVALIAÇÃO\): REAVALIO PACIENTE, QUE REFERE MELHORA\./);
 });
 
+test('reassessment does not repeat identical admission QP and HDA', () => {
+  const text = renderTemporalReassessment({
+    qp: 'DOR TORÁCICA HÁ 2 HORAS',
+    admissionHda: 'DOR TORÁCICA HÁ 2 HORAS',
+    reassessmentNarrative: 'REAVALIO PACIENTE, ESTÁVEL.'
+  });
+  assert.match(text, /# HDA \(ADMISSÃO\): DOR TORÁCICA HÁ 2 HORAS/);
+  assert.doesNotMatch(text, /# QP:/);
+  assert.equal((text.match(/DOR TORÁCICA HÁ 2 HORAS/g) || []).length, 1);
+});
+
 test('scores appear immediately below QP only when applied and calculated', () => {
   const text = renderTemporalReassessment({
     qp: 'DOR TORÁCICA',
@@ -78,4 +89,12 @@ test('evolution score block is injected below QP without changing the remaining 
   ]);
   assert.match(output, /# QP: DOR TORÁCICA\n\n# SCORES:\n- HEART: 4 PONTOS — RISCO INTERMEDIÁRIO\n\n# HDA:/);
   assert.match(output, /# HPP:\n- ALERGIAS: NEGA/);
+});
+
+test('scores remain injectable when duplicate QP was suppressed and HDA is the first clinical anchor', () => {
+  const evolution = ['## EVOLUÇÃO PRONTO SOCORRO - HOSPITAL MERIDIONAL SERRA ##', '', '# HDA: DOR TORÁCICA HÁ 2 HORAS', '', '# HPP:', '- ALERGIAS: NEGA'].join('\n');
+  const output = injectScoresIntoEvolution(evolution, [
+    { id: 'heart', label: 'HEART', applicability: 'applicable', calculability: 'calculable', applied: true, score: 3, interpretation: 'BAIXO RISCO' }
+  ]);
+  assert.match(output, /# HDA: DOR TORÁCICA HÁ 2 HORAS\n\n# SCORES:\n- HEART: 3 PONTOS — BAIXO RISCO/);
 });
