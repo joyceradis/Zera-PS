@@ -33,6 +33,13 @@ test('identical QP and HDA are rendered once as HDA instead of duplicating the s
   assert.equal((text.match(/DOR ABDOMINAL HÁ 6 HORAS/g) || []).length, 1);
 });
 
+test('QP-only documentation is preserved exactly once', () => {
+  const text = renderEvolution({ qp: 'CEFALEIA', hda: '' }, baseClinicalState());
+  assert.match(text, /# QP: CEFALEIA/);
+  assert.doesNotMatch(text, /# HDA:/);
+  assert.equal((text.match(/CEFALEIA/g) || []).length, 1);
+});
+
 test('distinct short QP and narrative HDA remain separate sections', () => {
   const text = renderEvolution({ qp: 'DOR ABDOMINAL', hda: 'DOR ABDOMINAL EM FLANCO DIREITO HÁ 6 HORAS, ASSOCIADA A NÁUSEAS.' }, baseClinicalState());
   assert.match(text, /# QP: DOR ABDOMINAL/);
