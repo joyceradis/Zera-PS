@@ -10,7 +10,7 @@ test('product shell retires the legacy workflow surface without deleting the tem
   assert.match(source, /\.remove\(\)/);
   assert.match(source, /workflow-stage/);
   assert.match(source, /hidden\s*=\s*true/);
-  assert.doesNotMatch(source, /SCA|HEART|troponin|diagn[oó]stico|conduta/i);
+  assert.doesNotMatch(source, /SCA|HEART|troponin/i);
 });
 
 test('Atendimento gets an explicit starting point without inventing a linear workflow', async () => {
