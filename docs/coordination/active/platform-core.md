@@ -10,13 +10,14 @@ Arquitetura canônica, modelagem de estado, document engine, workflow/temporalid
 
 - **Linha canônica:** `chore/housekeeping-product-convergence` / PR #30.
 - **PR #30:** OPEN + DRAFT + NÃO MERGEAR em `main` antes da homologação clínica explícita da Founder.
-- **HEAD canônico verificado nesta retomada:** `a1d495f51ad7105c7d991cdf6edfabc64abac93a` após #54, #55 e #56.
+- **Fonte de verdade do HEAD:** consultar sempre o `head_sha` atual da PR #30. Não congelar SHA de uma linha que recebe integrações contínuas nesta lane.
+- **Última integração Platform/Core desta retomada ao escrever este estado:** #58, storage temporal observável; o SHA específico é evidência histórica do merge, não ponteiro canônico permanente.
 - **Checkpoint histórico anterior:** `docs/audits/entries/2026-08-13T053000Z-platform-session-handoff.md`.
 - O estado corrente desta lane prevalece sobre o checkpoint histórico quando houver divergência temporal.
 
 ## Handoff obrigatório para agente novo
 
-1. sincronizar `chore/housekeeping-product-convergence`;
+1. sincronizar `chore/housekeeping-product-convergence` e conferir o `head_sha` da PR #30;
 2. ler `docs/architecture/AGENT_COORDINATION.md`;
 3. ler as três lanes em `docs/coordination/active/`;
 4. ler `ROADMAP.md` e `docs/clinical/INVARIANT_REGISTRY.md`;
@@ -35,15 +36,17 @@ Não usar `ACTIVE_WORK.md`/`SHARED_AUDIT_LOG.md` históricos como estado corrent
 - #51 FECHADA: `#generate-reassessment` tem owner único no coordenador temporal.
 - #52 FECHADA nesta retomada:
   - UX-12 já estava corrigido na canônica: atividade clínica cria Encounter antes de iniciar reavaliação;
-  - UX-13 corrigido em #54 / `541b1da`: removido descarte silencioso de rascunhos a partir do 31º;
-  - UX-14 completado em #55 / `10157ce`: falha de leitura/escrita de rascunhos chega à UI, e troca de contexto é abortada se o arquivo de segurança não puder ser persistido.
-- #53 FECHADA em #56 / `a1d495f`: README agora separa capacidade implementada internamente de capacidade realmente alcançável; não mascara #44.
+  - UX-13 corrigido em #54: removido descarte silencioso de rascunhos a partir do 31º;
+  - UX-14 completado em #55: falha de leitura/escrita de rascunhos chega à UI, e troca de contexto é abortada se o arquivo de segurança não puder ser persistido.
+- #53 FECHADA em #56: README agora separa capacidade implementada internamente de capacidade realmente alcançável; não mascara #44.
+- #20 FECHADA após rechecagem: housekeeping histórico concluído; o resíduo de branches SAFE TO PRUNE permanece registrado no estado corrente porque delete-ref não está disponível.
+- #58 integrado: `src/temporal-ui.js` não lê mais Encounter durante avaliação do módulo; falhas de leitura/escrita/remoção temporal são observáveis e reset destrutivo é bloqueado quando o storage persistido não pode ser limpo.
 - lifecycle/produtividade: atividade clínica real inicia Encounter protocol-agnostic e persiste `zera-ps:encounter:v3`; o falso `ATENDIDOS: 0` por inexistência de Encounter foi tratado na origem.
 - #44 permanece ABERTA apenas no ramo de protocolo dinâmico/progressive disclosure/ferramentas protocol-bound. Scores estáticos CRB-65/qSOFA/CURB-65 já estão alcançáveis em `Atendimento → Ferramentas`.
 - não desocultar `.workflow-card` para resolver #44; isso reintroduz Workflow/Roteiro como produto concorrente.
 - troponina: assay-dependent. Valor + unidade + referência do ensaio/laboratório. `0,0019` no Meridional é perfil local, não cutoff universal.
 - PWA app shell/hardening em v16; ainda falta prova instalada/offline real.
-- storage: ausente ≠ corrompido ≠ indisponível; I/O compartilhado preservado; rascunhos não têm mais truncamento silencioso por quantidade; falha de draft não vira histórico vazio.
+- storage: ausente ≠ corrompido ≠ indisponível; I/O compartilhado preservado; rascunhos não têm mais truncamento silencioso por quantidade; falha de draft não vira histórico vazio; storage temporal não derruba bootstrap da UI.
 - `INV-CLIN-003` permanece oficialmente **9 FULL / 1 PARTIAL** até PR #43 rebaseada, evidência atualizada, segunda leitura e handshake válido.
 - PR #43 recebeu segunda leitura nesta retomada: o HEAD `b964dcb` está stale porque `tests/converged-surface-reachability.test.mjs` ainda fixa a antiga dependência do seletor oculto para criação de Encounter. Quality deve rebasear e atualizar os pins antes de novo handshake.
 - #50 ABERTA: `main` continua `protected:false`, required status enforcement `off`; consulta ao endpoint de proteção retorna `403 Resource not accessible by integration`. Não há mutation de branch protection/ruleset disponível neste conector.
@@ -69,7 +72,7 @@ A segunda leitura de Platform/Core encontrou evidência stale no HEAD atual: o p
 Quality deve:
 
 1. rebasear sobre a canônica atual;
-2. atualizar evidências para reconhecer #45/#47/#49/#51/#52 resolvidas;
+2. atualizar evidências para reconhecer #45/#47/#49/#51/#52 e as correções de storage posteriores;
 3. inverter/remover pins que tratam o lifecycle quebrado como estado esperado;
 4. preservar âncora anti-trivialidade, contraprova positiva e mutation testing;
 5. separar composição de código × reachability de produto × homologação manual;
