@@ -21,6 +21,7 @@ import {
 } from './protocol-engine.js';
 import { createProtocolRenderer } from './protocol-renderer.js';
 import { createEncounterStorage } from './storage.js';
+import { showFeedback } from './ui.js';
 import {
   CONTEXT_DECISIONS,
   CONTEXT_EVENTS,
@@ -35,7 +36,8 @@ import {
 } from './document-engine.js';
 
 const $ = (id) => document.getElementById(id);
-const encounterStorage = createEncounterStorage();
+let encounterStorage = null;
+let encounterStorageFailureAnnounced = false;
 const STAGE_LABELS = Object.freeze({
   [WORKFLOW_STAGES.INITIAL_ASSESSMENT]: 'AVALIAÇÃO INICIAL',
   [WORKFLOW_STAGES.INITIAL_CONDUCT]: 'CONDUTA INICIAL',
@@ -49,10 +51,67 @@ const CLINICAL_ACTIVITY_FIELDS = Object.freeze([
   'laboratoriais', 'imagem', 'hipoteses', 'conduta', 'em-tempo'
 ]);
 
-let encounter = encounterStorage.loadActiveEncounter();
+let encounter = null;
 let protocol = null;
 let renderer = null;
 let toolStates = {};
+
+function reportEncounterStorageFailure(message, error) {
+  const status = $('save-status');
+  if (status) status.textContent = 'NÃO SALVO';
+  if (!encounterStorageFailureAnnounced) {
+    showFeedback(message);
+    encounterStorageFailureAnnounced = true;
+  }
+  console.error('Zera PS: falha no storage temporal', error);
+}
+
+function getEncounterStorage() {
+  if (encounterStorage) return encounterStorage;
+  try {
+    encounterStorage = createEncounterStorage();
+    return encounterStorage;
+  } catch (error) {
+    reportEncounterStorageFailure('O armazenamento local do Atendimento está indisponível. O conteúdo permanece na tela, mas o estado temporal não será persistido.', error);
+    return null;
+  }
+}
+
+function loadEncounter() {
+  const storage = getEncounterStorage();
+  if (!storage) return null;
+  try {
+    return storage.loadActiveEncounter();
+  } catch (error) {
+    reportEncounterStorageFailure('Não foi possível recuperar o estado temporal salvo deste Atendimento. Nenhum dado local foi apagado.', error);
+    return null;
+  }
+}
+
+function persistEncounter() {
+  if (!encounter) return true;
+  const storage = getEncounterStorage();
+  if (!storage) return false;
+  try {
+    storage.saveActiveEncounter(encounter);
+    return true;
+  } catch (error) {
+    reportEncounterStorageFailure('Não foi possível salvar o estado temporal deste Atendimento. O conteúdo atual permanece na tela.', error);
+    return false;
+  }
+}
+
+function clearPersistedEncounter() {
+  const storage = getEncounterStorage();
+  if (!storage) return false;
+  try {
+    storage.clearActiveEncounter();
+    return true;
+  } catch (error) {
+    reportEncounterStorageFailure('Não foi possível limpar o estado temporal salvo. A operação foi cancelada para evitar inconsistência entre a tela e o armazenamento.', error);
+    return false;
+  }
+}
 
 function currentStage() {
   return encounter?.currentStage || WORKFLOW_STAGES.INITIAL_ASSESSMENT;
@@ -83,10 +142,6 @@ function hasClinicalActivity() {
     || String($('evolution-output')?.value || '').trim().length > 0;
 }
 
-function persistEncounter() {
-  if (encounter) encounterStorage.saveActiveEncounter(encounter);
-}
-
 function persistTemporalContext() {
   if (!encounter) return;
   encounter = updateEncounterContext(encounter, readTemporalContext());
@@ -114,8 +169,8 @@ function handleClinicalActivity() {
   renderStage();
 }
 
-function handleDocumentationReset() {
-  clearActiveWorkflow();
+function handleDocumentationReset(event) {
+  if (!clearActiveWorkflow()) event?.preventDefault();
 }
 
 function ensurePendingItem(id, kind, label) {
@@ -231,13 +286,14 @@ function mountProtocol(protocolId) {
 }
 
 function clearActiveWorkflow() {
+  if (encounter && !clearPersistedEncounter()) return false;
   encounter = null;
-  encounterStorage.clearActiveEncounter();
   mountProtocol('');
   if ($('workflow-scenario')) $('workflow-scenario').value = '';
   renderProtocolVisibility();
   renderStage();
   renderPending();
+  return true;
 }
 
 function requestWorkflowSelection(workflowId, restoring = false) {
@@ -269,7 +325,9 @@ function handleTemplateSelectionRequest(event) {
     return;
   }
   event.detail.resetDocument = Boolean(decision.resetDocument);
-  if (decision.clearWorkflow) clearActiveWorkflow();
+  if (decision.clearWorkflow && !clearActiveWorkflow()) {
+    event.preventDefault();
+  }
 }
 
 function populateScenarioOptions() {
@@ -314,7 +372,7 @@ function handleScenarioChange() {
     return;
   }
   if (!scenario) {
-    clearActiveWorkflow();
+    if (!clearActiveWorkflow() && $('workflow-scenario')) $('workflow-scenario').value = previousScenario;
     return;
   }
 
@@ -448,6 +506,7 @@ function bindTemporalEvents() {
 
 function initTemporalWorkflow() {
   injectTemporalStyles();
+  encounter = loadEncounter();
   populateScenarioOptions();
   restoreTemporalUi();
   bindTemporalEvents();
