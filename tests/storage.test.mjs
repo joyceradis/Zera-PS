@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { STORAGE_KEYS, createStorage, migrateLegacyAutosave, migrateLegacyDrafts } from '../assets/storage.js';
 
 class MemoryStorage {
@@ -62,4 +63,27 @@ test('storage adapter lazily migrates legacy drafts', () => {
   assert.equal(drafts[0].snapshot.form.comorbidades, 'NEGA');
   assert.equal(drafts[0].snapshot.clinicalState.hpp.comorbidades.confirmed, false);
   assert.notEqual(memory.getItem(STORAGE_KEYS.drafts), null);
+});
+
+test('draft storage preserves more than thirty entries without truncation', () => {
+  const memory = new MemoryStorage();
+  const storage = createStorage(memory);
+  const drafts = Array.from({ length: 31 }, (_, index) => ({
+    id: String(index + 1),
+    title: `RASCUNHO ${index + 1}`,
+    createdAt: new Date(index * 1000).toISOString(),
+    snapshot: { schemaVersion: 2, form: { qp: `QP ${index + 1}` } }
+  }));
+  storage.saveDrafts(drafts);
+  assert.equal(storage.loadDrafts().length, 31);
+  assert.equal(storage.loadDrafts().at(-1).id, '31');
+});
+
+test('draft creation paths do not silently cap history at thirty entries', async () => {
+  const appSource = await readFile(new URL('../assets/app.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(
+    appSource,
+    /saveDrafts\([^\n;]*\.slice\(0,\s*30\)\)/,
+    'saving or archiving a draft must not silently discard older records'
+  );
 });
