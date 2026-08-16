@@ -10,9 +10,9 @@ Arquitetura canônica, modelagem de estado, document engine, workflow/temporalid
 
 - **Linha canônica:** `chore/housekeeping-product-convergence` / PR #30.
 - **PR #30:** OPEN + DRAFT + NÃO MERGEAR em `main` antes da homologação clínica explícita da Founder.
-- **Checkpoint detalhado da sessão:** `docs/audits/entries/2026-08-13T053000Z-platform-session-handoff.md`.
-- **Último HEAD Core com correção funcional verificada antes do checkpoint documental:** `45e7341d13444accfbe74d49d5b323e46935c2db`.
-- **Status do setor ao encerrar a sessão:** checkpoint publicado; retomada deve começar pela leitura do estado atual e não por nova arqueologia.
+- **HEAD canônico verificado nesta retomada:** `a1d495f51ad7105c7d991cdf6edfabc64abac93a` após #54, #55 e #56.
+- **Checkpoint histórico anterior:** `docs/audits/entries/2026-08-13T053000Z-platform-session-handoff.md`.
+- O estado corrente desta lane prevalece sobre o checkpoint histórico quando houver divergência temporal.
 
 ## Handoff obrigatório para agente novo
 
@@ -20,7 +20,7 @@ Arquitetura canônica, modelagem de estado, document engine, workflow/temporalid
 2. ler `docs/architecture/AGENT_COORDINATION.md`;
 3. ler as três lanes em `docs/coordination/active/`;
 4. ler `ROADMAP.md` e `docs/clinical/INVARIANT_REGISTRY.md`;
-5. ler `docs/audits/entries/2026-08-13T053000Z-platform-session-handoff.md`;
+5. ler `docs/audits/entries/2026-08-13T053000Z-platform-session-handoff.md` apenas como checkpoint histórico;
 6. abrir PR/issues citadas no próprio setor;
 7. só então adquirir lease.
 
@@ -32,16 +32,21 @@ Não usar `ACTIVE_WORK.md`/`SHARED_AUDIT_LOG.md` históricos como estado corrent
 - #45 FECHADA: justificativa de alto custo não fabrica mais urgência/gravidade não confirmadas.
 - #47 FECHADA: edição manual do documento final não pode ser destruída silenciosamente por `Atualizar evolução`.
 - #49 FECHADA: restauração de rascunho ressincroniza o intake visível antes de novo input.
-- #51 FECHADA: `#generate-reassessment` tem owner único no coordenador temporal. RED `ef085ead...`; GREEN `45e7341d...`; `checks` run 696 = success.
+- #51 FECHADA: `#generate-reassessment` tem owner único no coordenador temporal.
+- #52 FECHADA nesta retomada:
+  - UX-12 já estava corrigido na canônica: atividade clínica cria Encounter antes de iniciar reavaliação;
+  - UX-13 corrigido em #54 / `541b1da`: removido descarte silencioso de rascunhos a partir do 31º;
+  - UX-14 completado em #55 / `10157ce`: falha de leitura/escrita de rascunhos chega à UI, e troca de contexto é abortada se o arquivo de segurança não puder ser persistido.
+- #53 FECHADA em #56 / `a1d495f`: README agora separa capacidade implementada internamente de capacidade realmente alcançável; não mascara #44.
 - lifecycle/produtividade: atividade clínica real inicia Encounter protocol-agnostic e persiste `zera-ps:encounter:v3`; o falso `ATENDIDOS: 0` por inexistência de Encounter foi tratado na origem.
 - #44 permanece ABERTA apenas no ramo de protocolo dinâmico/progressive disclosure/ferramentas protocol-bound. Scores estáticos CRB-65/qSOFA/CURB-65 já estão alcançáveis em `Atendimento → Ferramentas`.
 - não desocultar `.workflow-card` para resolver #44; isso reintroduz Workflow/Roteiro como produto concorrente.
 - troponina: assay-dependent. Valor + unidade + referência do ensaio/laboratório. `0,0019` no Meridional é perfil local, não cutoff universal.
 - PWA app shell/hardening em v16; ainda falta prova instalada/offline real.
-- storage: ausente ≠ corrompido ≠ indisponível; I/O compartilhado preservado.
+- storage: ausente ≠ corrompido ≠ indisponível; I/O compartilhado preservado; rascunhos não têm mais truncamento silencioso por quantidade; falha de draft não vira histórico vazio.
 - `INV-CLIN-003` permanece oficialmente **9 FULL / 1 PARTIAL** até PR #43 rebaseada, evidência atualizada, segunda leitura e handshake válido.
-- #50 ABERTA: branch protection/required checks externos não estão enforced; handshake ainda é disciplina processual.
-- PR #30 chegou a aparecer fechada sem merge durante a sessão e foi restaurada para OPEN + DRAFT. Não presumir autoria/causa; lifecycle da PR canônica não é housekeeping.
+- PR #43 recebeu segunda leitura nesta retomada: o HEAD `b964dcb` está stale porque `tests/converged-surface-reachability.test.mjs` ainda fixa a antiga dependência do seletor oculto para criação de Encounter. Quality deve rebasear e atualizar os pins antes de novo handshake.
+- #50 ABERTA: `main` continua `protected:false`, required status enforcement `off`; consulta ao endpoint de proteção retorna `403 Resource not accessible by integration`. Não há mutation de branch protection/ruleset disponível neste conector.
 - branches `fix/pr30-priority-blockers` e `fix/p0-fabricated-negatives` seguem SAFE TO PRUNE, mas sem delete-ref seguro disponível; não usar force update para simular deleção.
 
 ## Correção metodológica importante da homologação
@@ -59,11 +64,13 @@ Portanto:
 
 PR #43 continua DRAFT e **não possui handshake válido para integração**.
 
+A segunda leitura de Platform/Core encontrou evidência stale no HEAD atual: o pin de reachability ainda espera que `createEncounter()` dependa do `#workflow-scenario` oculto, embora a linha canônica já inicie Encounter protocol-agnostic por atividade clínica real.
+
 Quality deve:
 
 1. rebasear sobre a canônica atual;
-2. atualizar evidências para reconhecer #45/#47/#49/#51 resolvidas;
-3. atualizar pins de reachability que esperavam lifecycle quebrado;
+2. atualizar evidências para reconhecer #45/#47/#49/#51/#52 resolvidas;
+3. inverter/remover pins que tratam o lifecycle quebrado como estado esperado;
 4. preservar âncora anti-trivialidade, contraprova positiva e mutation testing;
 5. separar composição de código × reachability de produto × homologação manual;
 6. publicar novo HEAD + suíte/evidência fresca;
@@ -80,17 +87,18 @@ Sem `INTEGRATION READY — <HEAD SHA>` para o HEAD revisado, não integrar.
 
 ## Próxima ordem de trabalho
 
-1. Quality rebaseia/atualiza #43.
-2. Platform/Core faz nova segunda leitura e decide honestamente `INV-CLIN-003`.
-3. Platform/Core + Produto resolvem ou deferem #44 sem criar segundo produto.
-4. Founder decide #46/#48 quando retomar.
-5. Core/Quality tratam fricção/keyboard-first com proteção.
-6. interação real desktop/mobile.
-7. PWA instalado/offline real.
-8. #50 branch protection/ruleset externo ou risco explicitamente aceito para piloto.
-9. novo preview da PR #30 identificado pelo HEAD final.
-10. Founder homologa esse preview.
-11. só então avaliar PR #30 → `main` e V1 candidata a piloto.
+1. Platform/Core continua auditando/corrigindo falhas estruturais que não dependem de decisão clínica/UX da Founder.
+2. Quality rebaseia/atualiza #43.
+3. Platform/Core faz nova segunda leitura e decide honestamente `INV-CLIN-003`.
+4. Platform/Core + Produto resolvem ou deferem #44 sem criar segundo produto.
+5. Founder decide #46/#48 quando retomar.
+6. Core/Quality tratam fricção/keyboard-first com proteção.
+7. interação real desktop/mobile.
+8. PWA instalado/offline real.
+9. #50 branch protection/ruleset externo ou risco explicitamente aceito para piloto.
+10. novo preview da PR #30 identificado pelo HEAD final.
+11. Founder homologa esse preview.
+12. só então avaliar PR #30 → `main` e V1 candidata a piloto.
 
 ## Restrições
 
