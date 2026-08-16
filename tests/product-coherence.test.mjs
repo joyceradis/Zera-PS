@@ -24,13 +24,18 @@ test('Atendimento gets an explicit starting point without inventing a linear wor
   assert.doesNotMatch(source, /ETAPA\s+\d|PASSO\s+\d|PROGRESSO|\d+\s*\/\s*\d+/i);
 });
 
-test('Atendimento orientation uses block copy and refreshes state after form reset', async () => {
+test('Atendimento orientation uses block copy and reset clears the whole encounter continuation surface', async () => {
   const source = await read('src/product-coherence.js');
   assert.match(source, /const start = document\.createElement\('p'\)/);
   assert.match(source, /const continuation = document\.createElement\('p'\)/);
   assert.match(source, /const help = document\.createElement\('p'\)/);
-  assert.match(source, /function queueAtendimentoStateRefresh\(\)[\s\S]*?queueMicrotask\(updateAtendimentoState\)/);
-  assert.match(source, /addEventListener\('reset', queueAtendimentoStateRefresh\)/);
+  assert.match(source, /CONTINUATION_TEXT_IDS/);
+  for (const id of ['reav-evolucao', 'reassessment-output', 'int-diagnostico', 'admission-output', 'alta-diagnostico', 'discharge-output']) {
+    assert.match(source, new RegExp(`['\"]${id}['\"]`));
+  }
+  assert.match(source, /function resetContinuationState\(\)[\s\S]*?data-score-answer[\s\S]*?data-glasgow[\s\S]*?dispatchEvent\(new Event\('change'/);
+  assert.match(source, /function queueAtendimentoReset\(\)[\s\S]*?queueMicrotask[\s\S]*?resetContinuationState\(\)[\s\S]*?updateAtendimentoState\(\)/);
+  assert.match(source, /addEventListener\('reset', queueAtendimentoReset\)/);
 });
 
 test('Atendimento state ignores default values from auxiliary hidden controls', async () => {
