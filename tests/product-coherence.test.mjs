@@ -24,6 +24,16 @@ test('Atendimento gets an explicit starting point without inventing a linear wor
   assert.doesNotMatch(source, /ETAPA\s+\d|PASSO\s+\d|PROGRESSO|\d+\s*\/\s*\d+/i);
 });
 
+test('Atendimento state ignores default values from auxiliary hidden controls', async () => {
+  const source = await read('src/product-coherence.js');
+  assert.match(source, /ATENDIMENTO_CONTENT_IDS/);
+  for (const id of ['qp-free', 'qp', 'hda', 'laboratoriais', 'imagem', 'hipoteses', 'conduta', 'evolution-output']) {
+    assert.match(source, new RegExp(`['\"]${id}['\"]`));
+  }
+  const body = source.slice(source.indexOf('function hasCurrentDocumentation'), source.indexOf('function updateAtendimentoState'));
+  assert.doesNotMatch(body, /querySelectorAll\(['"]input, textarea, select['"]\)/);
+});
+
 test('save status semantics are explained instead of relying on unexplained labels', async () => {
   const source = await read('src/product-coherence.js');
   assert.match(source, /atendimento-save-help/);
