@@ -39,8 +39,15 @@ function renderEvolution(raw = {}, clinicalState = {}) {
     output.push('', ...clean);
   };
 
-  if (normalize(raw.qp)) pushSection(`# QP: ${normalize(raw.qp)}`);
-  if (normalize(raw.hda)) pushSection(`# HDA: ${normalize(raw.hda)}`);
+  const qp = normalize(raw.qp);
+  const hda = normalize(raw.hda);
+  // The zero-friction intake can legitimately carry the same free narrative in
+  // both hidden fields. Repeating it under two headings adds no information.
+  // Preserve the full narrative as HDA; keep QP only when it is independently
+  // documented as a distinct, usually shorter, statement.
+  if (qp && qp !== hda) pushSection(`# QP: ${qp}`);
+  if (hda) pushSection(`# HDA: ${hda}`);
+  if (qp && !hda) pushSection(`# QP: ${qp}`);
 
   const hpp = clinicalState.hpp || {};
   const hppLines = [
