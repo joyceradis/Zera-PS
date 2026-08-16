@@ -60,34 +60,37 @@ function migrateLegacyDrafts(legacyDrafts = []) {
   }));
 }
 
-function createStorage(adapter = getDefaultStorageAdapter()) {
+function createStorage(adapter) {
+  const resolveAdapter = () => adapter === undefined ? getDefaultStorageAdapter() : adapter;
   const api = {
     loadAutosave() {
-      const current = parseStoredJson(readStorageItem(adapter, STORAGE_KEYS.autosave), STORAGE_KEYS.autosave, null);
+      const currentAdapter = resolveAdapter();
+      const current = parseStoredJson(readStorageItem(currentAdapter, STORAGE_KEYS.autosave), STORAGE_KEYS.autosave, null);
       if (current) return current;
-      const legacy = parseStoredJson(readStorageItem(adapter, STORAGE_KEYS.legacyAutosave), STORAGE_KEYS.legacyAutosave, null);
+      const legacy = parseStoredJson(readStorageItem(currentAdapter, STORAGE_KEYS.legacyAutosave), STORAGE_KEYS.legacyAutosave, null);
       if (!legacy) return null;
       const migrated = migrateLegacyAutosave(legacy);
       api.saveAutosave(migrated);
       return migrated;
     },
     saveAutosave(value) {
-      writeStorageItem(adapter, STORAGE_KEYS.autosave, JSON.stringify(value));
+      writeStorageItem(resolveAdapter(), STORAGE_KEYS.autosave, JSON.stringify(value));
     },
     clearAutosave() {
-      removeStorageItem(adapter, STORAGE_KEYS.autosave);
+      removeStorageItem(resolveAdapter(), STORAGE_KEYS.autosave);
     },
     loadDrafts() {
-      const current = parseStoredJson(readStorageItem(adapter, STORAGE_KEYS.drafts), STORAGE_KEYS.drafts, null);
+      const currentAdapter = resolveAdapter();
+      const current = parseStoredJson(readStorageItem(currentAdapter, STORAGE_KEYS.drafts), STORAGE_KEYS.drafts, null);
       if (current) return current;
-      const legacy = parseStoredJson(readStorageItem(adapter, STORAGE_KEYS.legacyDrafts), STORAGE_KEYS.legacyDrafts, null);
+      const legacy = parseStoredJson(readStorageItem(currentAdapter, STORAGE_KEYS.legacyDrafts), STORAGE_KEYS.legacyDrafts, null);
       if (!legacy) return [];
       const migrated = migrateLegacyDrafts(legacy);
       api.saveDrafts(migrated);
       return migrated;
     },
     saveDrafts(drafts) {
-      writeStorageItem(adapter, STORAGE_KEYS.drafts, JSON.stringify(drafts));
+      writeStorageItem(resolveAdapter(), STORAGE_KEYS.drafts, JSON.stringify(drafts));
     }
   };
   return api;

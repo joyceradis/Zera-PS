@@ -31,6 +31,10 @@ test('legacy drafts migrate to v2 snapshots without confirming old clinical valu
   assert.equal(drafts[0].snapshot.clinicalState.hpp.alergias.confirmed, false);
 });
 
+test('storage creation does not touch the default localStorage adapter before an operation', () => {
+  assert.doesNotThrow(() => createStorage());
+});
+
 test('storage adapter saves and loads JSON state', () => {
   const memory = new MemoryStorage();
   const storage = createStorage(memory);
