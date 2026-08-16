@@ -617,12 +617,18 @@ function clearAllDrafts() {
 
 function clearForm() {
   if (!confirm('Limpar todos os campos da evolução atual?')) return;
+  try {
+    storage.clearAutosave();
+  } catch {
+    if ($('save-status')) $('save-status').textContent = 'NÃO SALVO';
+    showFeedback('Não foi possível limpar o estado salvo neste dispositivo. Os campos atuais foram preservados.');
+    return;
+  }
   $('evolution-form').reset();
   $('evolution-output').value = '';
   clinicalState = emptyClinicalState();
   lastGeneratedEvolution = '';
   resetHdaComposer();
-  storage.clearAutosave();
   deactivateTemplate({ persist: false });
   toggleEmTempo();
   syncAllQuickChoices(QUICK_CHOICES, FIELD_MAP);
