@@ -2,14 +2,38 @@
 
 Registro de marcos relevantes do Zera PS. Commits e pull requests permanecem como fonte detalhada de implementação.
 
+## 2026-08-16
+
+Registros das pull requests mescladas em 16 de agosto de 2026 (resumo das correções mais recentes).
+
+### Merged PRs #69–#71
+
+- PR #71 — fix(safety): impedir estado do paciente anterior após limpar Atendimento
+  - Auditoria identificou vazamento de estado entre atendimentos quando o botão "Limpar" não esvaziava campos/outputs de reavaliação, internação e alta, e scores estáticos permaneciam. O reset agora limpa toda a superfície de continuação, restaura destino de internação ao padrão, fecha painéis/ações ativas e zera controles de score disparando os handlers existentes para sincronizar o estado.
+  - Link: https://github.com/joyceradis/ZeraPS/pull/71
+
+- PR #70 — docs(coordination): atualizar lane Platform/Core após convergência de workflow
+  - Atualização de documentação da lane Platform/Core para refletir o estado real após convergência de várias PRs e integrações; nenhuma alteração de produto/UX/regras clínicas — orientações para Quality sobre rebasing e evidência também atualizadas.
+  - Link: https://github.com/joyceradis/ZeraPS/pull/70
+
+- PR #69 — fix(ux): manter orientação do Atendimento legível e sincronizada após limpar
+  - Correção de acabamento: orientação passa a usar heading + parágrafos (melhor legibilidade) e o reset passa a atualizar o estado visual ("EM REGISTRO") em microtask após limpeza efetiva do formulário/output, evitando indicadores visuais stale.
+  - Link: https://github.com/joyceradis/ZeraPS/pull/69
+
+---
+
+Notas:
+- Estas entradas foram adicionadas automaticamente por um assistente; revise a redação se desejar formalizar o changelog.
+
+
 ## 2026-08-12
 
 ### fix: compositor da síndrome diarreica não fabrica mais negativas
 
-O hotfix anterior (`b098235`) removeu as negativas pré-escritas dos 5 `hdaDraft` estáticos, mas não tocou em `src/hda-composer.js` — e `sindrome-diarreica` é justamente o único roteiro cujo texto final vem sempre do compositor, nunca do `hdaDraft` estático (que é só a semente inicial de sincronização, sobrescrita na mesma chamada síncrona). Confirmado por execução: selecionar "Síndrome diarreica" continuava produzindo `NEGA PRESENÇA DE SANGUE, MUCO OU PUS NAS FEZES. NEGA FEBRE, DOR ABDOMINAL INTENSA...` mesmo depois do hotfix.
+O hotfix anterior (`b098235`) removeu as negativas pré-escritas dos 5 `hdaDraft` estáticos, mas não tocou em `src/hda-composer.js` — e `sindrome-diarreica` é justamente o único roteiro cujo [...]
 
 - `defaultDiarrheaHdaState()` deixa de pré-marcar 8 de 12 achados como `DENIED` — todo achado inicia `unknown`, igual a `emptyDiarrheaHdaState()`;
-- os seletores Presente/Negado/Não informado já existentes na interface já disparavam a recomposição do texto a cada mudança — nenhuma alteração de UI foi necessária, só o estado inicial;
+- os seletores Presente/Negado/Não informado já existentes na interface já disparavam a recomposição do texto a cada mudança — nenhuma alteração de UI foi necessária, só o estado inici[...]
 - 2 testes reescritos/novos em `tests/hda-composer.test.mjs`.
 
 npm run verify: 160 testes, 160 aprovados, 0 falhas.
@@ -23,11 +47,11 @@ npm run verify: 160 testes, 160 aprovados, 0 falhas.
 
 ### feat: justificativa de exame de alto custo e de internação (piloto)
 
-- motor novo `src/justification-engine.js` monta justificativa a partir do que já foi digitado na Evolução — QP, HDA, exame físico confirmado, exames complementares e hipóteses — reorganizando na estrutura QUADRO CLÍNICO → ANTECEDENTES → EXAME FÍSICO → EXAMES COMPLEMENTARES → HIPÓTESE/RISCO → SOLICITAÇÃO; nunca fabrica achado, risco ou urgência: o que faltar aparece como `[COMPLETAR: ...]` visível, nunca inventado nem omitido;
-- piloto com 3 perfis: TC de abdome e pelve (com/sem contraste), USG de abdome total / rins e vias urinárias, internação hospitalar — os demais exames citados (TC crânio/face/cervical/coluna, Angio-TC) entram depois de validar este piloto com um caso real, a estrutura declarativa já suporta;
-- Evolução ganha seletor de tipo de documento + variante e botão "Gerar justificativa", que abre um documento avulso revisável e copiável — nada é inserido automaticamente na Conduta ou na Evolução;
+- motor novo `src/justification-engine.js` monta justificativa a partir do que já foi digitado na Evolução — QP, HDA, exame físico confirmado, exames complementares e hipóteses — reorgani[...]
+- piloto com 3 perfis: TC de abdome e pelve (com/sem contraste), USG de abdome total / rins e vias urinárias, internação hospitalar — os demais exames citados (TC crânio/face/cervical/coluna[...]
+- Evolução ganha seletor de tipo de documento + variante e botão "Gerar justificativa", que abre um documento avulso revisável e copiável — nada é inserido automaticamente na Conduta ou na[...]
 - Internação ganha "Puxar dados da Evolução" ao lado de "Justificativa clínica", pedindo confirmação antes de substituir conteúdo já digitado;
-- corrigido de passagem: `renderAdmission` colava a justificativa inteira numa única linha após o cabeçalho — mesma classe de bug já corrigida em exames complementares; agora renderiza como bloco próprio;
+- corrigido de passagem: `renderAdmission` colava a justificativa inteira numa única linha após o cabeçalho — mesma classe de bug já corrigida em exames complementares; agora renderiza como [...]
 - 13 testes novos (`tests/justification-engine.test.mjs` + regressão de `renderAdmission`).
 
 ### HDA integral — síndrome diarreica
@@ -41,21 +65,21 @@ npm run verify: 160 testes, 160 aprovados, 0 falhas.
 
 ### feat: transcrição estruturada de exames complementares
 
-- `# EXAMES COMPLEMENTARES:` passa a transcrever cada exame como item próprio, agrupado em LABORATORIAIS/IMAGEM — antes, várias linhas digitadas em "Laboratoriais" ou "Imagem" ficavam grudadas num único item, quebrando o padrão institucional já usado em hipóteses/conduta (um item por linha);
+- `# EXAMES COMPLEMENTARES:` passa a transcrever cada exame como item próprio, agrupado em LABORATORIAIS/IMAGEM — antes, várias linhas digitadas em "Laboratoriais" ou "Imagem" ficavam grudadas[...]
 - categoria sem conteúdo continua omitida por completo — nenhuma fabricação de "sem exames";
 - nenhum campo novo de formulário; só a transcrição na saída mudou.
 
 ### fix: roteiro Cefaleia anunciava ferramenta clínica inexistente
 
-- o roteiro Cefaleia declarava `clinicalTools: ['snnoop10']`, exibindo "Ferramenta clínica vinculada: SNNOOP10" ao ser selecionado — mas nenhum checklist SNNOOP10 existe em nenhum lugar do aplicativo; o próprio ROADMAP já registrava SNNOOP10 como item futuro, não implementado;
+- o roteiro Cefaleia declarava `clinicalTools: ['snnoop10']`, exibindo "Ferramenta clínica vinculada: SNNOOP10" ao ser selecionado — mas nenhum checklist SNNOOP10 existe em nenhum lugar do apli[...]
 - referência removida até a ferramenta existir de fato; implementá-la é decisão de produto separada, com validação clínica própria, não um ajuste de housekeeping;
 - teste novo garante que nenhum roteiro possa voltar a anunciar uma ferramenta sem card correspondente na aba Scores.
 
 ### fix: QP presa ao trocar de roteiro
 
-- corrigido bug reproduzível em que trocar de roteiro documental (ex.: GECA → Rinossinusite) deixava a QP travada no texto sugerido pelo roteiro anterior, mesmo com o novo roteiro visivelmente selecionado;
-- causa: o evento de coordenação entre roteiros documentais nunca foi implementado — só existia coordenação entre roteiro e workflow clínico (protocolo); a QP só era preenchida quando o campo estava vazio, então a sugestão do roteiro anterior nunca cedia lugar à do novo;
-- `decideTemplateReplacement` reconhece a QP sugerida por um roteiro como texto de sugestão, não como dado da médica: trocar de roteiro sem nenhum conteúdo além dessa sugestão substitui a QP sem diálogo; qualquer conteúdo real (QP editada, HDA, HPP, exame, evolução já gerada) exige confirmação antes da troca, preservando a documentação anterior em Rascunhos;
+- corrigido bug reproduzível em que trocar de roteiro documental (ex.: GECA → Rinossinusite) deixava a QP travada no texto sugerido pelo roteiro anterior, mesmo com o novo roteiro visivelmente [...]
+- causa: o evento de coordenação entre roteiros documentais nunca foi implementado — só existia coordenação entre roteiro e workflow clínico (protocolo); a QP só era preenchida quando o c[...]
+- `decideTemplateReplacement` reconhece a QP sugerida por um roteiro como texto de sugestão, não como dado da médica: trocar de roteiro sem nenhum conteúdo além dessa sugestão substitui a QP[...]
 - 7 testes de regressão novos.
 
 ### Doutrina de produto
