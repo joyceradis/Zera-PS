@@ -1,0 +1,1 @@
+bash -l -c ' set -e OWNER="joyceradis" REPO="ZeraPS" TAG="v2026-08-16" TITLE="Release 2026-08-16
