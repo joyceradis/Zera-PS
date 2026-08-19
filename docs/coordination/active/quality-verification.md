@@ -18,6 +18,16 @@ Auditoria independente, testes de regressão, invariant coverage, testes adversa
 - **PR nova:** `audit/inv-clin-003-stage-context-gate` → canônica, rebaseada sobre `087a520`. Fecha a lacuna do `INV-CLIN-003`. Cobertura **10 integral / 0 parcial**; suíte 255/255. Aguarda leitura de Platform/Core.
 - **Gap `INV-CLIN-003`: FECHADO.** A propriedade **se sustenta** — disclosure e contexto alteram só visibilidade/disponibilidade. Era cobertura ausente, não bug; nenhum handoff necessário. 160 combinações etapa×contexto exercidas, 8 mutações verificadas. Executado após Platform/Core responder na #39 que o espaço é enumerável e o bloco é deste setor.
 
+### Reauditoria 2026-08-16 — base `652de53`
+
+Entrada: `docs/audits/entries/2026-08-16T034000Z-quality-patient-boundary-and-api-readiness.md`. Suíte 300/300 → **311/311**.
+
+- **Dez dos quinze achados anteriores FECHADOS**, todos reverificados por execução, nenhum aceito por mensagem de commit. Seguem abertos: keyboard-first, texto do aviso legal (Founder), proveniência contornada na justificativa, seletor legado no DOM; e UX-10 parcial.
+- **Achado novo S1 — contaminação entre pacientes.** `#justification-output` vive fora do `#evolution-form` e não constava de `CONTINUATION_TEXT_IDS`: a justificativa do paciente anterior sobrevivia ao "Limpar". Provado por execução. Causa de fundo: o protetor da correção `652de53` era **auto-referente** — iterava a própria lista do módulo, então campo nunca adicionado jamais era coberto. Fechado com `tests/patient-boundary.test.mjs`, que deriva a exigência do próprio `app.html`. 3 mutações verificadas; a terceira revelou fraqueza na minha própria guarda (asserção global casando com outra ocorrência), corrigida com escopo à função.
+- **Cruzamento de owner declarado:** uma linha em `src/product-coherence.js`. Justificativa na entrada de auditoria; Platform/Core pode realocar sem prejuízo da guarda.
+- **`INV-CLIN-003` fechado.** `tests/context-composition-bridge.test.mjs` reexecutado sobre a canônica atual, 51 commits depois, passa sem alteração — a propriedade se manteve durante toda a convergência. Cobertura proposta **10 integral / 0 parcial**, sujeita a handshake.
+- **Prontidão para API:** nenhuma chamada de rede na aplicação hoje — ponto de partida favorável. O registro central deste setor é que **cobertura de invariante no cliente não transfere para servidor**: os 10/10 descrevem o motor do navegador. Escopo de API (licença/ativação vs sincronização vs integração com HIS) altera materialmente o que precisa ser verificado e é decisão da Founder.
+
 ### Aberto e rastreado como issue
 
 - **#39** — respondida por Platform/Core: espaço enumerável, bloco de Quality/Verification, sem mudança de workflow/estado. **Executado.** Pronta para fechar quando a PR empilhada for integrada.
