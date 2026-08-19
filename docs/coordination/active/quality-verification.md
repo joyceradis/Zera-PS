@@ -28,6 +28,18 @@ Entrada: `docs/audits/entries/2026-08-16T034000Z-quality-patient-boundary-and-ap
 - **`INV-CLIN-003` fechado.** `tests/context-composition-bridge.test.mjs` reexecutado sobre a canônica atual, 51 commits depois, passa sem alteração — a propriedade se manteve durante toda a convergência. Cobertura proposta **10 integral / 0 parcial**, sujeita a handshake.
 - **Prontidão para API:** nenhuma chamada de rede na aplicação hoje — ponto de partida favorável. O registro central deste setor é que **cobertura de invariante no cliente não transfere para servidor**: os 10/10 descrevem o motor do navegador. Escopo de API (licença/ativação vs sincronização vs integração com HIS) altera materialmente o que precisa ser verificado e é decisão da Founder.
 
+### Fronteira de rede — guarda preventiva (decisão da Founder: API de licença/ativação)
+
+A Founder definiu o escopo: **licença/ativação, sem dado de paciente**. É o caminho que mantém verdadeira a afirmação do `README.md` de que o dado permanece no dispositivo — hoje a maior vantagem de segurança do projeto.
+
+`tests/network-boundary.test.mjs` foi escrito **antes da API existir**, deliberadamente. A promessa existia só em prosa; nada na suíte reprovava se ela deixasse de valer. A guarda enumera todo módulo embarcado, exige lista declarada para qualquer acesso à rede, verifica que o service worker apenas encaminha requisições que o navegador já emitiu (nunca compõe uma), e proíbe que módulo com acesso à rede referencie campo clínico — ids derivados do `FORM_IDS` real, não de lista escrita à mão. Piso ancorado impede que a varredura encolha em silêncio.
+
+Cinco mutações verificadas, todas detectadas: módulo clínico ganha `fetch`; service worker compõe requisição própria; service worker ganha corpo de requisição; módulo de rede referencia campo clínico; README abandona a promessa.
+
+Limite declarado: protege a **fronteira de saída do cliente**. Não prova nada sobre o comportamento de um servidor.
+
+Pendente de Platform/Core: registrar `INV-PRIV-001` no `docs/clinical/INVARIANT_REGISTRY.md` para que a guarda possa ser mapeada no gate de cobertura. Enquanto o invariante não existir no registry, o arquivo roda como teste independente.
+
 ### Aberto e rastreado como issue
 
 - **#39** — respondida por Platform/Core: espaço enumerável, bloco de Quality/Verification, sem mudança de workflow/estado. **Executado.** Pronta para fechar quando a PR empilhada for integrada.
