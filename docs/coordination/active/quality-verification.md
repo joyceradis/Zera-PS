@@ -40,6 +40,20 @@ Limite declarado: protege a **fronteira de saída do cliente**. Não prova nada 
 
 Pendente de Platform/Core: registrar `INV-PRIV-001` no `docs/clinical/INVARIANT_REGISTRY.md` para que a guarda possa ser mapeada no gate de cobertura. Enquanto o invariante não existir no registry, o arquivo roda como teste independente.
 
+### Harness de interação — entregue, sem dependência
+
+`tests/helpers/mini-dom.mjs` + `tests/helpers/boot-surface.mjs` + `tests/interaction-shift.test.mjs`. Documentação: `docs/testing/INTERACTION_HARNESS.md`. Suíte 316 → **324/324**.
+
+Carrega o `app.html` real, importa o entrypoint real (`app.js`) e interage **por evento** — clique e digitação com bolha —, nunca por chamada interna. Zero dependência: o `package.json` continua sem `dependencies` e sem `devDependencies`.
+
+Princípio de desenho: **API não implementada lança**. Um shim que devolve silêncio faz o teste passar pelo motivo errado, que é a falsa segurança que estas auditorias combatem. O harness foi construído deixando cada falha de boot apontar a API faltante.
+
+Cinco bugs históricos reintroduzidos, cinco detectados: vazamento da justificativa entre pacientes; guarda de sobrescrita removida; segundo dono no botão de reavaliação; `clearForm` sem limpar o documento final; campo de intake oculto.
+
+**Achado do harness, em um comando:** `retireLegacyWorkflowSurface` executa `.workflow-card.remove()`, e com ela sai o único controle que monta um protocolo. O protocolo não tem porta de entrada — HEART, pendências, resultados seriados e todo o progressive disclosure estão inalcançáveis. O encounter foi corrigido (nasce da atividade clínica), o protocolo não. Fixado em teste que **falha quando a porta voltar**, forçando revisão consciente da leitura de alcance do `INV-CLIN-003`.
+
+Limites declarados e não reivindicados: layout, CSS, foco real, viewport, service worker, PWA/offline e tempo até registro copiável. Exigem navegador real; o harness não os substitui.
+
 ### Aberto e rastreado como issue
 
 - **#39** — respondida por Platform/Core: espaço enumerável, bloco de Quality/Verification, sem mudança de workflow/estado. **Executado.** Pronta para fechar quando a PR empilhada for integrada.
