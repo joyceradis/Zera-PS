@@ -400,6 +400,7 @@ class MiniElement {
   showModal() { if (this.tagName !== 'DIALOG') unsupported('showModal fora de <dialog>'); this.open = true; }
   close() { this.open = false; }
   scrollIntoView() { /* sem layout: intencionalmente inerte, e declarado como tal */ }
+  select() { this.ownerDocument.selection = this; }
   focus() { this.ownerDocument.activeElement = this; }
 }
 
@@ -429,6 +430,16 @@ class MiniDocument {
     this.__root = fragment;
   }
   createElement(tagName) { return new MiniElement(tagName, this); }
+  /**
+   * Modela `document.execCommand('copy')` de forma explícita: devolve o resultado configurado
+   * em `execCommandResult`. O DOM real devolve `false` quando a cópia não acontece, e esse
+   * retorno é justamente o que o produto descarta.
+   */
+  execCommand(command) {
+    if (command !== 'copy') unsupported(`execCommand("${command}")`);
+    this.execCommandCalls = (this.execCommandCalls || 0) + 1;
+    return this.execCommandResult !== false;
+  }
   createTextNode(data) { return new MiniText(data, this); }
   getElementById(id) { return this.__root.descendants().find((node) => node.id === id) || null; }
   querySelector(selector) { return collectMatches(this.__root, selector)[0] || null; }

@@ -96,6 +96,20 @@ Handoff: a correção exige que a justificativa consulte o estado clínico real 
 
 Suíte: **336 testes, 335 aprovados, 0 falhas, 1 todo declarado.**
 
+### Cópia — confirmação falsa no ato terminal do produto (corrigido)
+
+Tudo que o Zera PS faz termina em "Copiar". `copyTextValue` descartava o retorno de `document.execCommand('copy')`, que é `false` quando a cópia não acontece, e `copyTextFrom` anunciava `Texto copiado.` incondicionalmente.
+
+Cadeia de perda, provada no harness: os dois caminhos falham → a médica ouve que copiou → limpa o Atendimento (que apaga o autosave junto) → cola no sistema do hospital e recebe o conteúdo anterior da área de transferência, possivelmente o documento do paciente anterior.
+
+O cenário não é exótico em deploy local: `navigator.clipboard` só existe em contexto seguro. Servido por HTTP na rede interna do hospital ele é `undefined` por especificação, e todo o peso cai no fallback obsoleto.
+
+Corrigido em `assets/app.js`: o resultado da cópia passa a ser propagado, e a falha traz orientação acionável — o texto continua na tela e não deve ser limpo antes de copiar manualmente. `tests/interaction-copy.test.mjs`, 4 vetores; reverter a correção reprova 2.
+
+**Cruzamento de owner declarado:** `assets/app.js`. É correção localizada demonstrada por auditoria, sem alterar arquitetura, estado ou semântica clínica — a faixa que `AGENT_COORDINATION.md` reserva a este setor. A **redação** da mensagem de falha é copy de UX e pertence à Founder; está sinalizada na PR para ajuste.
+
+Suíte: **340 testes, 339 aprovados, 0 falhas, 1 todo declarado.**
+
 ### Aberto e rastreado como issue
 
 - **#39** — respondida por Platform/Core: espaço enumerável, bloco de Quality/Verification, sem mudança de workflow/estado. **Executado.** Pronta para fechar quando a PR empilhada for integrada.

@@ -114,6 +114,19 @@ async function bootApp({ seed } = {}) {
     answerConfirm: (value) => { win.confirmResponse = value; },
     confirmCalls: () => win.confirmCalls,
 
+    /**
+     * Simula máquina de plantão sem área de transferência utilizável: `navigator.clipboard`
+     * indisponível (contexto não seguro, que é o caso de servir por HTTP na rede do hospital)
+     * e `execCommand('copy')` devolvendo false.
+     */
+    breakClipboard: () => {
+      globalThis.navigator.clipboard = {
+        writeText: async () => { throw new Error('NotAllowedError: contexto não seguro'); }
+      };
+      document.execCommandResult = false;
+    },
+    clipboardFallbackCalls: () => document.execCommandCalls || 0,
+
     /** Faz a próxima escrita local falhar, como cota estourada em máquina de plantão. */
     breakStorage: (broken = true) => { storage.failOnWrite = broken; },
     storageKeys: () => storage.keys(),
