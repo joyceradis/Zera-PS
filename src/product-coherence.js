@@ -9,7 +9,11 @@ const ATENDIMENTO_CONTENT_IDS = Object.freeze([
 const CONTINUATION_TEXT_IDS = Object.freeze([
   'reav-evolucao', 'reav-exames', 'reav-conduta', 'reassessment-output',
   'int-diagnostico', 'int-justificativa', 'int-prescricao', 'admission-output',
-  'alta-diagnostico', 'alta-resumo', 'alta-medicacoes', 'alta-orientacoes', 'discharge-output'
+  'alta-diagnostico', 'alta-resumo', 'alta-medicacoes', 'alta-orientacoes', 'discharge-output',
+  // O documento de justificativa vive dentro de <dialog>, fora do #evolution-form, então
+  // form.reset() nunca o alcançou. Sem esta entrada, a justificativa do paciente anterior
+  // sobrevive ao "Limpar" e reaparece ao abrir o diálogo no paciente seguinte.
+  'justification-output'
 ]);
 
 function retireLegacyWorkflowSurface() {

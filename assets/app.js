@@ -522,9 +522,14 @@ function generateEvolution() {
 async function copyTextValue(target) {
   try {
     await navigator.clipboard.writeText(target.value);
+    return true;
   } catch {
+    // `navigator.clipboard` não existe fora de contexto seguro — servir por HTTP na rede do
+    // hospital cai sempre aqui. `execCommand('copy')` devolve false quando não copia, e esse
+    // retorno precisa ser propagado: anunciar cópia que não aconteceu leva a médica a limpar o
+    // Atendimento confiando num texto que não está na área de transferência.
     target.select();
-    document.execCommand('copy');
+    return document.execCommand('copy') === true;
   }
 }
 
@@ -534,8 +539,10 @@ async function copyTextFrom(targetId, onFeedback = showFeedback) {
     onFeedback('Não há texto para copiar.');
     return;
   }
-  await copyTextValue(target);
-  onFeedback('Texto copiado.');
+  const copied = await copyTextValue(target);
+  onFeedback(copied
+    ? 'Texto copiado.'
+    : 'Não foi possível copiar automaticamente. O texto continua na tela — selecione e copie manualmente antes de limpar.');
 }
 
 function saveDraft() {
