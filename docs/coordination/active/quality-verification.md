@@ -58,6 +58,23 @@ Estendido com dois percursos que faltavam: **recuperação** (`tests/interaction
 
 **Decisão da Founder:** zero dependência vale também para ferramenta de teste. Consequência entregue: `docs/testing/MANUAL_GATES.md` enumera G1–G7 — tempo até registro copiável, sobrevivência do documento à colagem, teclado, PWA/offline real, layout na máquina do plantão, mobile e homologação clínica. Explícito e pequeno, em vez de área cinzenta. Nenhum relatório deste projeto deve afirmar cobertura sobre esses itens.
 
+### Auditoria da linha de release — `main`
+
+Motivo: a linha que publica o que o hospital roda vira caminho crítico de segurança a partir do momento em que o produto é vendido, e ninguém a tinha auditado.
+
+**Achado de integridade de release (grave).** `RELEASE_NOTES_2026-08-16.md` e `CHANGELOG.md` na `main` afirmam que a PR #71 — *"impedir estado do paciente anterior após limpar Atendimento"* — está publicada. **O código não está lá:** `src/product-coherence.js`, arquivo onde a correção vive, não existe na `main`. A `main` está 273 commits atrás da linha canônica e não contém a camada de convergência. Quem lê a `main` conclui que o vazamento entre pacientes foi corrigido no artefato liberado; não foi.
+
+Não é acusação de conduta: a linha de release e a linha de produto divergiram e nada as reconcilia. É exatamente o que o `ROADMAP.md` prevê ao manter a PR #30 bloqueada — mas as notas de release não refletem esse bloqueio.
+
+**Superfície de CI divergente.** `main` tem `codeql.yml` e `main.yml`; a canônica tem `pr-preview.yml`. Nenhuma das duas conhece os workflows da outra.
+
+- `.github/workflows/main.yml` na `main` é **uma linha de bash truncada**, não um workflow. Commitada por engano em diretório que executa com credenciais do repositório. Sem segredo embutido — verificado.
+- `codeql.yml` usa tags móveis (`actions/checkout@v7`, `github/codeql-action/*@v4`). O projeto exige SHA imutável, mas a exigência era verificada apenas em dois arquivos **nomeados** — workflow novo escapava.
+
+**Guarda entregue:** `tests/workflow-surface.test.mjs` deriva a exigência do diretório, não de lista escrita à mão. Todo arquivo em `.github/workflows/` precisa ser workflow válido (`on:` + `jobs:`), declarar `permissions:` e ter toda ação de terceiro fixada por SHA de 40 caracteres. Piso ancorado contra encolhimento.
+
+Verificada com os **arquivos reais da `main`**, não com mutação sintética: `main.yml` reprova por não declarar gatilho; `codeql.yml` reprova listando as quatro ações não fixadas. Quando a linha canônica for para a `main`, a guarda força a limpeza dos dois.
+
 ### Aberto e rastreado como issue
 
 - **#39** — respondida por Platform/Core: espaço enumerável, bloco de Quality/Verification, sem mudança de workflow/estado. **Executado.** Pronta para fechar quando a PR empilhada for integrada.
