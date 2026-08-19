@@ -52,7 +52,11 @@ Cinco bugs históricos reintroduzidos, cinco detectados: vazamento da justificat
 
 **Achado do harness, em um comando:** `retireLegacyWorkflowSurface` executa `.workflow-card.remove()`, e com ela sai o único controle que monta um protocolo. O protocolo não tem porta de entrada — HEART, pendências, resultados seriados e todo o progressive disclosure estão inalcançáveis. O encounter foi corrigido (nasce da atividade clínica), o protocolo não. Fixado em teste que **falha quando a porta voltar**, forçando revisão consciente da leitura de alcance do `INV-CLIN-003`.
 
-Limites declarados e não reivindicados: layout, CSS, foco real, viewport, service worker, PWA/offline e tempo até registro copiável. Exigem navegador real; o harness não os substitui.
+Estendido com dois percursos que faltavam: **recuperação** (`tests/interaction-recovery.test.mjs` — recarregar com autosave, e abrir rascunho depois da superfície montada, que é o percurso do UX-11) e **falha de armazenamento** (`tests/interaction-storage-failure.test.mjs` — exercita `INV-STOR-001` na borda, onde a auditoria o encontrara perdido). Três mutações adicionais verificadas, todas detectadas.
+
+**Erro do próprio harness, registrado:** o vetor de restauração falhou na primeira escrita. A leitura fácil seria regressão no produto; era infidelidade do harness — a bolha de evento parava na raiz e não alcançava o documento, então a delegação em `document.addEventListener('click', ...)` nunca disparava. Corrigido. A lição vale mais que a correção: vermelho de harness novo é suspeito até a causa ser identificada.
+
+**Decisão da Founder:** zero dependência vale também para ferramenta de teste. Consequência entregue: `docs/testing/MANUAL_GATES.md` enumera G1–G7 — tempo até registro copiável, sobrevivência do documento à colagem, teclado, PWA/offline real, layout na máquina do plantão, mobile e homologação clínica. Explícito e pequeno, em vez de área cinzenta. Nenhum relatório deste projeto deve afirmar cobertura sobre esses itens.
 
 ### Aberto e rastreado como issue
 

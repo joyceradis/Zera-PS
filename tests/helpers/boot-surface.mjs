@@ -19,12 +19,21 @@ const flush = () => new Promise((resolve) => queueMicrotask(() => queueMicrotask
 
 let booted = false;
 
-async function bootApp() {
+/**
+ * @param {object} [options]
+ * @param {Record<string,unknown>} [options.seed] estado local pré-existente, para simular um
+ *   recarregamento com dado já salvo. É a única forma de exercitar recuperação num harness que
+ *   admite um boot por processo.
+ */
+async function bootApp({ seed } = {}) {
   if (booted) throw new Error('bootApp() já foi chamado neste processo; use um arquivo de teste por boot.');
   booted = true;
 
   const document = new MiniDocument(APP_HTML);
   const storage = createMemoryStorage();
+  for (const [key, value] of Object.entries(seed || {})) {
+    storage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
+  }
   const timers = [];
   const windowListeners = new Map();
 
@@ -104,6 +113,10 @@ async function bootApp() {
     /** Resposta do próximo confirm(), e registro do que foi perguntado. */
     answerConfirm: (value) => { win.confirmResponse = value; },
     confirmCalls: () => win.confirmCalls,
+
+    /** Faz a próxima escrita local falhar, como cota estourada em máquina de plantão. */
+    breakStorage: (broken = true) => { storage.failOnWrite = broken; },
+    storageKeys: () => storage.keys(),
 
     runTimers: () => { for (const fn of timers.splice(0)) fn(); },
     flush

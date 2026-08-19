@@ -373,6 +373,15 @@ class MiniElement {
       if (!event.bubbles || event.__stopped) break;
       node = node.parentNode;
     }
+    // A bolha termina no DOCUMENTO, não na raiz da árvore. Delegação de evento em
+    // `document.addEventListener` é padrão comum neste código — `intake-restore-bridge.js`
+    // depende dela. Uma bolha que para antes do documento produz falso vermelho: foi
+    // exatamente o que aconteceu ao escrever o vetor de restauração de rascunho.
+    if (event.bubbles && !event.__stopped) {
+      for (const handler of [...(this.ownerDocument?.listeners?.get(event.type) || [])]) {
+        handler.call(this.ownerDocument, event);
+      }
+    }
     return !event.defaultPrevented;
   }
 
@@ -447,7 +456,8 @@ function createMemoryStorage() {
     },
     removeItem: (key) => { map.delete(key); },
     clear: () => map.clear(),
-    get size() { return map.size; }
+    get size() { return map.size; },
+    keys: () => [...map.keys()]
   };
 }
 

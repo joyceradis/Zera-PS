@@ -76,6 +76,21 @@ Explicitamente fora de alcance, e nenhum teste escrito aqui autoriza afirmação
 Esses gates continuam abertos e exigem navegador real. Este harness **não os substitui**; ele
 retira do caminho a classe de defeito que não precisava de navegador para ser pega.
 
+Por decisão registrada da Founder, a restrição de zero dependência vale também para ferramenta
+de teste. O que exige navegador fica como gate manual, enumerado em
+[`MANUAL_GATES.md`](MANUAL_GATES.md) — explícito e pequeno, em vez de área cinzenta.
+
+## Fidelidade: um erro do próprio harness, e como apareceu
+
+Ao escrever o vetor de restauração de rascunho, ele falhou. A leitura fácil seria "regressão no
+produto". Era falha do harness: a bolha de evento parava na raiz da árvore e **não alcançava o
+documento**, então `document.addEventListener('click', ...)` — delegação usada por
+`intake-restore-bridge.js` — nunca disparava.
+
+Registrado aqui porque a lição vale mais que a correção: **vermelho de harness novo é suspeito
+até que a causa seja identificada.** Um harness infiel produz alarme falso e queima a confiança
+de quem lê o relatório.
+
 ## Como estender
 
 1. escreva o cenário como interação — evento, nunca chamada interna;
