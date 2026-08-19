@@ -75,6 +75,27 @@ Não é acusação de conduta: a linha de release e a linha de produto divergira
 
 Verificada com os **arquivos reais da `main`**, não com mutação sintética: `main.yml` reprova por não declarar gatilho; `codeql.yml` reprova listando as quatro ações não fixadas. Quando a linha canônica for para a `main`, a guarda força a limpeza dos dois.
 
+### UX-06 promovido de latente a demonstrado — proveniência na justificativa (issue #77)
+
+Reportei em auditoria anterior como **risco latente**: `observedFieldFromInput` lê o valor cru do input e devolve `confirmed: true`, satisfazendo o portão por construção. Na época concluí que não havia fabricação porque todo conteúdo vinha de ato explícito. **Com o harness de interação, achei o caminho em que há.**
+
+A migração de autosave v1 (`migrateLegacyAutosave`) honra literalmente o contrato *"migração técnica não fabrica confirmação clínica"*: carrega o texto do formulário e deixa todo o estado clínico não confirmado. O document engine respeita e omite o exame físico do prontuário. **A justificativa não respeita.**
+
+Mesma sessão, mesmo dado, dois documentos:
+
+```text
+evolução      → sem seção de exame físico
+justificativa → "AO EXAME FÍSICO, DESTACA-SE: REG, DESIDRATADO ++/4+ / ABD: ... BLUMBERG POSITIVO"
+```
+
+O documento que afirma é o de uso externo, destinado à operadora.
+
+`tests/interaction-justification-provenance.test.mjs` demonstra por interação real. O vetor da propriedade correta está marcado `{ todo }`: aparece como `not ok ... # TODO` em toda execução, **não reprova a suíte**, e vira `ok` quando a correção chegar — verificado por mutação. É o mecanismo honesto para RED conhecido que aguarda outro setor: visível em todo run, sem travar CI e sem abençoar o defeito.
+
+Handoff: a correção exige que a justificativa consulte o estado clínico real em vez de reconstruí-lo do DOM. `clinicalState` vive no escopo de `assets/app.js` e não é exportado — é desenho de Core, não correção localizada.
+
+Suíte: **336 testes, 335 aprovados, 0 falhas, 1 todo declarado.**
+
 ### Aberto e rastreado como issue
 
 - **#39** — respondida por Platform/Core: espaço enumerável, bloco de Quality/Verification, sem mudança de workflow/estado. **Executado.** Pronta para fechar quando a PR empilhada for integrada.
