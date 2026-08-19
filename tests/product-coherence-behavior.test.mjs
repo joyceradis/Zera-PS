@@ -56,11 +56,14 @@ test('Atendimento state follows real content and returns to new when content is 
 });
 
 test('reset clears reassessment, admission, discharge, panels and score state bridges', async () => {
-  const nodes = Object.fromEntries([
-    'reav-evolucao', 'reav-exames', 'reav-conduta', 'reassessment-output',
-    'int-diagnostico', 'int-justificativa', 'int-prescricao', 'admission-output',
-    'alta-diagnostico', 'alta-resumo', 'alta-medicacoes', 'alta-orientacoes', 'discharge-output'
-  ].map((id) => [id, { value: `OLD:${id}` }]));
+  // O conjunto exercitado acompanha a lista do módulo, em vez de repeti-la literalmente:
+  // quando a fronteira cresce, este vetor passa a cobrir o campo novo sozinho. A garantia
+  // NÃO circular — de que a lista contempla todo campo fora do formulário — vive em
+  // tests/patient-boundary.test.mjs, que deriva a exigência do próprio app.html.
+  const { CONTINUATION_TEXT_IDS } = await import('../src/product-coherence.js?ids=behavior');
+  const nodes = Object.fromEntries(
+    CONTINUATION_TEXT_IDS.map((id) => [id, { value: `OLD:${id}` }])
+  );
   nodes['int-destino'] = { selectedIndex: 2 };
 
   let scoreChanges = 0;
